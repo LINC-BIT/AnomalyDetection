@@ -223,7 +223,16 @@ python tools/download_datasets.py mvtec-ad --root datasets/general/MVTecAD --cat
 python tools/download_datasets.py visa --root datasets/general/VisA --category capsules
 ```
 
-The downloader may require acceptance of the dataset license or network access. ZJU-Leaper is a project-specific dataset; its downloader is TODO. Until released, place it at the registered path or set `ZJU_LEAPER_ROOT`. Do not commit dataset bytes to Git.
+Place ZJU-Leaper at `datasets/textile/ZJU-Leaper/` or set `ZJU_LEAPER_ROOT`.
+
+### Public dataset links
+
+| Dataset | Download |
+|---|---|
+| MVTec AD | [Official page](https://www.mvtec.com/company/research/datasets/mvtec-ad) · [Hugging Face search](https://huggingface.co/datasets?search=MVTec%20AD) |
+| MVTec LOCO | [Official page](https://www.mvtec.com/company/research/datasets/mvtec-loco) · [Hugging Face search](https://huggingface.co/datasets?search=MVTec%20LOCO) |
+| VisA | [Official repository](https://github.com/amazon-science/spot-diff) · [Hugging Face search](https://huggingface.co/datasets?search=VisA) |
+| ZJU-Leaper | [Hugging Face search](https://huggingface.co/datasets?search=ZJU-Leaper) |
 
 ## 8. Weight preparation
 
@@ -244,7 +253,7 @@ The release policy is:
 
 The existing MoECLIP Google Drive URL is retained only as legacy provenance. See [docs/weights.md](docs/weights.md).
 
-Weight download automation, checksum verification, and Hugging Face release packages are TODO. Upstream model weights are downloaded by their backend when supported; project weights must currently be copied into the canonical slots and verified with `adh inventory`. No training is needed for the MWE: use an existing published checkpoint such as WinCLIP or PatchCore.
+Small YOLO weights may be published with the project. WinCLIP and similar training-free models download their pretrained weights through the backend. Other weights will be distributed from the project Hugging Face repository.
 
 When the project weight repository is published, use the generic downloader:
 
@@ -266,6 +275,46 @@ adh-ui
 
 Open the URL printed by Gradio. Select a task type, application domain, and model. The UI reads model, dataset, weight, and capability metadata from the backend registry; it does not define inference or training logic.
 
+### 9.1 Model session
+
+Use the selectors in this order:
+
+1. **Task type**: Defect detection or Anomaly detection.
+2. **Application domain**: textile, general, or another registered domain.
+3. **Model**: models compatible with the selected task and domain.
+
+The model panel displays the method, training dataset, training split, weight status, and supported outputs. Click **Load model** before running inference.
+
+### 9.2 Benchmark
+
+Open the **Benchmark** tab to evaluate one or more registered models on a selected dataset. Choose the dataset, category or pattern, shot mode, models, and optional profiling or resolution sweep, then click **Run benchmark**.
+
+Benchmark results use two top-level groups:
+
+- **Technical**
+  - **Image level**: image AUROC, image F1, precision, and recall.
+  - **Pixel level**: pixel AUROC, AUPRO, and IAP when masks and anomaly maps are available.
+  - **Instance level**: detection boxes and instance metrics for models that provide them.
+  - **Cross-domain**: scores on a held-out dataset or pattern.
+- **Overhead**
+  - **Compute overhead**: wall time, FPS, latency, and FLOPs.
+  - **Memory overhead**: peak memory and allocator measurements when available.
+  - **Communication overhead**: exported model transfer-size proxy.
+
+LMEI is reported under **Compute overhead** when the selected profiler provides it.
+
+Unavailable metrics are shown as unavailable; the UI does not infer values from unsupported model outputs. Benchmark reports are written to the configured run directory.
+
+### 9.3 Run history
+
+Open the **Run history** tab to read saved benchmark and evaluation results. Enter the JSON or JSONL report path, click **Refresh**, and optionally select a metric to filter the table. The table shows the run timestamp, model, dataset, metric values, and report path. History reads existing files only; it does not rerun experiments.
+
+### 9.4 Video demonstration
+
+Watch [Web UI demonstration](docs/videos/detection.mp4) for model selection, dataset selection, image loading, and detection output.
+
+Watch [Benchmark demonstration](docs/videos/benchmark.mp4) for benchmark execution and history reading.
+
 ## 10. Minimal Working Example
 
 This Minimal Working Example uses the web UI and an existing weight.
@@ -276,25 +325,25 @@ Start the UI as described in [Web UI](#9-web-ui), then complete the following st
 
 Choose **Anomaly detection** in **Task type**:
 
-![MWE step 1 placeholder: select Anomaly detection](docs/images/img1.png)
+![Minimal Working Example step 1 placeholder: select Anomaly detection](docs/images/img1.png)
 
 ### Step 2: Select the application domain
 
 Choose **textile** for demonstration:
 
-![MWE step 2 placeholder: select application domain](docs/images/img2.png)
+![Minimal Working Example step 2 placeholder: select application domain](docs/images/img2.png)
 
 ### Step 3: Select the model and inspect its metadata
 
 Select `WinCLIP · LAION-400M zero-shot`. Confirm the displayed method, domain, training dataset, training split, and weight filename.
 
-![MWE step 3 placeholder: select model and inspect metadata](docs/images/img3.png)
+![Minimal Working Example step 3 placeholder: select model and inspect metadata](docs/images/img3.png)
 
 ### Step 4: Load the model
 
 Click **Load model** and wait until the runtime status shows the selected model as loaded.
 
-![MWE step 4 placeholder: load model](docs/images/img4.png)
+![Minimal Working Example step 4 placeholder: load model](docs/images/img4.png)
 
 ### Step 5: Select the dataset and split
 
@@ -302,13 +351,13 @@ Choose `ZJU-Leaper`, select a pattern or **All textures**, and select the `test`
 
 Then, click **Load random images**.
 
-![MWE step 5 placeholder: select dataset and split](docs/images/img5.png)
+![Minimal Working Example step 5 placeholder: select dataset and split](docs/images/img5.png)
 
 ### Step 6: Run detection 
 
 Click **Run detection**. Wait for the process to complete and observe the results.
 
-![MWE step 6 placeholder: run detection](docs/images/img6.png)
+![Minimal Working Example step 6 placeholder: run detection](docs/images/img6.png)
 
 ## 11. Training
 
@@ -422,8 +471,6 @@ Image-level metrics are available when scores and labels exist. Pixel metrics re
 4. Add one entry to `configs/registry/models.yaml`.
 5. Supply a canonical weight or leave its status explicitly missing.
 6. Run runtime and architecture tests.
-
-No UI edit is permitted or required. See [docs/model-integration.md](docs/model-integration.md).
 
 ### Add a domain
 
