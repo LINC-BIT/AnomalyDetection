@@ -17,8 +17,13 @@ An extensible, configuration-driven platform for supervised defect detection, de
     - [6.2 Create and activate the Conda environment](#62-create-and-activate-the-conda-environment)
     - [6.3 Install requirements](#63-install-requirements)
   - [7. Data preparation](#7-data-preparation)
+    - [Public dataset links](#public-dataset-links)
   - [8. Weight preparation](#8-weight-preparation)
   - [9. Web UI](#9-web-ui)
+    - [9.1 Model session](#91-model-session)
+    - [9.2 Benchmark](#92-benchmark)
+    - [9.3 Run history](#93-run-history)
+    - [9.4 Video demonstration](#94-video-demonstration)
   - [10. Minimal Working Example](#10-minimal-working-example)
     - [Step 1: Select the task type](#step-1-select-the-task-type)
     - [Step 2: Select the application domain](#step-2-select-the-application-domain)
@@ -188,7 +193,7 @@ python -m pip install --no-deps --no-build-isolation -e .
 
 ## 7. Data preparation
 
-Datasets are local runtime assets and are excluded from Git.
+The repository currently provides dataset adapters for the datasets listed below：
 
 ```text
 datasets/textile/ZJU-Leaper/
@@ -208,60 +213,62 @@ adh inventory
 adh doctor
 ```
 
-An explicit root always overrides the default:
-
-```bash
-adh train patchcore --dataset zju-leaper --dataset-root /absolute/path/to/ZJU-Leaper --mode test
-```
-
 Supported environment overrides include `ZJU_LEAPER_ROOT`, `RAW_FABRIC_ROOT`, `MVTEC_AD_ROOT`, `MVTEC_LOCO_ROOT`, and `VISA_ROOT`.
 
-Download MVTec AD or VisA through Anomalib's maintained downloaders:
+Use the dataset download script from the repository root:
 
 ```bash
 python tools/download_datasets.py mvtec-ad --root datasets/general/MVTecAD --category bottle
 python tools/download_datasets.py visa --root datasets/general/VisA --category capsules
+python tools/download_datasets.py zju-leaper --root datasets/textile/ZJU-Leaper
 ```
 
-Place ZJU-Leaper at `datasets/textile/ZJU-Leaper/` or set `ZJU_LEAPER_ROOT`.
+The script currently supports these datasets:
+
+| Dataset | Script name | Default source |
+|---|---|---|
+| MVTec AD | `mvtec-ad` | Anomalib downloader |
+| VisA | `visa` | Anomalib downloader |
+| ZJU-Leaper | `zju-leaper` | [AnupamaBandara/ZLU_Leaper](https://huggingface.co/datasets/AnupamaBandara/ZLU_Leaper) |
+
+MVTec LOCO, RAW_FABRID, Fabric Defects Dataset, TILDA_400, and Tianchi download automation are TODO.
 
 ### Public dataset links
 
 | Dataset | Download |
 |---|---|
 | MVTec AD | [Official page](https://www.mvtec.com/company/research/datasets/mvtec-ad) · [Hugging Face search](https://huggingface.co/datasets?search=MVTec%20AD) |
-| MVTec LOCO | [Official page](https://www.mvtec.com/company/research/datasets/mvtec-loco) · [Hugging Face search](https://huggingface.co/datasets?search=MVTec%20LOCO) |
+| MVTec LOCO | [Official page](https://www.mvtec.com/company/research/datasets/mvtec-loco) · download script: TODO |
 | VisA | [Official repository](https://github.com/amazon-science/spot-diff) · [Hugging Face search](https://huggingface.co/datasets?search=VisA) |
-| ZJU-Leaper | [Hugging Face search](https://huggingface.co/datasets?search=ZJU-Leaper) |
+| ZJU-Leaper | [AnupamaBandara/ZLU_Leaper](https://huggingface.co/datasets/AnupamaBandara/ZLU_Leaper) |
 
 ## 8. Weight preparation
 
-Canonical local weights resolve under:
+Textile weights resolve under:
 
 ```text
 textile/artifacts/models/published/<model-id>.<extension>
 ```
 
-Weights are not committed to Git and the UI never downloads them implicitly. `adh inventory` reports `file`, `symlink`, `broken_link`, or `missing` for each slot.
+General-domain weights resolve under:
 
-The release policy is:
+```text
+general/artifacts/models/published/<model-id>.<extension>
+```
+YOLO weights are available from [AuroraLeeeeee/AnomalyDetection-textile-weights](https://huggingface.co/AuroraLeeeeee/AnomalyDetection-textile-weights).
 
-1. store public weights in a dedicated Hugging Face Hub repository;
-2. pin an immutable revision;
-3. record filename, size, and SHA-256 in the manifest;
-4. download into the project cache and verify before publication.
-
-The existing MoECLIP Google Drive URL is retained only as legacy provenance. See [docs/weights.md](docs/weights.md).
-
-Small YOLO weights may be published with the project. WinCLIP and similar training-free models download their pretrained weights through the backend. Other weights will be distributed from the project Hugging Face repository.
-
-When the project weight repository is published, use the generic downloader:
+Download the three YOLO weights and restore the project paths:
 
 ```bash
-python tools/download_weights.py ORG/REPO PatchCore.ckpt \
-  --revision REVISION \
-  --output textile/artifacts/models/published/PatchCore.ckpt
-adh inventory
+python tools/download_weights.py AuroraLeeeeee/AnomalyDetection-textile-weights \
+  textile/artifacts/models/published/yolov8n.pt \
+  --output textile/artifacts/models/published/yolov8n.pt
+python tools/download_weights.py AuroraLeeeeee/AnomalyDetection-textile-weights \
+  textile/artifacts/models/published/yolov8s.pt \
+  --output textile/artifacts/models/published/yolov8s.pt
+python tools/download_weights.py AuroraLeeeeee/AnomalyDetection-textile-weights \
+  textile/artifacts/models/published/yolo11n.pt \
+  --output textile/artifacts/models/published/yolo11n.pt
 ```
 
 ## 9. Web UI
@@ -272,8 +279,6 @@ Start the UI before using the command-line workflows:
 conda activate anomalib_env
 adh-ui
 ```
-
-Open the URL printed by Gradio. Select a task type, application domain, and model. The UI reads model, dataset, weight, and capability metadata from the backend registry; it does not define inference or training logic.
 
 ### 9.1 Model session
 

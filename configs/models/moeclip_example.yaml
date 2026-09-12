@@ -142,4 +142,4 @@ export:
 checkpoint:
   work_dir: null    # null = fresh temp dir; set to keep the raw training-run checkpoint too
   name: moeclip_mvtec_ad_zeroshot_zju_pattern1-4
-  registry_dir: textile/artifacts/models   # domain-owned stable checkpoint
+  registry_dir: general/artifacts/models   # domain-owned stable checkpoint

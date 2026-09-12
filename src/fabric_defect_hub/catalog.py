@@ -11,7 +11,7 @@ from typing import Any
 
 import yaml
 
-from fabric_defect_hub.paths import ARTIFACTS_ROOT, REPOSITORY_ROOT
+from fabric_defect_hub.paths import ARTIFACTS_ROOT, GENERAL_ROOT, REPOSITORY_ROOT
 
 PROJECT_ROOT = REPOSITORY_ROOT
 MODEL_ROOT = ARTIFACTS_ROOT / "models"
@@ -145,7 +145,8 @@ def published_path(model: CanonicalModel) -> Path:
     called the file, the published slot always spells it the way the rest of
     the project refers to the model.
     """
-    return PUBLISHED_MODEL_ROOT / f"{model.key}{_EXTENSION[model.backend]}"
+    root = GENERAL_ROOT / "artifacts" / "models" / "published" if model.domain == "general" else PUBLISHED_MODEL_ROOT
+    return root / f"{model.key}{_EXTENSION[model.backend]}"
 
 
 def published_status(path: Path) -> str:
