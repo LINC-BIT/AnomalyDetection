@@ -1,0 +1,55 @@
+# WinCLIP zero-shot fabric evaluation.
+#
+# This is intentionally separate from anomalib_example.yaml: WinCLIP is not
+# fitted on ZJU. With k_shot: 0 the adapter writes a reconstructable metadata
+# artifact, then evaluates the pretrained CLIP model against the ZJU test set.
+
+model:
+  name: WinCLIP
+
+data:
+  dataset: zju-leaper
+  dataset_root: ${ZJU_LEAPER_ROOT}
+  train_selection:
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 1200
+    use_defect: false
+    task: anomaly
+    seed: 0
+  test_selection:
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 400
+    use_defect: true
+    defect_ratio: 0.5
+    task: anomaly
+    seed: 0
+
+train:
+  enabled: true
+  model_kwargs:
+    class_name: fabric
+    k_shot: 0
+    scales: [2, 3]
+  engine_kwargs: {}
+  num_workers: 0
+
+val:
+  enabled: true
+  output_dir: artifacts/anomaly_maps/winclip_zeroshot_zju_pattern1-4
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+predict:
+  output_dir: null
+
+export:
+  enabled: false
+  formats: []
+
+checkpoint:
+  default_root_dir: runs/winclip_zeroshot_zju_pattern1-4
+  name: winclip_zeroshot_zju_pattern1-4
+  registry_dir: textile/artifacts/models

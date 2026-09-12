@@ -1,0 +1,145 @@
+# ============================================================================
+# MoECLIP experiment config example.
+#
+# MoECLIP is vendored research code (components/moeclip, see
+# components/README.md), not a pip-installed library -- this adapter
+# (models/moeclip/) reimplements upstream's train.py/test.py loops against
+# this project's Sample/Prediction/Artifact contracts. Requires the
+# `moeclip` extra (pip install -e ".[moeclip]") *and* the OpenCLIP
+# ViT-L-14-336px backbone checkpoint placed at
+# components/moeclip/model/ViT-L-14-336px.pt (nothing downloads it -- see
+# models/moeclip/presets.py::CHECKPOINT_DOWNLOAD_URL).
+#
+# Usage (configuration-driven, not command-line flags):
+#     from fabric_defect_hub.models.moeclip import run_from_yaml
+#     result = run_from_yaml("configs/models/moeclip_example.yaml")
+#     print(result.metrics)                   # {'image_auroc': ..., 'pixel_aupro': ...}
+#     print(result.registered_artifact.path)  # stable storage path of the trained checkpoint
+#
+# Or via the CLI:
+#     fdh train moeclip_example --mode test    # 8-image smoke run
+#     fdh predict moeclip_example --weights artifacts/models/moeclip_ViT-L-14-336.pth --image some.png
+#
+# Same structural shape as dinomaly_example.yaml, with two important
+# differences, both because MoECLIP is a *zero-shot* (ZSAD) detector:
+#
+#  1. It trains on an auxiliary cross-domain corpus (VisA / MVTec AD /
+#     MVTec LOCO) and is evaluated on fabric it has never seen -- hence
+#     the separate `data.test_dataset`. Training it on fabric is rejected
+#     outright; that would make its fabric scores in-domain and void the
+#     zero-shot claim the benchmark is measuring.
+#  2. It learns from *labelled* anomalies, so its train split is NOT
+#     normal-only: it needs defective samples carrying pixel masks
+#     (use_defect: true + task: segmentation). Defective train samples
+#     without a mask are dropped, with the count reported on the artifact
+#     (see MoECLIPAdapter._select_train_samples).
+#
+# Architecture knobs live under `model:` rather than `train:` because they
+# must match at inference time.
+# ============================================================================
+
+# ---- Model: backbone + mixture-of-experts architecture ----
+model:
+  name: ViT-L-14-336        # the only backbone upstream supports (d_model/depth are hardcoded to ViT-L)
+  img_size: 518             # must be a multiple of the 14px patch size (518 = 14 * 37)
+  moe_r: 8                  # LoRA rank per expert
+  moe_lora_alpha: 16
+  moe_num_experts: 4
+  moe_top_k: 2              # experts each patch is routed to
+  # weights: artifacts/models/published/MoECLIP.pt
+  #   Evaluate an existing checkpoint instead of training: set this and
+  #   train.enabled: false. The architecture knobs above must match the
+  #   ones the checkpoint was trained with.
+  moe_layers: [5, 11, 17, 23]   # 0-indexed transformer blocks the MoE is injected at
+  use_fofs: true            # Frozen Orthogonal Feature Separation (freezes each expert's LoRA A)
+  use_paa: true             # Patch Average Aggregation (multi-scale 1/3/5 neighbourhoods)
+  seg_proj_sharing_strategy: shared   # shared | separate
+  image_adapt_weight: 0.1   # blend weight of the MoE output back into the frozen CLIP stream
+  relu: false               # LeakyReLU after the segmentation projections
+  # ---- Prompt policy (the text side; no effect on weight shapes) ----
+  # MoECLIP scores a patch by comparing it against "a photo of a {name}."
+  # vs "a photo of a damaged {name}." -- so {name} has to describe the
+  # normal object. During *training* leave prompt_class unset: each corpus
+  # category then supplies its own name (VisA's "candle", "pcb3", ... with
+  # upstream's own descriptions), which is what the experts specialize
+  # against. At *inference* on fabric, pin it -- one texture, one prompt:
+  #   prompt_class: fabric
+  #   prompts: {fabric: "plain woven cotton fabric"}
+  # Left unset here so this config trains as upstream does; the fabric
+  # prompt then falls back to "fabric texture" (see models/moeclip/
+  # presets.py::REAL_NAME_OVERRIDES), and ZJU-Leaper samples use their own
+  # pattern name. Never prompt with a defect type -- that is the label.
+  prompt_class: null
+  prompts: {}
+
+# ---- Data: train on an auxiliary cross-domain corpus, evaluate zero-shot on fabric ----
+# This is the protocol MoECLIP is *for*, and it is enforced: `fdh train`
+# rejects a fabric training corpus for this backend (see
+# training.ZERO_SHOT_TRAINABLE_DATASETS). VisA is upstream's own choice of
+# training set; mvtec-ad / mvtec-loco are the other allowed corpora. Both
+# roots are left unset on purpose -- `fdh train` falls back to this
+# project's data/<Dataset> symlinks (see training.DEFAULT_DATASET_ROOTS).
+#
+# Do NOT set test_dataset to the same dataset as `dataset`: that measures
+# in-domain performance and the resulting number is not a zero-shot result.
+data:
+  # MVTec AD is staged on the project's external SSD and follows the
+  # mask-bearing MVTec layout MoECLIP needs for its segmentation loss.
+  dataset: mvtec-ad             # auxiliary training corpus (never fabric)
+  dataset_root: ${MVTEC_AD_ROOT}
+  test_dataset: zju-leaper      # held-out fabric target: pattern1-4
+  test_dataset_root: ${ZJU_LEAPER_ROOT}
+  train_selection:          # MoECLIP learns from labelled defects -- the opposite of the one-class backends
+    split: test             # VisA/MVTec-style benchmarks only put anomalies+masks in their "test" split;
+                             # "train" is normal-only by definition of the benchmark, so use_defect below
+                             # would otherwise silently select zero defective samples
+    num_samples: 600
+    use_defect: true        # key: the segmentation loss needs anomalous pixels to learn from
+    defect_ratio: 0.5
+    task: segmentation      # pixel ground truth; defect samples without a mask are dropped from training
+    seed: 0
+  test_selection:           # read from test_dataset: mixed normal + defective fabric
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 400
+    use_defect: true
+    defect_ratio: 0.5
+    task: segmentation
+    seed: 0
+
+# ---- Training: upstream's reference recipe (train.py argparse defaults) ----
+train:
+  enabled: true
+  epochs: 20
+  batch_size: 4
+  lr: 0.00005
+  balance_loss_lambda: 0.01     # router load-balancing auxiliary loss weight
+  etf_loss_lambda: 0.01         # simplex-ETF expert-diversity loss weight
+  lr_milestones: [16000, 32000]
+  lr_gamma: 0.5
+  seed: 111
+  num_workers: 0
+  device: null                  # null = auto-detect (cuda > mps > cpu); or "cuda", "cpu", "mps"
+
+# ---- Validation: predict() + AnomalyEvaluator (not upstream's pandas leaderboard) ----
+val:
+  enabled: true
+  output_dir: artifacts/anomaly_maps/moeclip_zeroshot_zju_pattern1-4   # stores pixel-level anomaly maps for pixel AUROC/AUPRO; null if not needed
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+# ---- Inference defaults (used by MoECLIPAdapter.predict) ----
+predict:
+  output_dir: null   # leave empty if only image-level scores are needed, no pixel heatmap
+
+# ---- Export (not implemented for MoECLIP -- see MoECLIPAdapter.export) ----
+export:
+  enabled: false
+  formats: []
+
+# ---- Checkpoint / model registry ----
+checkpoint:
+  work_dir: null    # null = fresh temp dir; set to keep the raw training-run checkpoint too
+  name: moeclip_mvtec_ad_zeroshot_zju_pattern1-4
+  registry_dir: textile/artifacts/models   # domain-owned stable checkpoint

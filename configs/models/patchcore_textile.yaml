@@ -1,0 +1,35 @@
+# ============================================================================
+# Config: PatchCore fabric profile
+# ============================================================================
+
+model:
+  name: PatchCore
+  backend: anomalib
+  task: anomaly
+  recipe: patchcore               # config profile (WideResNet-50 memory bank + 10% coreset)
+
+data:
+  dataset: raw-fabric
+  dataset_root: ${RAW_FABRIC_ROOT}
+  tiling: true                         # Enable 4K tiling for high-resolution RAW-Fabric images
+  tile_size: [256, 256]
+  overlap: 0.25
+  train_selection:
+    split: train
+    task: anomaly
+  test_selection:
+    split: test
+    task: anomaly
+
+train:
+  enabled: true
+  engine_kwargs:
+    max_epochs: 1                 # PatchCore is a memory bank: one pass, no backprop
+
+predict:
+  calibrate_bn: true                   # Feature background drift calibration
+
+checkpoint:
+  default_root_dir: results/patchcore_textile
+  name: patchcore
+  registry_dir: textile/artifacts/models

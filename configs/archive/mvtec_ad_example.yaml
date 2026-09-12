@@ -1,0 +1,31 @@
+# MVTec AD dataset adapter config examples.
+# Used via load_dataset("mvtec-ad", root=<root>, **config).
+# root points at the dataset directory containing one subdirectory per category
+# (bottle/, cable/, carpet/, ...). Not a fabric dataset — mainly used for
+# cross-domain zero-shot / robustness evaluation.
+
+# ---- Scenario A: zero-shot (normal samples only, for cross-domain evaluation of fabric models) ----
+zero_shot:
+  split: test
+  category: null           # null = aggregate all 15 categories; or specify a single category, e.g. bottle
+  num_samples: 300
+  use_defect: false
+  task: anomaly
+
+# ---- Scenario B: full-shot (single category, all images) ----
+few_shot:
+  split: test
+  category: bottle
+  num_samples: null         # null = use every image in this category
+  use_defect: true
+  task: anomaly
+
+# ---- Scenario C: low-shot (350 images, controlled defect ratio, across all categories) ----
+low_shot:
+  split: test
+  category: null
+  num_samples: 350
+  use_defect: true
+  defect_ratio: 0.3
+  task: anomaly
+  seed: 0

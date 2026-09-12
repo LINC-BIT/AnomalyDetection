@@ -1,0 +1,37 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+.idea/
+.vscode/
+.cache/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+**/data/*
+!**/data/.gitkeep
+**/artifacts/*
+!**/artifacts/.gitkeep
+**/results/*
+!**/results/.gitkeep
+datasets/*
+!datasets/textile/
+!datasets/general/
+!datasets/textile/.gitkeep
+!datasets/general/.gitkeep
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.torchscript
+
+# Keep only domain placeholders and documentation. Dataset bytes can be
+# tens of gigabytes and must never enter the source repository.
+datasets/textile/*
+!datasets/textile/.gitkeep
+!datasets/textile/DATASET.md
+datasets/general/*
+!datasets/general/.gitkeep

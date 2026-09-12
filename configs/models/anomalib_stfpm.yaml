@@ -1,0 +1,71 @@
+# ============================================================================
+# STFPM (Student-Teacher Feature Pyramid Matching) — teacher-student anomaly
+# detection on fabric.
+#
+# A separate file from anomalib_example.yaml for one reason: that file's
+# defaults are shaped for the memory-bank models (PatchCore/PaDiM), which fit
+# in a single pass and run with `max_epochs: 1`. STFPM trains a student
+# network from scratch and genuinely needs epochs, so sharing one config
+# would mean every caller remembering to override the run length.
+#
+#     fdh train stfpm
+#     fdh train stfpm --set train.engine_kwargs.max_epochs=200
+#
+# Everything not set here falls back to the fabric preset in
+# models/anomalib/presets.py::MODEL_PRESETS["Stfpm"]. See
+# configs/models/anomalib_example.yaml for the full annotated field
+# reference — this file only carries what differs.
+# ============================================================================
+
+model:
+  name: STFPM
+
+data:
+  dataset: zju-leaper
+  # dataset_root falls back to data/ZJU-Leaper (training.DEFAULT_DATASET_ROOTS).
+  train_selection:
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 300
+    use_defect: false      # one-class training: normal images only
+    task: anomaly
+    seed: 0
+  test_selection:
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    use_defect: true
+    defect_ratio: 0.5
+    task: anomaly
+    seed: 0
+
+train:
+  enabled: true
+  model_kwargs: {}          # preset supplies backbone/layers
+  engine_kwargs:
+    # A starting point, NOT a tuned or published fabric value: no STFPM
+    # fabric result has been reproduced here yet, and this project's rule is
+    # to claim a number only once it has been. Treat it as the initial point
+    # of the tuning window and override with `--set` (see docs/config.md).
+    max_epochs: 100
+    # accelerator unset -> Lightning "auto" (CUDA/MPS/CPU by host).
+  num_workers: 0
+
+val:
+  enabled: true
+  output_dir: artifacts/anomaly_maps/stfpm_pattern1-4   # STFPM produces pixel maps; needed for pixel AUROC/AUPRO
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+predict:
+  output_dir: null
+
+export:
+  enabled: false
+  formats: [torch]
+
+checkpoint:
+  default_root_dir: results/fabric_defect_hub_anomalib
+  name: stfpm_pattern1-4
+  registry_dir: textile/artifacts/models

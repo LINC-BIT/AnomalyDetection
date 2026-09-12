@@ -1,0 +1,28 @@
+# RAW_FABRID dataset adapter config examples.
+# Used via load_dataset("raw-fabric", root=<root>, **config).
+# root points at the dataset directory containing the MVTec/ subdirectory (RAW_FABRID/).
+# MVTec/ is already a standard MVTec-AD directory layout: train/good, test/good,
+# test/defect, ground_truth/defect — RawFabricDataset reads it directly, no conversion needed.
+
+# ---- Scenario A: full-shot (all images) ----
+few_shot:
+  split: test
+  num_samples: null        # null = use every image in this split
+  use_defect: true
+  task: anomaly
+
+# ---- Scenario B: low-shot (350 images, controlled defect ratio) ----
+low_shot:
+  split: test
+  num_samples: 350         # take only 350 images
+  use_defect: true
+  defect_ratio: 0.3        # 30% of those are defective
+  task: anomaly
+  seed: 0
+
+# ---- Scenario C: zero-shot (normal samples only, no defect images) ----
+zero_shot:
+  split: train              # MVTec/train contains only normal samples (one-class training set)
+  num_samples: 300
+  use_defect: false
+  task: anomaly

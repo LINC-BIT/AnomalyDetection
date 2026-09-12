@@ -1,0 +1,58 @@
+# FabricMamba (n-scale), reimplemented from Bao et al. 2025
+# (doi:10.1016/j.engappai.2025.112558) Fig. 2: a YOLOv8n backbone whose SPPF
+# is replaced by P-LSKA, and a PA-FPN head whose C2f blocks are replaced by
+# MVSS and whose upsamplers are replaced by DySample.
+#
+# Channels and repeats are written out explicitly at YOLOv8n scale
+# (width 0.25 / depth 0.33 already applied) instead of using a `scales:`
+# table, because the custom modules go through `parse_model`'s generic
+# branch, which neither width-scales their arguments nor tracks a changed
+# output width. For the same reason every channel change in the head is an
+# explicit 1x1 Conv in front of the (channel-preserving) MVSS block —
+# together they stand where one channel-changing C2f stood.
+#
+# Deliberately absent, and why:
+# * PGI (the paper's training-only auxiliary branch): needs a second
+#   supervised head wired into the trainer, which Ultralytics' stock v8
+#   trainer has no hook for. The paper's own ablation (Table 8) trains
+#   FabricMamba without PGI at a ~0.3-1.4 mAP50 cost, so the architecture
+#   stands without it; revisit if we ever adopt a v9-style trainer.
+# * A `scales:` table: single explicit n scale only, see above.
+
+nc: 1  # ZJU-Leaper-style single "defect" class; retuned by data.yaml at train time
+
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [16, 3, 2]]      # 0  P1/2
+  - [-1, 1, Conv, [32, 3, 2]]      # 1  P2/4
+  - [-1, 1, C2f, [32, True]]       # 2
+  - [-1, 1, Conv, [64, 3, 2]]      # 3  P3/8
+  - [-1, 2, C2f, [64, True]]       # 4
+  - [-1, 1, Conv, [128, 3, 2]]     # 5  P4/16
+  - [-1, 2, C2f, [128, True]]      # 6
+  - [-1, 1, Conv, [256, 3, 2]]     # 7  P5/32
+  - [-1, 1, C2f, [256, True]]      # 8
+  - [-1, 1, PLSKA, [256]]          # 9  (YOLOv8: SPPF)
+
+head:
+  - [-1, 1, DySample, [256, 2]]    # 10 (YOLOv8: nn.Upsample x2)
+  - [[-1, 6], 1, Concat, [1]]      # 11 cat backbone P4 -> 384
+  - [-1, 1, Conv, [128, 1, 1]]     # 12 width to 128 for the MVSS below
+  - [-1, 1, MVSS, [128, 1]]        # 13 (YOLOv8: C2f)
+
+  - [-1, 1, DySample, [128, 2]]    # 14
+  - [[-1, 4], 1, Concat, [1]]      # 15 cat backbone P3 -> 192
+  - [-1, 1, Conv, [64, 1, 1]]      # 16
+  - [-1, 1, MVSS, [64, 1]]         # 17 (P3/8-small)
+
+  - [-1, 1, Conv, [64, 3, 2]]      # 18
+  - [[-1, 13], 1, Concat, [1]]     # 19 cat head P4 -> 192
+  - [-1, 1, Conv, [128, 1, 1]]     # 20
+  - [-1, 1, MVSS, [128, 1]]        # 21 (P4/16-medium)
+
+  - [-1, 1, Conv, [128, 3, 2]]     # 22
+  - [[-1, 9], 1, Concat, [1]]      # 23 cat backbone P5 -> 384
+  - [-1, 1, Conv, [256, 1, 1]]     # 24
+  - [-1, 1, MVSS, [256, 1]]        # 25 (P5/32-large)
+
+  - [[17, 21, 25], 1, Detect, [nc]]  # 26

@@ -1,0 +1,132 @@
+# ============================================================================
+# Ultralytics (YOLOv8n / YOLOv8s / YOLO11n) experiment config example.
+#
+# Usage (configuration-driven, not command-line flags):
+#     from fabric_defect_hub.models.ultralytics import run_from_yaml
+#     result = run_from_yaml("configs/models/ultralytics_example.yaml")
+#     print(result.metrics)          # {'map50': ..., 'precision': ...}
+#     print(result.registered_artifact.path)  # stable storage path of the trained model
+#
+# Only write the fields you want to change; anything you don't set falls
+# back to the fabric preset (models/ultralytics/presets.py) and ultralytics'
+# own defaults.
+# ============================================================================
+
+# ---- Model: variant and initial weights ----
+model:
+  variant: yolov8n        # yolov8n | yolov8s | yolo11n
+  pretrained: true        # true = load COCO-pretrained weights for transfer learning; false = train from scratch
+  offline: false           # true = forbid implicit downloads, error before training if weights are missing
+  task: detect
+  recipe: yolov8   # 配置档案：YOLO 织物检测训练设置
+
+# ---- Data: converted at runtime via DatasetAdapter (no need to pre-stage a YOLO dataset on disk) ----
+data:
+  dataset: zju-leaper
+  # Falls back to data/ZJU-Leaper (this project's dataset symlink convention,
+  # see training.DEFAULT_DATASET_ROOTS) if ${ZJU_LEAPER_ROOT} is not set.
+  dataset_root: ${ZJU_LEAPER_ROOT}
+  class_names: ["defect"]
+  require_background: true  # fail fast if a future override accidentally removes normal fabric
+  train_selection:        # balanced normal + defect pool within the selected pattern subset
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]   # keep the agreed fabric patterns; do not expand to every pattern
+    num_samples: 300
+    defect_ratio: 0.5
+    task: detection
+    seed: 0
+  val_selection:
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    defect_ratio: 0.5     # evaluate normal-background false positives as well as defect recall
+    task: detection
+    seed: 0
+  # Alternative: point directly at an existing YOLO data.yaml (mutually exclusive with dataset)
+  # data_yaml: /path/to/data.yaml
+
+# ---- Shared training strategy ----
+train:
+  enabled: true
+  patience: 30
+  optimizer: auto
+  cos_lr: true
+  single_cls: true
+  # device: 0             # "cpu" / 0 / "0,1"; omit to auto-select
+  resume: false
+  augmentation:
+    hsv_h: 0.01
+    hsv_s: 0.4
+    hsv_v: 0.4
+    degrees: 10.0
+    translate: 0.1
+    scale: 0.3
+    flipud: 0.5
+    fliplr: 0.5
+    mosaic: 0.5
+    close_mosaic: 15
+    mixup: 0.0
+  extra: {}               # any other ultralytics train() kwargs, passed through as-is
+
+# ---- Validation / metric extraction (native YOLO val) ----
+val:
+  enabled: true
+  split: val
+  conf: 0.001
+  iou: 0.6
+
+# ---- Inference defaults (used by UltralyticsAdapter.predict) ----
+predict:
+  conf: 0.25
+  iou: 0.7
+  max_det: 300
+  augment: false
+  tta_mode: null
+  tiling: false
+  tile_size: [640, 640]
+  tile_overlap: 0.25
+
+# ---- Export (optional, after training; multiple formats) ----
+export:
+  enabled: false
+  formats: [onnx]         # onnx | engine | torchscript | openvino ...
+  half: false
+  dynamic: false
+  simplify: true
+  # opset: 12
+  # imgsz: 640
+
+# ---- Run directory / model registry ----
+checkpoint:
+  project: runs/fabric_defect_hub
+  registry_dir: textile/artifacts/models   # domain-owned stable checkpoint
+  exist_ok: false
+
+# ---- Variant profiles ----
+# The selected model.variant chooses one block below. Values here override
+# the shared sections above; edit the target block instead of Python presets.
+variants:
+  yolov8n:
+    train:
+      epochs: 100
+      imgsz: 640
+      batch: 32
+      lr0: 0.01
+    checkpoint:
+      name: yolov8n_pattern1-4
+  yolov8s:
+    train:
+      epochs: 100
+      imgsz: 640
+      batch: 32
+      lr0: 0.01
+    checkpoint:
+      name: yolov8s_pattern1-4
+  yolo11n:
+    train:
+      epochs: 100
+      imgsz: 640
+      batch: 32
+      lr0: 0.01
+    checkpoint:
+      name: yolo11n_pattern1-4

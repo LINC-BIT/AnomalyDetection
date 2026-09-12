@@ -1,0 +1,98 @@
+# ============================================================================
+# torchvision Mask R-CNN (instance segmentation) experiment config example.
+#
+# Unlike torchvision_example.yaml (Faster R-CNN, bounding-box detection),
+# this trains on pixel-level defect masks instead of boxes. That matters
+# because only ZJU-Leaper ships real bounding-box annotations in this
+# project; RAW_FABRID and MVTec AD only carry ground-truth *masks*
+# (`.../ground_truth/<defect>/<id>_mask.png`), no boxes — training Faster
+# R-CNN (task: detection) against those two datasets silently produces an
+# all-background, zero-metric run (every image looks unlabeled to a
+# box-based detector). Mask R-CNN with task: segmentation is what actually
+# works across all three registered datasets:
+#   fdh train configs/models/torchvision_maskrcnn_segmentation.yaml
+#   fdh train configs/models/torchvision_maskrcnn_segmentation.yaml --dataset raw-fabric
+#   fdh train configs/models/torchvision_maskrcnn_segmentation.yaml --dataset mvtec-ad --category bottle
+#
+# Usage (configuration-driven, not command-line flags):
+#     from fabric_defect_hub.models.torchvision import run_from_yaml
+#     result = run_from_yaml("configs/models/torchvision_maskrcnn_segmentation.yaml")
+#     print(result.metrics)                    # {'map': ..., 'map_50': ...}
+#     print(result.registered_artifact.path)    # stable storage path of the trained model
+# ============================================================================
+
+# ---- Model: variant and initial weights ----
+model:
+  variant: maskrcnn_resnet50_fpn   # maskrcnn_resnet50_fpn | maskrcnn_resnet50_fpn_v2
+  pretrained: true                    # true = load COCO-pretrained weights and replace the classifier/mask heads for transfer learning
+  offline: false                       # true = forbid implicit downloads, error before training if weights are missing
+  # weights: null                     # if set, fine-tune from this checkpoint (overrides pretrained)
+  trainable_backbone_layers: 3        # how many of the 5 ResNet stages stay trainable; the rest are frozen
+
+# ---- Data: read Sample objects directly, no on-disk staging (torchvision Dataset natively supports in-memory objects) ----
+data:
+  dataset: zju-leaper
+  # Falls back to data/ZJU-Leaper (this project's dataset symlink convention,
+  # see training.DEFAULT_DATASET_ROOTS) if ${ZJU_LEAPER_ROOT} is not set.
+  dataset_root: ${ZJU_LEAPER_ROOT}
+  class_names: ["defect"]
+  train_selection:        # constructor kwargs passed to the DatasetAdapter
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]   # spread the low-shot budget across textures instead of only pattern1's plain white background; ignored (harmlessly) by datasets that don't have a pattern axis, e.g. raw-fabric/mvtec-ad
+    num_samples: 300
+    defect_ratio: 0.5      # normal images teach the background mask/class
+    task: segmentation
+    seed: 0
+  val_selection:
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    defect_ratio: 0.5      # validation includes normal-background false positives
+    task: segmentation
+    seed: 0
+
+# ---- Training hyperparameters (only the commonly-changed ones are listed; see presets.COMMON_FABRIC_TRAIN_DEFAULTS for the rest) ----
+train:
+  enabled: true
+  epochs: 30
+  batch_size: 8
+  optimizer: sgd           # sgd | adamw
+  lr: 0.002
+  momentum: 0.9
+  weight_decay: 0.0005
+  lr_scheduler: cosine     # none | step | cosine
+  warmup_epochs: 1
+  grad_clip_norm: 5.0
+  patience: 8              # early stop after this many epochs with no val-mAP improvement
+  num_workers: 0             # safe default on macOS; raise on a prepared Linux/CUDA host
+  # device: cuda            # omit to auto-select cuda > mps > cpu
+  # seed: 0                 # RNG seed for reproducible weight init / shuffling / augmentation
+  # amp: true                # mixed precision; only actually engaged on CUDA (no-op on CPU/MPS)
+  # resume: true             # continue from checkpoint.run_dir's last.pt (optimizer/scheduler/epoch state included) instead of starting over
+  extra: {}                 # any other training kwargs, passed through as-is
+
+# ---- Validation / metric extraction (native torchmetrics COCO-style mAP) ----
+val:
+  enabled: true
+  batch_size: 8
+  num_workers: 0
+
+# ---- Inference defaults (used by TorchvisionAdapter.predict) ----
+predict:
+  score_threshold: 0.5
+  max_detections: 100
+  # nms_iou_threshold: 0.5   # null = rely solely on the model's own built-in per-class NMS; a value applies one more NMS pass on top
+  # device: cpu               # null = keep whatever device the loaded weights are already on
+
+# ---- Export (optional, after training) ----
+export:
+  enabled: false
+  formats: [exported_program]  # exported_program (recommended) | torchscript (compatibility) | onnx
+  opset: 17
+
+# ---- Run directory / model registry ----
+checkpoint:
+  run_dir: runs/fabric_defect_hub_tv
+  name: maskrcnn_pattern1-4
+  registry_dir: textile/artifacts/models   # domain-owned stable checkpoint
+  save_every_epoch: false

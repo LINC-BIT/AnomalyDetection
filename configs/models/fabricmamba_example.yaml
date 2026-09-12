@@ -1,0 +1,100 @@
+# ============================================================================
+# FabricMamba — clean-room YOLOv8n derivative (P-LSKA + MVSS + DySample),
+# reimplemented from Bao et al. 2025 (doi:10.1016/j.engappai.2025.112558).
+# See src/fabric_defect_hub/models/fabricmamba/ for what is and is not
+# reproduced (PGI is deliberately absent).
+#
+#     fdh train fabricmamba
+#
+# Rides the Ultralytics backend end to end: same config schema, trainer,
+# validation, and registry as configs/models/ultralytics_example.yaml —
+# only the architecture differs. `pretrained` is forced false because no
+# pretrained checkpoint can exist for a custom architecture; training is
+# from-scratch, which also means it wants the full (not low-shot) training
+# selection more than the transfer-learning variants do.
+# ============================================================================
+
+model:
+  variant: fabricmamba
+  pretrained: false       # custom arch: from scratch is the only option
+  offline: false
+  task: detect
+
+data:
+  dataset: zju-leaper
+  dataset_root: ${ZJU_LEAPER_ROOT}
+  class_names: ["defect"]
+  require_background: true
+  train_selection:
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 300
+    defect_ratio: 0.5
+    task: detection
+    seed: 0
+  val_selection:
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    defect_ratio: 0.5
+    task: detection
+    seed: 0
+
+train:
+  enabled: true
+  patience: 30
+  optimizer: SGD          # the paper's recipe (section 5.1): SGD + LambdaLR
+  cos_lr: true
+  single_cls: true
+  resume: false
+  augmentation:
+    hsv_h: 0.01
+    hsv_s: 0.4
+    hsv_v: 0.4
+    degrees: 10.0
+    translate: 0.1
+    scale: 0.3
+    flipud: 0.5
+    fliplr: 0.5
+    mosaic: 0.5
+    close_mosaic: 10      # paper: mosaic off for the last ten epochs
+    mixup: 0.0
+  extra: {}
+
+val:
+  enabled: true
+  split: val
+  conf: 0.001
+  iou: 0.6
+
+predict:
+  conf: 0.25
+  iou: 0.7
+  max_det: 300
+  augment: false
+  tta_mode: null
+  tiling: false
+  tile_size: [640, 640]
+  tile_overlap: 0.25
+
+export:
+  enabled: false
+  formats: [onnx]
+  half: false
+  dynamic: false
+  simplify: true
+
+checkpoint:
+  project: runs/fabric_defect_hub
+  registry_dir: textile/artifacts/models
+  exist_ok: false
+
+variants:
+  fabricmamba:
+    train:
+      epochs: 100
+      imgsz: 640
+      batch: 16           # paper uses 64 on a 24GB card; start conservative
+      lr0: 0.01
+    checkpoint:
+      name: fabricmamba_pattern1-4

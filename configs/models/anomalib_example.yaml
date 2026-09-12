@@ -1,0 +1,124 @@
+# ============================================================================
+# Anomalib experiment config example, and the annotated field reference the
+# other anomalib configs in this directory point back to.
+#
+# This file's defaults are shaped for the memory-bank models
+# (PatchCore / PaDiM), which fit in a single pass -- note `max_epochs: 1`.
+# Models that genuinely train have their own file so the run length isn't
+# something every caller has to remember to override:
+#     anomalib_stfpm.yaml      teacher-student
+#     anomalib_ganomaly.yaml   adversarial (GAN), image-level scores only
+#     anomalib_draem.yaml      reconstruction (needs DTD staged at data/DTD)
+#
+# The full set of names this backend accepts lives in
+# models/anomalib/presets.py::MODEL_ALIASES -- also reachable from any
+# config here via `--variant`, e.g.
+#     fdh train anomalib_example --variant FastFlow
+# `fabric_defect_hub.list_models("anomalib")` prints them.
+#
+# Usage (configuration-driven, not command-line flags):
+#     from fabric_defect_hub.models.anomalib import run_from_yaml
+#     result = run_from_yaml("configs/models/anomalib_example.yaml")
+#     print(result.metrics)                    # {'image_auroc': ..., 'pixel_aupro': ...}
+#     print(result.registered_artifact.path)    # stable storage path of the trained checkpoint
+#
+# Only write the fields you want to change; any train.model_kwargs key you
+# don't set falls back to the fabric preset
+# (models/anomalib/presets.py::MODEL_PRESETS).
+#
+# Two structural differences from ultralytics_example.yaml /
+# torchvision_example.yaml (not oversights — dictated by this backend's own
+# shape; see the module docstring in models/anomalib/config.py):
+#   1. data has train_selection / test_selection, not train/val — anomalib's
+#      own Folder data structure is train/good + test/{good,defect}; there
+#      is no "validation set" concept.
+#   2. There is no native metric extraction like val.batch_size —
+#      AnomalibAdapter has no `.validate()`; "validation" here is predict()
+#      followed by feeding its output to evaluation.anomaly.AnomalyEvaluator,
+#      two steps stitched together.
+# ============================================================================
+
+# ---- Model: pick one ----
+model:
+  name: PatchCore   # any alias from presets.MODEL_ALIASES, case-insensitive:
+                    #   PatchCore | PaDiM | RD4AD | STFPM | UniNet | DRAEM | DSR
+                    #   | GANomaly | FastFlow | SuperSimpleNet | GLASS
+                    #   | WinCLIP | AnomalyDINO | EfficientAD
+  # WinCLIP is zero-shot by default (needs no training images); pass
+  # train.model_kwargs: {k_shot: 5} to use few-shot normal references instead.
+  # weights: artifacts/models/published/PatchCore.ckpt
+  # allow_unsafe_checkpoint: true
+  #   Evaluate an existing checkpoint instead of training: set both and
+  #   train.enabled: false. The opt-in is required because an anomalib
+  #   checkpoint is a Lightning pickle -- only set it for one you produced.
+
+# ---- Data: read from ZJULeaperDataset at runtime and staged into a temporary MVTec-style directory ----
+# dataset_root is left unset on purpose: `fdh train` falls back to this
+# project's own data/ZJU-Leaper symlink (see training.DEFAULT_DATASET_ROOTS),
+# which is set up the same way on every machine that has this dataset staged.
+# Override with --dataset-root, or set ${ZJU_LEAPER_ROOT} and uncomment below,
+# to point at a different location.
+data:
+  dataset: zju-leaper
+  # dataset_root: ${ZJU_LEAPER_ROOT}
+  train_selection:        # training uses normal samples only (PatchCore et al. train one-class)
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]   # spread the low-shot budget across textures instead of only pattern1's plain white background
+    num_samples: 300
+    use_defect: false      # key: never introduce defective images into the training set
+    task: anomaly
+    seed: 0
+  test_selection:          # test set mixes normal + defective, used to compute AUROC/AUPRO
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    use_defect: true
+    defect_ratio: 0.5
+    task: anomaly
+    seed: 0
+  # Alternative: when you already have an MVTec-style dataset on disk, use
+  # datamodule_kwargs instead of dataset (in that case the val stage's
+  # metric computation is skipped, since there is no Sample list to
+  # evaluate against — see the note in pipeline.py).
+  # datamodule_kwargs:
+  #   root: /path/to/mvtec/bottle
+  #   normal_dir: train/good
+  #   normal_test_dir: test/good
+  #   abnormal_dir: test/defect
+  #   mask_dir: ground_truth/defect
+
+# ---- Training: model_kwargs overrides the fabric preset, engine_kwargs is passed to the anomalib Engine ----
+train:
+  enabled: true
+  model_kwargs: {}          # e.g. PatchCore: {coreset_sampling_ratio: 0.1, num_neighbors: 9}
+  engine_kwargs:
+    max_epochs: 1            # PatchCore/PaDiM need no gradient training; 1 epoch is enough to fit
+    # `accelerator` is deliberately unset: Lightning's own default is "auto",
+    # which picks CUDA/MPS/CPU by what the host actually has — the same
+    # auto-detection every other backend in this project already does. Pinning
+    # it to `cpu` here (as this file used to) made a GPU host train on CPU
+    # silently, and forced every caller to pass `--set` to undo it.
+  num_workers: 0              # see config.py: the staged directory is transient symlinks, and worker subprocesses have a shutdown race
+
+# ---- Validation: predict() + AnomalyEvaluator (not a native .validate()) ----
+val:
+  enabled: true
+  output_dir: artifacts/anomaly_maps/patchcore_pattern1-4   # stores pixel-level anomaly_map, used for pixel AUROC/AUPRO; set to null if pixel metrics aren't needed
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+# ---- Inference defaults (used by AnomalibAdapter.predict) ----
+predict:
+  output_dir: null   # leave empty if only image-level scores are needed, no pixel heatmap
+
+# ---- Export (optional, after training) ----
+export:
+  enabled: false
+  formats: [torch]   # torch | onnx | openvino (anomalib.deploy.ExportType)
+
+# ---- Run directory / model registry ----
+checkpoint:
+  default_root_dir: results/fabric_defect_hub_anomalib   # anomalib Engine's own working directory
+  name: patchcore_pattern1-4
+  registry_dir: textile/artifacts/models   # domain-owned stable checkpoint

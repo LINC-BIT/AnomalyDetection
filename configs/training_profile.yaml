@@ -1,0 +1,5 @@
+# Shared dataset policy for every ZJU-Leaper training config.
+# Edit this file for the common case; CLI flags still override it per run.
+mode: medium
+pattern: [pattern1, pattern2, pattern3, pattern4]
+defect_ratio: 0.5

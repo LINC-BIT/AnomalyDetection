@@ -1,0 +1,41 @@
+schema_version: 1
+weight_policy:
+  storage: project_cache
+  cache_root: textile/artifacts/models/published
+  tracked_by_git: false
+  preferred_distribution: huggingface_hub
+  legacy_distribution: manual
+
+models:
+  - {id: yolov8n, backend: ultralytics, variant: yolov8n, task: detection, config: ultralytics_example.yaml, label: "YOLOv8n · ZJU-Leaper", method: YOLO, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: yolov8s, backend: ultralytics, variant: yolov8s, task: detection, config: ultralytics_example.yaml, label: "YOLOv8s · ZJU-Leaper", method: YOLO, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: yolo11n, backend: ultralytics, variant: yolo11n, task: detection, config: ultralytics_example.yaml, label: "YOLO11n · ZJU-Leaper", method: YOLO, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: fasterrcnn_resnet50_fpn, backend: torchvision, variant: fasterrcnn_resnet50_fpn, task: detection, config: torchvision_example.yaml, label: "Faster R-CNN · ZJU-Leaper", method: Faster R-CNN, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: cascadercnn_resnet50_fpn, backend: torchvision, variant: cascadercnn_resnet50_fpn, task: detection, config: torchvision_example.yaml, label: "Cascade R-CNN · ZJU-Leaper", method: Cascade R-CNN, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: detr_resnet50, backend: torchvision, variant: detr_resnet50, task: detection, config: torchvision_example.yaml, label: "DETR · ZJU-Leaper", method: DETR, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: maskrcnn_resnet50_fpn, backend: torchvision, variant: maskrcnn_resnet50_fpn, task: instance_segmentation, config: torchvision_maskrcnn_segmentation.yaml, label: "Mask R-CNN · ZJU-Leaper", method: Mask R-CNN, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: unetplusplus_resnet34, backend: torchvision, variant: unetplusplus_resnet34, task: segmentation, config: torchvision_maskrcnn_segmentation.yaml, label: "UNet++ · ZJU-Leaper", method: UNet++, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: deeplabv3plus_resnet50, backend: torchvision, variant: deeplabv3plus_resnet50, task: segmentation, config: torchvision_maskrcnn_segmentation.yaml, label: "DeepLabV3+ · ZJU-Leaper", method: DeepLabV3+, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: PatchCore, backend: anomalib, variant: PatchCore, task: anomaly, config: anomalib_example.yaml, label: "PatchCore · ZJU-Leaper (normal only)", method: PatchCore, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - {id: PaDiM, backend: anomalib, variant: PaDiM, task: anomaly, config: anomalib_example.yaml, label: "PaDiM · ZJU-Leaper (normal only)", method: PaDiM, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - {id: RD4AD, backend: anomalib, variant: RD4AD, task: anomaly, config: anomalib_example.yaml, label: "RD4AD · ZJU-Leaper (normal only)", method: Reverse Distillation, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - {id: EfficientAD, backend: anomalib, variant: EfficientAD, task: anomaly, config: anomalib_efficientad.yaml, label: "EfficientAD · ZJU-Leaper (normal only)", method: EfficientAD, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - {id: SuperSimpleNet, backend: anomalib, variant: SuperSimpleNet, task: anomaly, config: anomalib_example.yaml, label: "SuperSimpleNet · ZJU-Leaper (normal only)", method: SuperSimpleNet, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - {id: STFPM, backend: anomalib, variant: STFPM, task: anomaly, config: anomalib_stfpm.yaml, label: "STFPM · ZJU-Leaper (normal only)", method: STFPM, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - {id: GANomaly, backend: anomalib, variant: GANomaly, task: anomaly, config: anomalib_ganomaly.yaml, label: "GANomaly · ZJU-Leaper (normal only)", method: GANomaly, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - {id: WinCLIP, backend: anomalib, variant: WinClip, task: anomaly, config: anomalib_winclip.yaml, label: "WinCLIP · Zero-shot", method: WinCLIP, trained_on: [CLIP-pretraining-corpus], training_split: external_pretraining, domain: general, source: upstream_pretrained}
+  - {id: Dinomaly, backend: dinomaly, variant: dinov2reg_vit_base_14, task: anomaly, config: dinomaly_example.yaml, label: "Dinomaly · ZJU-Leaper (normal only)", method: Dinomaly, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - id: MoECLIP
+    backend: moeclip
+    variant: ViT-L-14-336
+    task: anomaly
+    config: moeclip_example.yaml
+    label: "MoECLIP · MVTec AD adapter"
+    method: MoECLIP
+    trained_on: [mvtec-ad]
+    training_split: auxiliary_anomaly_training
+    evaluated_on: [zju-leaper]
+    domain: general
+    source: manually_imported_upstream_weight
+    legacy_weight_url: https://drive.google.com/file/d/1d5iKW1ojGpMkeobbxNd9h_QG27xLWuKZ/view
+  - {id: MambaAD, backend: mambaad, variant: resnet34, task: anomaly, config: mambaad_example.yaml, label: "MambaAD · ZJU-Leaper (normal only)", method: MambaAD, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}

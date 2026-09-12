@@ -1,0 +1,80 @@
+# ============================================================================
+# DRAEM — reconstructive + discriminative training on synthetic anomalies.
+#
+#     fdh train draem
+#
+# PREREQUISITE, unlike every other config in this directory: DRAEM blends its
+# synthetic defects from an external texture source (DTD, the Describable
+# Textures Dataset). Stage it at data/DTD — this project's data/<Dataset>
+# convention, same as data/ZJU-Leaper — before running.
+#
+# If it isn't there, `AnomalibAdapter._validate_model_kwargs` raises up front
+# rather than letting the run start. That guard exists because anomalib's own
+# Draem does NOT fail on a missing directory: it calls
+# `download_and_extract(dtd_dir, DTD_DOWNLOAD_INFO)` and pulls ~600MB over
+# the network mid-training, which is a bad surprise on a metered or offline
+# training box. To take that download deliberately, set:
+#
+#     train:
+#       model_kwargs:
+#         dtd_dir: /path/with/space
+#         allow_dtd_download: true
+#
+# `allow_dtd_download` is this adapter's own flag, not an anomalib argument —
+# it is stripped before the kwargs reach the model.
+#
+# Everything not set here falls back to
+# models/anomalib/presets.py::MODEL_PRESETS["Draem"]. See
+# configs/models/anomalib_example.yaml for the full annotated field reference.
+# ============================================================================
+
+model:
+  name: DRAEM
+
+data:
+  dataset: zju-leaper
+  train_selection:
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 300
+    use_defect: false      # DRAEM synthesizes its own defects; real ones stay out of training
+    task: anomaly
+    seed: 0
+  test_selection:
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    use_defect: true
+    defect_ratio: 0.5
+    task: anomaly
+    seed: 0
+
+train:
+  enabled: true
+  model_kwargs:
+    dtd_dir: datasets/general/DTD
+    # enable_sspcab: true   # upstream's SSPCAB attention variant, off by default
+  engine_kwargs:
+    # A starting point, not a tuned or published fabric value.
+    max_epochs: 100
+    # accelerator unset -> Lightning "auto" (CUDA/MPS/CPU by host).
+  num_workers: 0
+
+val:
+  enabled: true
+  output_dir: artifacts/anomaly_maps/draem_pattern1-4   # DRAEM produces pixel maps
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+predict:
+  output_dir: null
+
+export:
+  enabled: false
+  formats: [torch]
+
+checkpoint:
+  default_root_dir: results/fabric_defect_hub_anomalib
+  name: draem_pattern1-4
+  registry_dir: textile/artifacts/models

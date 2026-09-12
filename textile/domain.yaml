@@ -1,0 +1,9 @@
+id: textile
+name: Textile defect inspection
+datasets_root: ../datasets/textile
+artifacts_root: artifacts
+configs_root: ../configs/models
+model_scope: textile-trained
+notes:
+  - Weights in this directory are domain-specific unless marked zero-shot.
+  - Algorithms live in the repository-level src directory.

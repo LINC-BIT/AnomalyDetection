@@ -1,0 +1,102 @@
+[project]
+name = "anomaly-detection-hub"
+version = "0.2.0"
+description = "Unified multi-domain detection and anomaly-learning platform with pluggable model backends."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = ["pyyaml"]
+
+[project.scripts]
+adh = "fabric_defect_hub.cli:main"
+adh-ui = "fabric_defect_hub.web.app:launch"
+
+# These groups are still here for anyone who wants a narrower
+# `pip install -e ".[ultralytics]"`-style selective install, or for PyPI
+# packaging metadata -- but day-to-day setup should use one of the two root
+# requirements files instead: `requirements.txt` (lean, UI/inference only --
+# also what Hugging Face Spaces auto-installs from) or
+# `requirements-full.txt` (everything below, plus this package itself,
+# editable, in one `pip install -r requirements-full.txt`). Keep both in
+# sync if you add a dependency to a group here.
+[project.optional-dependencies]
+ultralytics = ["ultralytics", "pillow", "pyyaml"]
+torchvision = ["torchvision", "torchmetrics", "pycocotools", "pillow", "pyyaml", "onnxscript"]
+anomalib = ["anomalib", "open-clip-torch", "scikit-learn", "scikit-image"]
+# Dinomaly (components/dinomaly, vendored -- not an anomalib model, see
+# components/README.md). torch/torchvision come from anomalib/dev extras.
+dinomaly = ["timm", "scipy", "scikit-learn", "tabulate", "colorama"]
+# MoECLIP (components/moeclip, vendored -- CLIP + mixture-of-LoRA-experts).
+# kornia: the gaussian blur in its anomaly-map path; transformers: ACT2FN in
+# its MoE config; einops/ftfy/regex: its vendored OpenCLIP tokenizer/blocks;
+# ipdb: imported unconditionally at the top of two of its modules.
+moeclip = [
+  "kornia", "transformers", "einops", "ftfy", "regex", "ipdb",
+  "opencv-python", "pandas", "packaging", "setuptools>=68,<81", "scipy", "scikit-learn",
+]
+# MambaAD (models/mambaad/, clean-room reimplementation -- no
+# components/mambaad submodule, no mamba_ssm; see adapter.py's module
+# docstring). timm: the frozen teacher backbone; einops: decoder reshapes.
+mambaad = ["timm", "einops"]
+# Optional CUDA-only accelerator for the MambaAD backend. Not required:
+# models/mambaad/ssm.py detects it at run time and uses upstream's fused
+# selective-scan kernel when present, falling back to its own portable
+# implementations otherwise. Only installable on a CUDA host with a
+# matching nvcc toolchain -- hence a separate group, like profiling-tensorrt.
+mambaad-cuda = ["mamba-ssm", "causal-conv1d"]
+# BackendProfiler runtimes (profiling/pytorch.py needs only torch itself,
+# already pulled in by any of the extras above).
+profiling-onnxruntime = ["onnxruntime", "psutil"]
+# FLOPs counting for the LMEI edge-deployment index (profiling/flops.py) --
+# a plain torch.nn.Module hook counter, no engine/hardware dependency.
+profiling-flops = ["thop"]
+profiling-power-nvidia = ["nvidia-ml-py"]
+# NVIDIA-only: requires a CUDA-capable GPU + matching CUDA toolkit, hence
+# split out from `profiling-onnxruntime`. Not installable/verifiable on
+# this project's dev machine (Apple Silicon) — see profiling/tensorrt.py.
+profiling-tensorrt = ["tensorrt", "pycuda"]
+# Post-training ONNX quantization for edge deployment (quantization/onnx_quant.py):
+# fp16 conversion + INT8 dynamic/static. TensorRT INT8 calibration
+# (quantization/tensorrt_calibration.py) reuses onnx/pillow/numpy from here
+# but needs the profiling-tensorrt extra too for tensorrt/pycuda themselves.
+quantization = ["onnx", "onnxruntime", "onnxconverter-common", "pillow", "numpy"]
+ui = ["gradio>=5.0,<7", "httpx[socks]>=0.28,<1", "pillow", "numpy", "psutil"]
+dev = [
+  "pytest",
+  "jsonschema",
+  "numpy",
+  "pillow",
+  "scikit-learn",
+  "scikit-image",
+  "torch",
+  "torchvision",
+  "torchmetrics",
+  "pycocotools",
+  "onnx",
+  "onnxruntime",
+  "onnxscript",
+  "onnxconverter-common",
+  "psutil",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"fabric_defect_hub.models.fabricmamba" = ["*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not architecture'"
+markers = [
+  "slow: requires real framework dependencies, models, and dataset access",
+  # Style/layering checks that read the source with `ast` rather than running
+  # it. Failing one means the code still works but was written in a way that
+  # re-couples a layer to a specific backend -- a review call, not a defect.
+  # Deselected by default; run on demand with `pytest -m architecture`.
+  "architecture: source-level layering audit, not runtime correctness",
+]

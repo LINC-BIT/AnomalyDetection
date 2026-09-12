@@ -1,0 +1,9 @@
+[submodule "components/anomalydiffusion"]
+	path = components/anomalydiffusion
+	url = https://github.com/aurora0543/anomalydiffusion.git
+[submodule "components/dinomaly"]
+	path = components/dinomaly
+	url = https://github.com/aurora0543/Dinomaly.git
+[submodule "components/moeclip"]
+	path = components/moeclip
+	url = https://github.com/aurora0543/MoECLIP.git

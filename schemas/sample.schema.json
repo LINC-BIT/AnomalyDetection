@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fabricdefecthub/schemas/sample.schema.json",
+  "title": "Sample",
+  "description": "Unified per-image dataset sample, shared across detection/segmentation/anomaly tasks.",
+  "type": "object",
+  "required": ["id", "image_path", "task", "annotations"],
+  "properties": {
+    "id": { "type": "string" },
+    "image_path": { "type": "string" },
+    "task": { "type": "string", "enum": ["detection", "segmentation", "anomaly", "industrial"] },
+    "annotations": {
+      "type": "object",
+      "properties": {
+        "boxes": {
+          "type": "array",
+          "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 }
+        },
+        "masks": { "type": "array" },
+        "labels": { "type": "array", "items": { "type": "string" } },
+        "is_anomalous": { "type": "boolean" },
+        "anomaly_mask": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

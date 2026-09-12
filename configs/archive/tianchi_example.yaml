@@ -1,0 +1,58 @@
+# Tianchi (Guangdong fabric defect challenge) dataset adapter config examples.
+# Used via load_dataset("tianchi", root=<root>, **config).
+# root points at the dataset directory containing the guangdong1_round1_* folders.
+#
+# Tianchi ships native bbox annotations, so it is primarily a *detection*
+# training source (see Scenario A) -- but every part also has a real
+# normal_Images pool, so it doubles as an anomaly training source (Scenario C)
+# and, unqualified, a `fabric-train` member (see datasets/fabric_train.py).
+
+# ---- Scenario A: detection training (bboxed defects, both splits) ----
+detection_train:
+  parts: all              # train1-partA / train1-partB / train2, or a subset list
+  split: train
+  num_samples: 1500
+  use_defect: true
+  defect_ratio: 1.0        # detection: train only on boxed (defective) images
+  task: detection
+  train_ratio: 0.8          # synthesized split; see datasets/tianchi.py
+  seed: 0
+
+detection_val:
+  parts: all
+  split: test
+  num_samples: 300
+  use_defect: true
+  defect_ratio: 1.0
+  task: detection
+  train_ratio: 0.8
+  seed: 0
+
+# ---- Scenario B: low-shot detection, single release batch ----
+low_shot_train2_only:
+  parts: train2
+  split: train
+  num_samples: 300
+  use_defect: true
+  defect_ratio: 0.5
+  task: detection
+  seed: 0
+
+# ---- Scenario C: zero-shot / one-class anomaly training (normal images only) ----
+anomaly_normal_only:
+  parts: all
+  split: train
+  num_samples: null        # use every normal image in the selection
+  use_defect: false        # never include boxed defect images
+  task: anomaly
+  seed: 0
+
+# ---- Scenario D: anomaly evaluation (mixed normal/defect, image-level flag) ----
+anomaly_eval:
+  parts: all
+  split: test
+  num_samples: 400
+  use_defect: true
+  defect_ratio: 0.3
+  task: anomaly
+  seed: 0

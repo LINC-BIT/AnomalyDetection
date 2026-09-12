@@ -1,0 +1,111 @@
+# ============================================================================
+# MambaAD experiment config example.
+#
+# MambaAD is a CLEAN-ROOM REIMPLEMENTATION (models/mambaad/), not vendored
+# code -- unlike Dinomaly/MoECLIP there is no components/mambaad submodule
+# and no extra install step (git submodule update, a manually-placed
+# checkpoint). The official repo (lewandofskee/MambaAD) is an ADer plugin
+# (needs ADer's framework present to run at all) built on mamba_ssm, a
+# CUDA-only compiled kernel -- neither installs/runs on this project's dev
+# machine. This reimplementation ports the published architecture and
+# recipe directly in portable PyTorch/NumPy instead (see
+# models/mambaad/adapter.py's module docstring), so it trains and predicts
+# on CPU/MPS/CUDA alike -- slower than the fused kernel on a CUDA box, but
+# not gated to one.
+#
+# Usage (configuration-driven, not command-line flags):
+#     from fabric_defect_hub.models.mambaad import run_from_yaml
+#     result = run_from_yaml("configs/models/mambaad_example.yaml")
+#     print(result.metrics)                   # {'image_auroc': ..., 'pixel_aupro': ...}
+#     print(result.registered_artifact.path)  # stable storage path of the trained checkpoint
+#
+# Or via the CLI:
+#     fdh train mambaad_example --mode test    # 8-image smoke run
+#     fdh predict mambaad_example --weights artifacts/models/mambaad_resnet34.pth --image some.png
+#
+# Same structural shape as dinomaly_example.yaml: one-class (normal-only)
+# training, same anomaly-training source restriction
+# (training.ANOMALY_TRAINABLE_DATASETS), predict() + AnomalyEvaluator for
+# validation rather than a native .validate(). Architecture knobs
+# (dims_decoder, depths_decoder, scan_type, num_direction, ...) default
+# from models/mambaad/presets.py and are not normally overridden here.
+#
+# MULTI-CLASS: MambaAD's paper claim is *multi-class unified* anomaly
+# detection -- ONE model across every category at once, which is precisely
+# what anomalib's one-model-per-category zoo cannot do. The selection below
+# (patterns 1-4) is the small default shared with the other example configs;
+# to use MambaAD as intended, train it across the whole corpus:
+#     fdh train mambaad_example --dataset fabric-train --mode full
+#     fdh train mambaad_example --mode full          # all 19 ZJU-Leaper patterns
+# ============================================================================
+
+# ---- Model: pick the frozen teacher backbone ----
+model:
+  name: resnet34   # resnet34 (upstream's flagship MVTec-AD recipe, 98.6 mAUROC) | wide_resnet50_2
+  # weights: artifacts/models/published/MambaAD.pt
+  #   Evaluate an existing checkpoint instead of training: set this and
+  #   train.enabled: false. Must have been trained with the same `name`.
+
+# ---- Data: read from ZJULeaperDataset at runtime ----
+# dataset_root is left unset on purpose: `fdh train` falls back to this
+# project's own data/ZJU-Leaper symlink (see training.DEFAULT_DATASET_ROOTS).
+data:
+  dataset: zju-leaper
+  # dataset_root: ${ZJU_LEAPER_ROOT}
+  train_selection:        # training uses normal samples only (MambaAD trains one-class)
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 300
+    use_defect: false      # key: never introduce defective images into the training set
+    task: anomaly
+    seed: 0
+  test_selection:          # test set mixes normal + defective, used to compute AUROC/AUPRO
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    use_defect: true
+    defect_ratio: 0.5
+    task: anomaly
+    seed: 0
+
+# ---- Training: adapted from upstream's published MVTec-AD recipe (see
+# models/mambaad/adapter.py's train() docstring for how the schedule departs
+# from upstream's per-category 1000-epoch step decay) ----
+train:
+  enabled: true
+  total_iters: 5000        # this project's default, NOT a reproduction budget: upstream trains
+                           # 1000 epochs over a whole dataset. Raise this a lot (and see the
+                           # multi-class note below) before comparing against published numbers.
+  batch_size: 16
+  image_size: 256        # must be a multiple of 32 (teacher's stride-16 deepest level, halved again by fusion)
+  lr: 0.005
+  weight_decay: 0.0001
+  warmup_iters: 0
+  loss_lambda: 5.0        # upstream's L2Loss `lam` -- the loss is MSE (not cosine; cosine is used only at inference)
+  decay_at: 0.8           # step-decay the LR at 80% of total_iters (upstream's decay_epochs)
+  decay_rate: 0.1         # ...by this factor, floored at lr/100
+  num_workers: 0
+  device: null             # null = auto-detect (cuda > mps > cpu); or "cuda", "cpu", "mps"
+
+# ---- Validation: predict() + AnomalyEvaluator (not a native .validate()) ----
+val:
+  enabled: true
+  output_dir: artifacts/anomaly_maps/mambaad_pattern1-4   # stores pixel-level anomaly_map, used for pixel AUROC/AUPRO; set to null if pixel metrics aren't needed
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+# ---- Inference defaults (used by MambaADAdapter.predict) ----
+predict:
+  output_dir: null   # leave empty if only image-level scores are needed, no pixel heatmap
+
+# ---- Export (not implemented for MambaAD -- see MambaADAdapter.export) ----
+export:
+  enabled: false
+  formats: []
+
+# ---- Checkpoint / model registry ----
+checkpoint:
+  work_dir: null    # null = fresh temp dir; set to keep the raw training-run checkpoint too
+  name: mambaad_pattern1-4
+  registry_dir: textile/artifacts/models   # domain-owned stable checkpoint

@@ -1,0 +1,66 @@
+-r requirements.txt
+
+# -- ultralytics extra: YOLO detection backend --
+ultralytics
+
+# -- torchvision extra: Faster/Cascade/Mask R-CNN, DETR, UNet++, DeepLabV3+ --
+torch
+torchvision
+torchmetrics
+pycocotools
+onnxscript
+
+# -- anomalib extra: PatchCore, PaDiM, RD4AD, EfficientAD, SuperSimpleNet,
+# WinCLIP. open-clip-torch is Anomalib's optional VLM dependency. --
+anomalib
+open-clip-torch
+scikit-learn
+scikit-image
+
+# -- dinomaly extra: vendored research model, see components/README.md --
+timm
+scipy
+tabulate
+colorama
+
+# -- moeclip extra: vendored research model, see components/README.md.
+kornia
+transformers
+einops
+ftfy
+regex
+ipdb
+opencv-python
+pandas
+packaging
+# The vendored tokenizer imports pkg_resources; setuptools <81 still ships it.
+setuptools>=68,<81
+
+# -- mambaad extra: clean-room reimplementation, see components/README.md
+# and models/mambaad/adapter.py -- no submodule, no mamba_ssm dependency.
+# On a CUDA training host, additionally `pip install -e ".[mambaad-cuda]"`
+# to let it pick up upstream's fused selective-scan kernel automatically
+# (models/mambaad/ssm.py detects it at run time; it is CUDA-only, which is
+# why it is not listed here). --
+timm
+einops
+
+# -- quantization + profiling-onnxruntime extras: fp16/INT8 export, ONNX runtime profiling --
+onnx
+onnxruntime
+onnxconverter-common
+
+# -- profiling-flops extra: FLOPs counting for the LMEI edge index --
+thop
+
+# -- dev extra: test suite --
+pytest
+jsonschema
+
+# -- this project itself, editable --
+-e .
+
+# -- NVIDIA-hardware-only (uncomment on a CUDA host) --
+# nvidia-ml-py          # profiling-power-nvidia: GPU power draw via NVML
+# tensorrt              # profiling-tensorrt: TensorRT engine profiling
+# pycuda                # profiling-tensorrt: TensorRT INT8 calibration

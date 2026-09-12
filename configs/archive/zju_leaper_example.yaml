@@ -1,0 +1,49 @@
+# ZJU-Leaper dataset adapter config examples.
+# Used via load_dataset("zju-leaper", root=<root>, **config).
+# root points at the dataset directory containing Images/ Annotations/ ImageSets/.
+
+# ---- Scenario A: few-shot (full count, single pattern) ----
+few_shot:
+  pattern: pattern1        # texture/pattern selector: patternN / N / texture name / groupN / total (default)
+  split: test
+  num_samples: null        # null = use every image in this selection
+  use_defect: true
+  task: anomaly
+
+# ---- Scenario B: low-shot (300-400 images, controlled defect ratio) ----
+low_shot:
+  pattern: pattern1
+  split: test
+  num_samples: 350         # take only 350 images
+  use_defect: true
+  defect_ratio: 0.3        # 30% of those are defective
+  task: anomaly
+  seed: 0
+
+# ---- Scenario B2: low-shot, multiple patterns pooled and evenly split ----
+# pattern1 alone is a plain white background with no texture; training only
+# on it doesn't generalize to the other 18 patterns. Pass a list to pool
+# several patterns and split num_samples as evenly as possible across them.
+low_shot_multi_pattern:
+  pattern: [pattern1, pattern2, pattern3, pattern4]
+  split: test
+  num_samples: 350
+  use_defect: true
+  defect_ratio: 0.3
+  task: anomaly
+  seed: 0
+
+# ---- Scenario C: zero-shot (normal samples only, no defect images) ----
+zero_shot:
+  pattern: pattern1
+  split: train
+  num_samples: 300
+  use_defect: false        # never include defective images
+  task: anomaly
+
+# ---- Scenario D: filter by texture name ----
+by_texture_name:
+  pattern: Knot Pattern    # matched against p_name in statistic.csv
+  split: test
+  num_samples: 200
+  defect_ratio: 0.5

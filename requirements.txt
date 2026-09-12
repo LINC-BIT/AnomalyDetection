@@ -1,0 +1,6 @@
+gradio>=5.0,<7
+httpx[socks]>=0.28,<1
+numpy
+pillow
+psutil
+pyyaml

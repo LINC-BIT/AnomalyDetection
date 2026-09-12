@@ -1,0 +1,31 @@
+# Replace this placeholder with the local ZJU-Leaper directory.
+output_dir: artifacts/benchmarks/example
+report_path: artifacts/benchmarks/example/leaderboard.csv
+leaderboard:
+  metric: map_50
+  descending: true
+
+runs:
+  - experiment_id: zju-fasterrcnn-baseline
+    dataset:
+      name: zju-leaper
+      root: ${ZJU_LEAPER_ROOT}
+      split: test
+      kwargs:
+        task: detection
+        num_samples: 100
+        seed: 0
+    model:
+      backend: torchvision
+      name: fasterrcnn_resnet50_fpn
+      task: detection
+    runtime:
+      device: cpu
+      engine: python
+      precision: fp32
+      input_size: [640, 640]
+    train: null
+    evaluator:
+      type: detection
+      kwargs:
+        class_names: [defect]

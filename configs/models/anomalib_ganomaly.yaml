@@ -1,0 +1,78 @@
+# ============================================================================
+# GANomaly — the benchmark's adversarial (GAN) entry.
+#
+#     fdh train ganomaly
+#
+# Two things here are unlike every other anomalib config in this directory,
+# and both are deliberate:
+#
+# 1. `val.output_dir` is null. GANomaly scores the L2 distance between two
+#    latent vectors and returns no pixel-level anomaly map at all (see
+#    models/anomalib/presets.py::IMAGE_LEVEL_ONLY, checked against
+#    anomalib 2.5.0's GanomalyModel.forward). Its `capabilities()` therefore
+#    does not advertise `anomaly_map`, and pixel AUROC/AUPRO is not
+#    computable for this model — only image-level AUROC. Pointing an
+#    output_dir at it would just create an empty directory.
+#
+# 2. `train.model_kwargs.batch_size` is set explicitly. GANomaly takes
+#    batch_size as a *constructor* argument, so the canonical
+#    TrainConfig.batch_size does not reach it (AnomalibAdapter's
+#    TRAIN_CONFIG_KEYS maps only genuinely flat keys). In anomalib 2.5.0 it
+#    only sizes two unused label buffers, so a mismatch is currently inert —
+#    it is pinned here to keep the value visible rather than implicit.
+#
+# Everything not set here falls back to
+# models/anomalib/presets.py::MODEL_PRESETS["Ganomaly"]. See
+# configs/models/anomalib_example.yaml for the full annotated field reference.
+# ============================================================================
+
+model:
+  name: GANomaly
+
+data:
+  dataset: zju-leaper
+  train_selection:
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 300
+    use_defect: false      # adversarial training still learns the normal manifold only
+    task: anomaly
+    seed: 0
+  test_selection:
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    use_defect: true
+    defect_ratio: 0.5
+    task: anomaly
+    seed: 0
+
+train:
+  enabled: true
+  model_kwargs:
+    batch_size: 32          # see note 2 above
+  engine_kwargs:
+    # A starting point, not a tuned or published fabric value — GAN training
+    # is the least stable regime in this benchmark, so expect to move this.
+    max_epochs: 100
+    # accelerator unset -> Lightning "auto" (CUDA/MPS/CPU by host).
+  num_workers: 0
+
+val:
+  enabled: true
+  output_dir: null          # see note 1 above: image-level scores only
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+predict:
+  output_dir: null
+
+export:
+  enabled: false
+  formats: [torch]
+
+checkpoint:
+  default_root_dir: results/fabric_defect_hub_anomalib
+  name: ganomaly_pattern1-4
+  registry_dir: textile/artifacts/models

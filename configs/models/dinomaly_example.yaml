@@ -1,0 +1,104 @@
+# ============================================================================
+# Dinomaly experiment config example.
+#
+# Dinomaly is vendored research code (components/dinomaly, see
+# components/README.md), not a pip-installed library like anomalib -- this
+# adapter (models/dinomaly/) reimplements upstream's reference training loop
+# and scoring path against this project's Sample/Prediction/Artifact
+# contracts. Requires the `dinomaly` extra: pip install -e ".[dinomaly]".
+#
+# Usage (configuration-driven, not command-line flags):
+#     from fabric_defect_hub.models.dinomaly import run_from_yaml
+#     result = run_from_yaml("configs/models/dinomaly_example.yaml")
+#     print(result.metrics)                    # {'image_auroc': ..., 'pixel_aupro': ...}
+#     print(result.registered_artifact.path)    # stable storage path of the trained checkpoint
+#
+# Or via the CLI:
+#     fdh train dinomaly_example --mode test        # 8-image smoke run
+#     fdh predict dinomaly_example --weights artifacts/models/dinomaly_dinov2reg_vit_base_14.pth --image some.png
+#
+# Same structural shape as anomalib_example.yaml (data has train_selection /
+# test_selection, not train/val; no native .validate() -- val is predict()
+# + AnomalyEvaluator) -- see models/dinomaly/config.py's module docstring.
+# One divergence: train has fixed hyperparameter fields instead of a
+# free-form model_kwargs dict, since Dinomaly is one architecture with one
+# training recipe (models/dinomaly/presets.py::DEFAULT_TRAIN_KWARGS), not
+# five differently-shaped models like anomalib.
+# ============================================================================
+
+# ---- Model: pick an encoder size ----
+model:
+  name: dinov2reg_vit_base_14   # dinov2reg_vit_small_14 | dinov2reg_vit_base_14 | dinov2reg_vit_large_14
+  # weights: artifacts/models/published/Dinomaly.pt
+  #   Evaluate an existing checkpoint instead of training: set this and
+  #   train.enabled: false. Must have been trained with the same `name`.
+
+# ---- Data: read from ZJULeaperDataset at runtime and staged into a temporary MVTec-style directory ----
+# dataset_root is left unset on purpose: `fdh train` falls back to this
+# project's own data/ZJU-Leaper symlink (see training.DEFAULT_DATASET_ROOTS).
+# Override with --dataset-root, or set ${ZJU_LEAPER_ROOT} and uncomment below.
+data:
+  dataset: zju-leaper
+  # dataset_root: ${ZJU_LEAPER_ROOT}
+  train_selection:        # training uses normal samples only (Dinomaly trains one-class)
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 300
+    use_defect: false      # key: never introduce defective images into the training set
+    task: anomaly
+    seed: 0
+  test_selection:          # test set mixes normal + defective, used to compute AUROC/AUPRO
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 100
+    use_defect: true
+    defect_ratio: 0.5
+    task: anomaly
+    seed: 0
+  # Alternative: when you already have an MVTec-style dataset on disk, use
+  # data_root instead of dataset (in that case the val stage's metric
+  # computation is skipped, since there is no Sample list to evaluate
+  # against — see the note in pipeline.py).
+  # data_root: /path/to/mvtec/bottle
+
+# ---- Training: upstream's reference recipe (dinomaly_mvtec_sep.py), overridable per field ----
+train:
+  enabled: true
+  total_iters: 5000
+  batch_size: 32
+  image_size: 448
+  crop_size: 392
+  lr: 0.002
+  final_lr: 0.0002
+  warmup_iters: 100
+  weight_decay: 0.0001
+  hm_percent_final: 0.9
+  hm_percent_warmup_iters: 1000
+  hm_factor: 0.1
+  grad_clip_max_norm: 0.1
+  num_workers: 0        # staged directory is transient symlinks; see AnomalibAdapter.train's note, same reasoning
+  device: null           # null = auto-detect (cuda > mps > cpu); or "cuda", "cpu", "mps"
+  # target_layers: [2, 3, 4, 5, 6, 7, 8, 9]   # override the model preset's default (rarely needed)
+
+# ---- Validation: predict() + AnomalyEvaluator (not a native .validate()) ----
+val:
+  enabled: true
+  output_dir: artifacts/anomaly_maps/dinomaly_pattern1-4   # stores pixel-level anomaly_map, used for pixel AUROC/AUPRO; set to null if pixel metrics aren't needed
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+# ---- Inference defaults (used by DinomalyAdapter.predict) ----
+predict:
+  output_dir: null   # leave empty if only image-level scores are needed, no pixel heatmap
+
+# ---- Export (not implemented for Dinomaly -- see DinomalyAdapter.export) ----
+export:
+  enabled: false
+  formats: []
+
+# ---- Checkpoint / model registry ----
+checkpoint:
+  work_dir: null    # null = fresh temp dir (see DinomalyAdapter.train); set to keep the raw training-run checkpoint too
+  name: dinomaly_pattern1-4
+  registry_dir: textile/artifacts/models   # domain-owned stable checkpoint

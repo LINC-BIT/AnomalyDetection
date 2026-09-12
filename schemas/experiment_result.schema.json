@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fabricdefecthub/schemas/experiment_result.schema.json",
+  "title": "ExperimentResult",
+  "description": "Unified summary of a train/predict/evaluate/profile run, used by the results leaderboard and experiment-detail pages.",
+  "type": "object",
+  "required": ["experiment_id", "model", "dataset", "runtime", "metrics"],
+  "properties": {
+    "experiment_id": { "type": "string" },
+    "model": {
+      "type": "object",
+      "required": ["name", "backend", "task"],
+      "properties": {
+        "name": { "type": "string" },
+        "backend": { "type": "string", "minLength": 1 },
+        "task": { "type": "string", "enum": ["detection", "segmentation", "anomaly", "industrial"] }
+      },
+      "additionalProperties": false
+    },
+    "dataset": {
+      "type": "object",
+      "required": ["name", "split"],
+      "properties": {
+        "name": { "type": "string" },
+        "split": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["device", "engine", "precision", "input_size"],
+      "properties": {
+        "device": { "type": "string" },
+        "engine": { "type": "string" },
+        "precision": { "type": "string" },
+        "input_size": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 }
+      },
+      "additionalProperties": false
+    },
+    "metrics": { "type": "object", "additionalProperties": { "type": "number" } },
+    "artifacts": { "type": "object", "additionalProperties": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,53 @@
+# ============================================================================
+# REPRODUCTION config — PatchCore on the authors' own dataset (MVTec-AD)
+# ============================================================================
+# Purpose: reproduce the paper's headline number on the dataset it was
+# published against, BEFORE trusting the `patchcore` recipe on fabric
+# data. This is Stage 3, step 1 of the reproduce-then-iterate protocol.
+#
+# Method   : PatchCore (Roth et al., "Towards Total Recall in Industrial
+#            Anomaly Detection", CVPR 2022), via anomalib's verified impl.
+# Settings : WideResNet-50 (layer2+layer3), 10% coreset, k=9 neighbours —
+#            supplied by the `patchcore` recipe (see recipes/), NOT
+#            hardcoded here, so this config proves the recipe wiring too.
+# Target   : see docs/REPRODUCTION_PATCHCORE.md — MVTec-AD mean image AUROC
+#            ~0.991, pixel AUROC ~0.981, PRO ~0.935 (per-category here).
+#
+# Run:  MVTEC_AD_ROOT=/path/to/mvtec_ad fdh run configs/models/patchcore_mvtec_repro.yaml
+# ----------------------------------------------------------------------------
+
+model:
+  name: PatchCore
+  backend: anomalib
+  task: anomaly
+  recipe: patchcore          # backbone/coreset/neighbours come from here
+
+data:
+  dataset: mvtec-ad
+  dataset_root: ${MVTEC_AD_ROOT}
+  # No tiling: MVTec-AD is native 256x256-friendly object imagery, unlike the
+  # 4K RAW-Fabric config. Reproduce the paper's setting exactly.
+  train_selection:
+    split: train
+    category: bottle              # start with one category; sweep all 15 for the mean
+    use_defect: false             # MVTec train split is one-class (normal only)
+    task: anomaly
+  test_selection:
+    split: test
+    category: bottle
+    use_defect: true
+    task: anomaly
+
+train:
+  enabled: true
+  engine_kwargs:
+    max_epochs: 1                 # PatchCore is a memory bank: one pass, no backprop
+
+val:
+  enabled: true
+  output_dir: results/patchcore_mvtec_repro/anomaly_maps   # needed for pixel AUROC/PRO
+
+checkpoint:
+  default_root_dir: results/patchcore_mvtec_repro
+  name: patchcore_mvtec_bottle
+  registry_dir: textile/artifacts/models
