@@ -263,43 +263,59 @@ Open the URL printed by Gradio. Select a task type, application domain, and mode
 
 ## 10. Minimal Working Example
 
-```bash
-conda activate anomalib_env
-adh inventory
-adh doctor
-python examples/01_inspect_catalog.py
-```
+This MWE uses the web UI and an existing published weight. It does not train a new model.
 
-Expected inventory shape:
+Start the UI as described in [Web UI](#9-web-ui), then complete the following steps in the **Single Image Detection** tab. Replace each placeholder image with a screenshot of your local UI.
 
-```text
-models: 20
-datasets: 9
-```
+### Step 1: Select the task type
 
-On the current local checkout, 19 canonical weights are present and MambaAD is missing. `doctor` should report every installed backend and explain its selected training dataset or missing prerequisite.
+Choose **Anomaly detection** in **Task type**. This filters the model list to anomaly-detection models.
 
-Run a real local inference:
+![MWE step 1 placeholder: select Anomaly detection](docs/images/mwe-placeholder.svg)
 
-```bash
-adh predict yolov8n \
-  --weights textile/artifacts/models/published/yolov8n.pt \
-  --image datasets/textile/ZJU-Leaper/Images/052628.jpg \
-  --output results/yolov8n-mwe.json
-```
+### Step 2: Select the application domain
 
-Expected result: JSON containing the model identity and one prediction with boxes, labels, and confidence scores. Exact detections depend on the checkpoint and input.
+Choose **textile** for the current textile demonstration, or **general** for models trained or adapted outside the textile domain.
 
-The page title and brand are **AnomalyDetection**. The model selector displays the actual training dataset, for example `PatchCore · ZJU-Leaper (normal only)` or `MoECLIP · MVTec AD adapter`.
+![MWE step 2 placeholder: select application domain](docs/images/mwe-placeholder.svg)
 
-Single-image workflow:
+### Step 3: Select the model and inspect its metadata
 
-1. select a model and inspect its method/domain/training metadata;
-2. load the model;
-3. select a dataset, split, category/pattern, and sampling regime;
-4. load sample images;
-5. run inference;
-6. inspect boxes, masks, anomaly score, or heatmap according to declared capabilities.
+Choose a model with a green **Ready** status. For a no-training MWE, select `WinCLIP · LAION-400M zero-shot` or an available published PatchCore model. Confirm the displayed method, domain, training dataset, training split, and weight filename.
+
+![MWE step 3 placeholder: select model and inspect metadata](docs/images/mwe-placeholder.svg)
+
+### Step 4: Load the model
+
+Click **Load model** and wait until the runtime status shows the selected model as loaded. If the status is **Checkpoint missing**, place the weight at the path shown in the message and restart the UI.
+
+![MWE step 4 placeholder: load model](docs/images/mwe-placeholder.svg)
+
+### Step 5: Select the dataset and split
+
+In the dataset sampler, choose a dataset that exists locally. For the textile MWE, choose `ZJU-Leaper`, select a pattern or **All textures**, and select the `test` split. Set **Full-shot** to use the complete configured sample regime.
+
+![MWE step 5 placeholder: select dataset and split](docs/images/mwe-placeholder.svg)
+
+### Step 6: Load sample images
+
+Click **Load random images**. Confirm that the source image and its dataset caption appear. Use **Previous** and **Next** to inspect other samples.
+
+![MWE step 6 placeholder: load sample images](docs/images/mwe-placeholder.svg)
+
+### Step 7: Run detection
+
+Click **Run detection**. The backend runs the selected model on the current image. The UI does not implement model logic; it only renders the response returned by the backend service.
+
+![MWE step 7 placeholder: run detection](docs/images/mwe-placeholder.svg)
+
+### Step 8: Read the result
+
+Read the anomaly score and verdict in **Inference result**. For a map-capable model, the result image contains the anomaly heatmap overlay and the status reports **Heatmap available**. For an image-level-only model such as GANomaly, the UI reports **Image-level score only**.
+
+![MWE step 8 placeholder: inspect score and heatmap](docs/images/mwe-placeholder.svg)
+
+This completes the MWE. Training, batch inference, evaluation, and performance benchmark commands are documented in the following sections.
 
 Restart `adh-ui` after changing the model manifest because a running process keeps its imported inventory in memory.
 
@@ -312,7 +328,7 @@ adh train --list
 adh models
 ```
 
-Minimal Working Example training run:
+Test training run:
 
 ```bash
 adh train patchcore --dataset zju-leaper --mode test --no-publish
