@@ -211,7 +211,14 @@ adh train patchcore --dataset zju-leaper --dataset-root /absolute/path/to/ZJU-Le
 
 Supported environment overrides include `ZJU_LEAPER_ROOT`, `RAW_FABRIC_ROOT`, `MVTEC_AD_ROOT`, `MVTEC_LOCO_ROOT`, and `VISA_ROOT`.
 
-Dataset download automation is TODO. Until the download commands are released, place each dataset at the registered path or set its environment variable. Do not commit dataset bytes to Git.
+Download MVTec AD or VisA through Anomalib's maintained downloaders:
+
+```bash
+python tools/download_datasets.py mvtec-ad --root datasets/general/MVTecAD --category bottle
+python tools/download_datasets.py visa --root datasets/general/VisA --category capsules
+```
+
+The downloader may require acceptance of the dataset license or network access. ZJU-Leaper is a project-specific dataset; its downloader is TODO. Until released, place it at the registered path or set `ZJU_LEAPER_ROOT`. Do not commit dataset bytes to Git.
 
 ## 8. Weight preparation
 
@@ -232,7 +239,16 @@ The release policy is:
 
 The existing MoECLIP Google Drive URL is retained only as legacy provenance. See [docs/weights.md](docs/weights.md).
 
-Weight download automation, checksum verification, and Hugging Face release packages are TODO. Until they are released, copy the locally obtained files into the canonical slots and run `adh inventory` to verify them.
+Weight download automation, checksum verification, and Hugging Face release packages are TODO. Upstream model weights are downloaded by their backend when supported; project weights must currently be copied into the canonical slots and verified with `adh inventory`. No training is needed for the MWE: use an existing published checkpoint such as WinCLIP or PatchCore.
+
+When the project weight repository is published, use the generic downloader:
+
+```bash
+python tools/download_weights.py ORG/REPO PatchCore.ckpt \
+  --revision REVISION \
+  --output textile/artifacts/models/published/PatchCore.ckpt
+adh inventory
+```
 
 ## 9. Web UI
 
