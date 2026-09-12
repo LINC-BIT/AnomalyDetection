@@ -10,10 +10,11 @@ class`), so this stays in the default test suite. Mirrors
 
 import importlib.util
 import inspect
+from types import SimpleNamespace
 
 import pytest
 
-from fabric_defect_hub.models.anomalib.adapter import AnomalibAdapter
+from fabric_defect_hub.models.anomalib.adapter import AnomalibAdapter, _patch_winclip_open_clip_layout
 from fabric_defect_hub.models.anomalib.config import AnomalibConfig
 from fabric_defect_hub.models.anomalib.presets import (
     IMAGE_LEVEL_ONLY,
@@ -261,3 +262,25 @@ def test_default_train_spec_has_zero_workers():
     # torchvision backend's default of 2.
     cfg = AnomalibConfig.from_dict({"data": {"datamodule_kwargs": {"root": "/x"}}})
     assert cfg.train.num_workers == 0
+
+
+def test_winclip_patches_openclip_batch_first_window_path():
+    torch_model = SimpleNamespace(
+        clip=SimpleNamespace(visual=SimpleNamespace(transformer=SimpleNamespace(batch_first=True)))
+    )
+    model = SimpleNamespace(model=torch_model)
+
+    _patch_winclip_open_clip_layout(model)
+
+    assert torch_model._get_window_embeddings.__name__ == "_get_window_embeddings_batch_first"
+
+
+def test_winclip_keeps_legacy_openclip_window_path():
+    torch_model = SimpleNamespace(
+        clip=SimpleNamespace(visual=SimpleNamespace(transformer=SimpleNamespace(batch_first=False)))
+    )
+    model = SimpleNamespace(model=torch_model)
+
+    _patch_winclip_open_clip_layout(model)
+
+    assert not hasattr(torch_model, "_get_window_embeddings")

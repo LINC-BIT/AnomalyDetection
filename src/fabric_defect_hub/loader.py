@@ -173,13 +173,16 @@ def run_experiment(
         for s in samples:
             tiles, meta_info = tiler.split_sample(s)
             if meta_info.get("tiled", False):
-                tile_preds = model.predict(tiles, active_artifact)
+                predict_kwargs = {"output_dir": output_dir} if output_dir and model.capabilities().fills("anomaly_map") else {}
+                tile_preds = model.predict(tiles, active_artifact, **predict_kwargs)
                 stitched_pred = tiler.stitch_predictions(tile_preds, meta_info)
                 predictions.append(stitched_pred)
             else:
-                predictions.extend(model.predict([s], active_artifact))
+                predict_kwargs = {"output_dir": output_dir} if output_dir and model.capabilities().fills("anomaly_map") else {}
+                predictions.extend(model.predict([s], active_artifact, **predict_kwargs))
     else:
-        predictions = model.predict(samples, active_artifact)
+        predict_kwargs = {"output_dir": output_dir} if output_dir and model.capabilities().fills("anomaly_map") else {}
+        predictions = model.predict(samples, active_artifact, **predict_kwargs)
 
     evaluated_metrics = evaluator.evaluate(samples, predictions) if evaluator is not None else {}
     metrics = {

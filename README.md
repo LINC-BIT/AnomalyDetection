@@ -8,26 +8,27 @@ An extensible, configuration-driven platform for supervised defect detection, de
   - [Table of contents](#table-of-contents)
   - [1. Project scope](#1-project-scope)
   - [2. Overview](#2-overview)
-  - [2. Supported models](#2-supported-models)
-  - [3. Architecture](#3-architecture)
-  - [4. Requirements](#4-requirements)
+  - [3. Supported models](#3-supported-models)
+  - [4. Architecture](#4-architecture)
+  - [5. Requirements](#5-requirements)
     - [4.1 Software](#41-software)
     - [4.2 Hardware profiles](#42-hardware-profiles)
-  - [5. Installation](#5-installation)
-    - [5.1 Clone source and initialize components](#51-clone-source-and-initialize-components)
-    - [5.2 Install in the existing Conda environment](#52-installation-in-the-existing-conda-environment)
-  - [6. Data preparation](#6-data-preparation)
-  - [7. Weight preparation](#7-weight-preparation)
-  - [8. Minimal Working Example (MWE)](#8-minimal-working-example-mwe)
+  - [6. Installation](#6-installation)
+    - [6.1 Clone source and initialize components](#61-clone-source-and-initialize-components)
+    - [6.2 Create and activate the Conda environment](#62-create-and-activate-the-conda-environment)
+    - [6.3 Install requirements](#63-install-requirements)
+  - [7. Data preparation](#7-data-preparation)
+  - [8. Weight preparation](#8-weight-preparation)
   - [9. Web UI](#9-web-ui)
-  - [10. Training](#10-training)
-  - [11. Inference](#11-inference)
-  - [12. Evaluation and benchmarking](#12-evaluation-and-benchmarking)
-  - [13. Adding a model or domain](#13-adding-a-model-or-domain)
+  - [10. Minimal Working Example](#10-minimal-working-example)
+  - [11. Training](#11-training)
+  - [12. Inference](#12-inference)
+  - [13. Evaluation and benchmarking](#13-evaluation-and-benchmarking)
+  - [14. Adding a model or domain](#14-adding-a-model-or-domain)
     - [Add a model](#add-a-model)
     - [Add a domain](#add-a-domain)
-  - [14. Outputs and reproducibility](#14-outputs-and-reproducibility)
-  - [15. Troubleshooting](#15-troubleshooting)
+  - [15. Outputs and reproducibility](#15-outputs-and-reproducibility)
+  - [16. Troubleshooting](#16-troubleshooting)
     - [Dataset unavailable](#dataset-unavailable)
     - [Component checkout not found](#component-checkout-not-found)
     - [SOCKS proxy error when importing Gradio](#socks-proxy-error-when-importing-gradio)
@@ -35,7 +36,7 @@ An extensible, configuration-driven platform for supervised defect detection, de
     - [UI still shows an old label](#ui-still-shows-an-old-label)
     - [No anomaly heatmap](#no-anomaly-heatmap)
     - [Out-of-memory during training](#out-of-memory-during-training)
-  - [16. Testing](#16-testing)
+  - [17. Testing](#17-testing)
   - [Additional documentation](#additional-documentation)
 
 ## 1. Project scope
@@ -44,7 +45,7 @@ This repository currently delivers:
 
 1. A general modular framework organized by application domain.
 2. A runnable textile domain demonstration.
-3. Deployment, architecture, Minimal Working Example (MWE), inference, evaluation, and output documentation.
+3. Deployment, architecture, Minimal Working Example, inference, evaluation, and output documentation.
 
 Other application domains, datasets, and model weights are extension points. They are not claimed to be complete in the current release.
 
@@ -79,7 +80,7 @@ The manifest is authoritative; run `adh inventory` for the machine-readable live
 
 GANomaly produces an image-level anomaly score but no pixel anomaly map. The UI therefore correctly shows no heatmap for GANomaly. Capabilities are queried from the backend rather than guessed by the frontend.
 
-## 3. Architecture
+## 4. Architecture
 
 ```text
 AnomalyDetection/
@@ -100,7 +101,7 @@ AnomalyDetection/
 │   └── general/                 # MVTec, VisA, DTD, and auxiliary data
 ├── textile/                     # textile overlays and artifacts
 │   └── artifacts/models/published/
-├── examples/                    # Minimal Working Examples (MWE)
+├── examples/                    # Minimal Working Examples
 ├── tools/                       # conversion, export, and benchmark tools
 ├── tests/                       # runtime and architecture contracts
 └── docs/                        # focused guides and design records
@@ -113,7 +114,7 @@ There are two registries:
 
 The UI consumes `application/` services and the generated inventory. It does not define training, inference, evaluation, model paths, or model capabilities.
 
-## 4. Requirements
+## 5. Requirements
 
 ### 4.1 Software
 
@@ -122,7 +123,7 @@ The UI consumes `application/` services and the generated inventory. It does not
 | Python | 3.10 or newer; the current local verification used Python 3.14.6 |
 | Environment | Conda recommended; local environment name: `anomalib_env` |
 | Operating system | macOS or Linux for the current workflows |
-| GPU | optional for MWE inference; strongly recommended for training |
+| GPU | optional for Minimal Working Example inference; strongly recommended for training |
 | CUDA | required only for NVIDIA acceleration and CUDA-specific optional packages |
 
 PyTorch emits deprecation warnings for TorchScript on Python 3.14. For a conservative training deployment, Python 3.11–3.13 is recommended until the upstream TorchScript transition is complete.
@@ -132,15 +133,15 @@ PyTorch emits deprecation warnings for TorchScript on Python 3.14. For a conserv
 | Workflow | CPU/RAM | GPU | Disk |
 | --- | --- | --- | --- |
 | Catalog, tests, UI layout | 4+ cores, 16 GB RAM | not required | 10 GB plus weights |
-| MWE inference | 8+ cores, 16 GB RAM | optional | weights plus selected dataset |
+| Minimal Working Example inference | 8+ cores, 16 GB RAM | optional | weights plus selected dataset |
 | Full textile training | 8+ cores, 32 GB RAM | NVIDIA GPU recommended; capacity depends on model/batch | dataset and run artifacts, typically tens of GB |
 | Full benchmark suite | 16+ cores, 32–64 GB RAM | recommended | all datasets, weights, maps, exports, and logs |
 
 These are operational recommendations, not guaranteed minimums. Use smaller batches and `--mode test` on constrained machines.
 
-## 5. Installation
+## 6. Installation
 
-### 5.1 Clone source and initialize components
+### 6.1 Clone source and initialize components
 
 ```bash
 git clone --recurse-submodules https://github.com/LINC-BIT/AnomalyDetection.git
@@ -153,12 +154,22 @@ If the repository was cloned without `--recurse-submodules`, initialize all pinn
 git submodule update --init --recursive
 ```
 
-Do not clone component repositories manually. The parent repository pins the tested commit of AnomalyDiffusion, Dinomaly, and MoECLIP through `.gitmodules` and Git links. To update a component intentionally, check out the reviewed commit inside that submodule, test it, and commit the changed Git link in the parent repository.
+Do not clone component repositories manually. The parent repository pins the tested commit of AnomalyDiffusion, Dinomaly, and MoECLIP through `.gitmodules` and Git links.
 
-### 5.2 Install in the existing Conda environment
+### 6.2 Create and activate the Conda environment
+
+Create the environment first:
 
 ```bash
+conda create -n anomalib_env python=3.12 -y
 conda activate anomalib_env
+```
+
+### 6.3 Install requirements
+
+Install the complete local stack:
+
+```bash
 python -m pip install -r requirements-full.txt
 python -m pip install --no-deps --no-build-isolation -e .
 ```
@@ -170,9 +181,7 @@ python -m pip install -r requirements.txt
 python -m pip install --no-deps --no-build-isolation -e .
 ```
 
-The public commands are `adh` and `adh-ui`. The internal Python import remains `fabric_defect_hub` for compatibility and is not the product name.
-
-## 6. Data preparation
+## 7. Data preparation
 
 Datasets are local runtime assets and are excluded from Git.
 
@@ -202,7 +211,9 @@ adh train patchcore --dataset zju-leaper --dataset-root /absolute/path/to/ZJU-Le
 
 Supported environment overrides include `ZJU_LEAPER_ROOT`, `RAW_FABRIC_ROOT`, `MVTEC_AD_ROOT`, `MVTEC_LOCO_ROOT`, and `VISA_ROOT`.
 
-## 7. Weight preparation
+Dataset download automation is TODO. Until the download commands are released, place each dataset at the registered path or set its environment variable. Do not commit dataset bytes to Git.
+
+## 8. Weight preparation
 
 Canonical local weights resolve under:
 
@@ -221,7 +232,20 @@ The release policy is:
 
 The existing MoECLIP Google Drive URL is retained only as legacy provenance. See [docs/weights.md](docs/weights.md).
 
-## 8. Minimal Working Example (MWE)
+Weight download automation, checksum verification, and Hugging Face release packages are TODO. Until they are released, copy the locally obtained files into the canonical slots and run `adh inventory` to verify them.
+
+## 9. Web UI
+
+Start the UI before using the command-line workflows:
+
+```bash
+conda activate anomalib_env
+adh-ui
+```
+
+Open the URL printed by Gradio. Select a task type, application domain, and model. The UI reads model, dataset, weight, and capability metadata from the backend registry; it does not define inference or training logic.
+
+## 10. Minimal Working Example
 
 ```bash
 conda activate anomalib_env
@@ -250,13 +274,7 @@ adh predict yolov8n \
 
 Expected result: JSON containing the model identity and one prediction with boxes, labels, and confidence scores. Exact detections depend on the checkpoint and input.
 
-## 9. Web UI
-
-```bash
-adh-ui
-```
-
-Open the URL printed by Gradio. The page title and brand are **AnomalyDetection**. The model selector displays the actual training dataset, for example `PatchCore · ZJU-Leaper (normal only)` or `MoECLIP · MVTec AD adapter`.
+The page title and brand are **AnomalyDetection**. The model selector displays the actual training dataset, for example `PatchCore · ZJU-Leaper (normal only)` or `MoECLIP · MVTec AD adapter`.
 
 Single-image workflow:
 
@@ -269,7 +287,7 @@ Single-image workflow:
 
 Restart `adh-ui` after changing the model manifest because a running process keeps its imported inventory in memory.
 
-## 10. Training
+## 11. Training
 
 List resolvable recipes:
 
@@ -278,7 +296,7 @@ adh train --list
 adh models
 ```
 
-MWE training run:
+Minimal Working Example training run:
 
 ```bash
 adh train patchcore --dataset zju-leaper --mode test --no-publish
@@ -309,9 +327,9 @@ adh train moeclip \
   --no-publish
 ```
 
-Use `--no-publish` for MWE runs and experiments. Without it, a successful canonical run updates the published slot used by the UI.
+Use `--no-publish` for Minimal Working Example runs and experiments. Without it, a successful canonical run updates the published slot used by the UI.
 
-## 11. Inference
+## 12. Inference
 
 Single image:
 
@@ -337,7 +355,7 @@ adh predict patchcore \
 
 `--output-dir` is required when a map-capable anomaly model should persist `.npy` anomaly maps. It cannot make an image-only model such as GANomaly produce a heatmap.
 
-## 12. Evaluation and benchmarking
+## 13. Evaluation and benchmarking
 
 Evaluate an anomaly checkpoint:
 
@@ -371,7 +389,7 @@ adh evaluate patchcore \
 
 Image-level metrics are available when scores and labels exist. Pixel metrics require ground-truth masks and a model-produced anomaly map. Detection and segmentation metrics require their corresponding annotations.
 
-## 13. Adding a model or domain
+## 14. Adding a model or domain
 
 ### Add a model
 
@@ -394,7 +412,7 @@ No UI edit is permitted or required. See [docs/model-integration.md](docs/model-
 
 Do not copy reusable algorithms into a domain folder and do not relabel textile weights as general-purpose weights.
 
-## 14. Outputs and reproducibility
+## 15. Outputs and reproducibility
 
 Training produces registered artifacts, provenance, optional exports, and a canonical published path. Evaluation produces structured metrics and may persist anomaly maps. Benchmark runs use JSON/JSONL reports suitable for later tables.
 
@@ -402,7 +420,7 @@ Provenance records include timestamp, Git commit/dirty state, host/platform, Pyt
 
 Do not commit generated datasets, checkpoints, maps, caches, or results. Publish durable checkpoints through the documented model distribution channel.
 
-## 15. Troubleshooting
+## 16. Troubleshooting
 
 ### Dataset unavailable
 
@@ -432,7 +450,7 @@ Check the model's `capabilities`. GANomaly is image-level only. For a map-capabl
 
 Use `--mode test`, lower the batch size with `--set`, reduce image size where supported, or select a smaller model. CUDA-only accelerators are optional and must match the installed PyTorch/CUDA toolchain.
 
-## 16. Testing
+## 17. Testing
 
 Runtime and integration contracts:
 

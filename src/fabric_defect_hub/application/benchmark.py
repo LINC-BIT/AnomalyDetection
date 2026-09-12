@@ -28,6 +28,7 @@ from fabric_defect_hub.application.workspace import (
 )
 
 DEFAULT_RUN_LOG_PATH = "runs/leaderboard_log.jsonl"
+BENCHMARK_ANOMALY_MAP_ROOT = "artifacts/runtime/anomaly_maps/benchmark"
 
 # The metric each task's `Evaluator` treats as its headline accuracy number
 # (see `evaluation/{anomaly,detection,segmentation}.py`) -- what
@@ -118,7 +119,50 @@ def _profile_setup(model: Any, device: str):
     return profiler, config, export_target
 
 
-def _profile_model(model: Any, artifact: Any, device: str) -> dict[str, float]:
+def _native_profile_model(model: Any, artifact: Any, samples: list[Any], device: str) -> dict[str, float]:
+    """Measure an adapter directly when it has no exportable runtime.
+
+    This path is intentionally labelled native: it includes the adapter's
+    preprocessing and postprocessing, and is therefore not mixed with the
+    export-only profiler results.
+    """
+    if not samples:
+        raise ValueError("native profiling requires at least one sample")
+    import statistics
+    import time as _time
+
+    sample = samples[0]
+    warmup, measured = 2, 8
+    for _ in range(warmup):
+        model.predict([sample], artifact)
+    latencies: list[float] = []
+    for _ in range(measured):
+        started = _time.perf_counter()
+        model.predict([sample], artifact)
+        latencies.append((_time.perf_counter() - started) * 1000.0)
+    mean_ms = statistics.fmean(latencies)
+    metrics: dict[str, float] = {
+        "latency_ms_mean": mean_ms,
+        "latency_ms_p50": sorted(latencies)[len(latencies) // 2],
+        "latency_ms_p95": sorted(latencies)[min(len(latencies) - 1, int(round(.95 * (len(latencies) - 1))))],
+        "latency_ms_p99": sorted(latencies)[min(len(latencies) - 1, int(round(.99 * (len(latencies) - 1))))],
+        "fps": 1000.0 / mean_ms if mean_ms > 0 else 0.0,
+        "profiling_mode": "native",
+        "memory_measurement_kind": "process_rss",
+        "memory_measurement_scope": "host_process",
+        "memory_cross_engine_comparable": False,
+    }
+    try:
+        import os
+        import psutil
+
+        metrics["peak_memory_mb"] = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
+    except ImportError:
+        metrics["peak_memory_mb"] = 0.0
+    return metrics
+
+
+def _profile_model(model: Any, artifact: Any, device: str, samples: list[Any] | None = None) -> dict[str, float]:
     """Export and profile one model without letting optional overhead data
     invalidate its already-computed accuracy result.
 
@@ -131,10 +175,7 @@ def _profile_model(model: Any, artifact: Any, device: str) -> dict[str, float]:
 
     setup = _profile_setup(model, device)
     if setup is None:
-        raise RuntimeError(
-            "no PyTorchProfiler-compatible export target; supported targets are "
-            "'exported_program' and 'torchscript'"
-        )
+        return _native_profile_model(model, artifact, samples or [], device)
     profiler, config, export_target = setup
     # No export config: the dict is forwarded verbatim into the backend's own
     # exporter, and each backend has its own vocabulary — Ultralytics rejects
@@ -379,6 +420,7 @@ def run_benchmark(
                 runtime=RuntimeInfo(device=device, engine="python", precision="fp32", input_size=(640, 640)),
                 evaluator=evaluator,
                 artifact=artifact_for_model(model_spec),
+                output_dir=str(Path(BENCHMARK_ANOMALY_MAP_ROOT) / _slug(model_label)),
                 run_log_path=run_log_path,
             )
             if sample_count is None:
@@ -391,7 +433,7 @@ def run_benchmark(
             if include_profiling:
                 try:
                     profile_started = time.perf_counter()
-                    row.update(_profile_model(model, artifact_for_model(model_spec), device))
+                    row.update(_profile_model(model, artifact_for_model(model_spec), device, dataset.load_samples()))
                     row["runtime_s"] = round(row["runtime_s"] + time.perf_counter() - profile_started, 1)
                 except Exception as exc:
                     errors.append(f"{model_label}: profiling skipped ({type(exc).__name__}: {exc})")

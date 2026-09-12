@@ -23,7 +23,7 @@ models:
   - {id: SuperSimpleNet, backend: anomalib, variant: SuperSimpleNet, task: anomaly, config: anomalib_example.yaml, label: "SuperSimpleNet · ZJU-Leaper (normal only)", method: SuperSimpleNet, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
   - {id: STFPM, backend: anomalib, variant: STFPM, task: anomaly, config: anomalib_stfpm.yaml, label: "STFPM · ZJU-Leaper (normal only)", method: STFPM, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
   - {id: GANomaly, backend: anomalib, variant: GANomaly, task: anomaly, config: anomalib_ganomaly.yaml, label: "GANomaly · ZJU-Leaper (normal only)", method: GANomaly, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
-  - {id: WinCLIP, backend: anomalib, variant: WinClip, task: anomaly, config: anomalib_winclip.yaml, label: "WinCLIP · Zero-shot", method: WinCLIP, trained_on: [CLIP-pretraining-corpus], training_split: external_pretraining, domain: general, source: upstream_pretrained}
+  - {id: WinCLIP, backend: anomalib, variant: WinClip, task: anomaly, config: anomalib_winclip.yaml, label: "WinCLIP · LAION-400M zero-shot", method: WinCLIP, trained_on: [LAION-400M], training_split: external_pretraining, domain: general, source: upstream_pretrained}
   - {id: Dinomaly, backend: dinomaly, variant: dinov2reg_vit_base_14, task: anomaly, config: dinomaly_example.yaml, label: "Dinomaly · ZJU-Leaper (normal only)", method: Dinomaly, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
   - id: MoECLIP
     backend: moeclip

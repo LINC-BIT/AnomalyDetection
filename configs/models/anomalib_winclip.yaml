@@ -2,7 +2,8 @@
 #
 # This is intentionally separate from anomalib_example.yaml: WinCLIP is not
 # fitted on ZJU. With k_shot: 0 the adapter writes a reconstructable metadata
-# artifact, then evaluates the pretrained CLIP model against the ZJU test set.
+# artifact, then evaluates OpenCLIP ViT-B-16-plus-240 pretrained with the
+# LAION-400M laion400m_e31 weights against the ZJU test set.
 
 model:
   name: WinCLIP

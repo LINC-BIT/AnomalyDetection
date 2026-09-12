@@ -20,6 +20,7 @@ from __future__ import annotations
 import inspect
 import shutil
 import tempfile
+from types import MethodType
 from pathlib import Path
 from typing import Any
 
@@ -342,8 +343,7 @@ class AnomalibAdapter(ModelAdapter):
 
         from anomalib.engine import Engine
 
-        model_cls = resolve_model_class(artifact.metadata.get("model_class", self.name))
-        model = _load_checkpoint(model_cls, artifact.path)
+        model = self._load_artifact(artifact)
         engine = Engine()
         exported_path = engine.export(model=model, export_type=target)
         return ExportedArtifact(path=str(exported_path), target=target)
@@ -430,8 +430,47 @@ class AnomalibAdapter(ModelAdapter):
                 self._model = model_cls(**artifact.metadata["model_kwargs"])
             else:
                 self._model = _load_checkpoint(model_cls, artifact.path)
+            _patch_winclip_open_clip_layout(self._model)
             self._loaded_path = artifact.path
         return self._model
+
+
+def _patch_winclip_open_clip_layout(model: Any) -> None:
+    """Adapt anomalib 2.5 WinCLIP to OpenCLIP's batch-first transformer.
+
+    Anomalib's window path unconditionally converts NLD to LND before calling
+    the transformer. OpenCLIP 3 uses a batch-first transformer and therefore
+    interprets that converted tensor incorrectly, producing identical window
+    embeddings and a spatially constant anomaly map. Keep anomalib's method
+    unchanged for older OpenCLIP releases and replace only the incompatible
+    batch-first path.
+    """
+
+    torch_model = getattr(model, "model", None)
+    clip = getattr(torch_model, "clip", None)
+    visual = getattr(clip, "visual", None)
+    transformer = getattr(visual, "transformer", None)
+    if torch_model is None or not getattr(transformer, "batch_first", False):
+        return
+
+    def _get_window_embeddings_batch_first(self, feature_map, masks):
+        import torch
+
+        batch_size = feature_map.shape[0]
+        n_masks = masks.shape[1]
+        class_index = torch.zeros(1, n_masks, dtype=torch.long, device=feature_map.device)
+        indices = torch.cat((class_index, masks + 1)).T
+        masked = torch.cat([torch.index_select(feature_map, 1, index) for index in indices])
+        masked = self.clip.visual.patch_dropout(masked)
+        masked = self.clip.visual.ln_pre(masked)
+        masked = self.clip.visual.transformer(masked)
+        masked = self.clip.visual.ln_post(masked)
+        pooled, _ = self.clip.visual._global_pool(masked)
+        if self.clip.visual.proj is not None:
+            pooled = pooled @ self.clip.visual.proj
+        return pooled.reshape((n_masks, batch_size, -1)).permute(1, 0, 2)
+
+    torch_model._get_window_embeddings = MethodType(_get_window_embeddings_batch_first, torch_model)
 
 
 def _load_checkpoint(model_cls, path: str):

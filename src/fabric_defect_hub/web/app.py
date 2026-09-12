@@ -187,6 +187,10 @@ def create_app():
 
     sessions = InferenceSessionManager()
     default_model = next(iter(MODEL_CATALOG))
+    default_spec = MODEL_CATALOG[default_model]
+    default_task = "anomaly" if default_spec.get("task") == "anomaly" else "defect"
+    default_domain = default_spec.get("domain", "general")
+    domain_values = sorted({spec.get("domain", "general") for spec in MODEL_CATALOG.values()})
     default_dataset = next(iter(DATASET_CATALOG))
     lang0 = DEFAULT_LANGUAGE
 
@@ -208,6 +212,13 @@ def create_app():
                     with gr.Row(equal_height=True):
                         with gr.Column(scale=3, elem_classes="fdh-control-card"):
                             model_header = gr.Markdown(tr(lang0, "model_session_header"))
+                            task_choice = gr.Dropdown(
+                                choices=[("Defect detection", "defect"), ("Anomaly detection", "anomaly")],
+                                value=default_task, label="Task type",
+                            )
+                            domain_choice = gr.Dropdown(
+                                choices=domain_values, value=default_domain, label="Application domain",
+                            )
                             model_choice = gr.Dropdown(
                                 list(MODEL_CATALOG), value=default_model, label=tr(lang0, "model_dropdown_label")
                             )
@@ -334,6 +345,24 @@ def create_app():
                         model_status,
                         inputs=[model_choice, lang_state],
                         outputs=model_state,
+                    )
+                    def model_choices(task_type, domain):
+                        return [
+                            label for label, spec in MODEL_CATALOG.items()
+                            if (spec.get("task") == "anomaly") == (task_type == "anomaly")
+                            and spec.get("domain", "general") == domain
+                        ]
+
+                    def update_models(task_type, domain):
+                        choices = model_choices(task_type, domain)
+                        value = choices[0] if choices else None
+                        return gr.Dropdown(choices=choices, value=value), model_status(value, lang0) if value else "No registered model matches this selection."
+
+                    task_choice.change(
+                        update_models, inputs=[task_choice, domain_choice], outputs=[model_choice, model_state]
+                    )
+                    domain_choice.change(
+                        update_models, inputs=[task_choice, domain_choice], outputs=[model_choice, model_state]
                     )
                     verify_model_button.click(
                         checkpoint_diagnostic,
