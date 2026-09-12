@@ -1,29 +1,54 @@
 # AnomalyDetection
 
-An extensible, configuration-driven platform for supervised defect detection, defect segmentation, and industrial anomaly detection. The repository currently ships a complete textile domain, while its model, dataset, training, inference, evaluation, and UI contracts are designed for additional materials and application domains.
-
-Repository: [LINC-BIT/AnomalyDetection](https://github.com/LINC-BIT/AnomalyDetection)
+An extensible, configuration-driven platform for supervised defect detection, defect segmentation, and industrial anomaly detection.
 
 ## Table of contents
 
-- [1. Overview](#1-overview)
-- [2. Supported models](#2-supported-models)
-- [3. Architecture](#3-architecture)
-- [4. Requirements](#4-requirements)
-- [5. Installation](#5-installation)
-- [6. Data preparation](#6-data-preparation)
-- [7. Weight preparation](#7-weight-preparation)
-- [8. Five-minute verification](#8-five-minute-verification)
-- [9. Web UI](#9-web-ui)
-- [10. Training](#10-training)
-- [11. Inference](#11-inference)
-- [12. Evaluation and benchmarking](#12-evaluation-and-benchmarking)
-- [13. Adding a model or domain](#13-adding-a-model-or-domain)
-- [14. Outputs and reproducibility](#14-outputs-and-reproducibility)
-- [15. Troubleshooting](#15-troubleshooting)
-- [16. Testing](#16-testing)
+- [AnomalyDetection](#anomalydetection)
+  - [Table of contents](#table-of-contents)
+  - [1. Project scope](#1-project-scope)
+  - [2. Overview](#2-overview)
+  - [2. Supported models](#2-supported-models)
+  - [3. Architecture](#3-architecture)
+  - [4. Requirements](#4-requirements)
+    - [4.1 Software](#41-software)
+    - [4.2 Hardware profiles](#42-hardware-profiles)
+  - [5. Installation](#5-installation)
+    - [5.1 Clone source and initialize components](#51-clone-source-and-initialize-components)
+    - [5.2 Install in the existing Conda environment](#52-installation-in-the-existing-conda-environment)
+  - [6. Data preparation](#6-data-preparation)
+  - [7. Weight preparation](#7-weight-preparation)
+  - [8. Minimal Working Example (MWE)](#8-minimal-working-example-mwe)
+  - [9. Web UI](#9-web-ui)
+  - [10. Training](#10-training)
+  - [11. Inference](#11-inference)
+  - [12. Evaluation and benchmarking](#12-evaluation-and-benchmarking)
+  - [13. Adding a model or domain](#13-adding-a-model-or-domain)
+    - [Add a model](#add-a-model)
+    - [Add a domain](#add-a-domain)
+  - [14. Outputs and reproducibility](#14-outputs-and-reproducibility)
+  - [15. Troubleshooting](#15-troubleshooting)
+    - [Dataset unavailable](#dataset-unavailable)
+    - [Component checkout not found](#component-checkout-not-found)
+    - [SOCKS proxy error when importing Gradio](#socks-proxy-error-when-importing-gradio)
+    - [Model weight missing](#model-weight-missing)
+    - [UI still shows an old label](#ui-still-shows-an-old-label)
+    - [No anomaly heatmap](#no-anomaly-heatmap)
+    - [Out-of-memory during training](#out-of-memory-during-training)
+  - [16. Testing](#16-testing)
+  - [Additional documentation](#additional-documentation)
 
-## 1. Overview
+## 1. Project scope
+
+This repository currently delivers:
+
+1. A general modular framework organized by application domain.
+2. A runnable textile domain demonstration.
+3. Deployment, architecture, Minimal Working Example (MWE), inference, evaluation, and output documentation.
+
+Other application domains, datasets, and model weights are extension points. They are not claimed to be complete in the current release.
+
+## 2. Overview
 
 The project solves three related task families through one interface:
 
@@ -35,7 +60,7 @@ The project solves three related task families through one interface:
 
 The textile weights included on the development machine were trained or adapted for the datasets declared in [`configs/registry/models.yaml`](configs/registry/models.yaml). They must not be treated as universal weights for metal, wood, electronics, food, or other materials.
 
-## 2. Supported models
+## 3. Supported models
 
 The manifest is authoritative; run `adh inventory` for the machine-readable live view.
 
@@ -75,7 +100,7 @@ AnomalyDetection/
 │   └── general/                 # MVTec, VisA, DTD, and auxiliary data
 ├── textile/                     # textile overlays and artifacts
 │   └── artifacts/models/published/
-├── examples/                    # minimal executable examples
+├── examples/                    # Minimal Working Examples (MWE)
 ├── tools/                       # conversion, export, and benchmark tools
 ├── tests/                       # runtime and architecture contracts
 └── docs/                        # focused guides and design records
@@ -97,7 +122,7 @@ The UI consumes `application/` services and the generated inventory. It does not
 | Python | 3.10 or newer; the current local verification used Python 3.14.6 |
 | Environment | Conda recommended; local environment name: `anomalib_env` |
 | Operating system | macOS or Linux for the current workflows |
-| GPU | optional for smoke inference; strongly recommended for training |
+| GPU | optional for MWE inference; strongly recommended for training |
 | CUDA | required only for NVIDIA acceleration and CUDA-specific optional packages |
 
 PyTorch emits deprecation warnings for TorchScript on Python 3.14. For a conservative training deployment, Python 3.11–3.13 is recommended until the upstream TorchScript transition is complete.
@@ -107,7 +132,7 @@ PyTorch emits deprecation warnings for TorchScript on Python 3.14. For a conserv
 | Workflow | CPU/RAM | GPU | Disk |
 | --- | --- | --- | --- |
 | Catalog, tests, UI layout | 4+ cores, 16 GB RAM | not required | 10 GB plus weights |
-| Small inference smoke test | 8+ cores, 16 GB RAM | optional | weights plus selected dataset |
+| MWE inference | 8+ cores, 16 GB RAM | optional | weights plus selected dataset |
 | Full textile training | 8+ cores, 32 GB RAM | NVIDIA GPU recommended; capacity depends on model/batch | dataset and run artifacts, typically tens of GB |
 | Full benchmark suite | 16+ cores, 32–64 GB RAM | recommended | all datasets, weights, maps, exports, and logs |
 
@@ -196,7 +221,7 @@ The release policy is:
 
 The existing MoECLIP Google Drive URL is retained only as legacy provenance. See [docs/weights.md](docs/weights.md).
 
-## 8. Five-minute verification
+## 8. Minimal Working Example (MWE)
 
 ```bash
 conda activate anomalib_env
@@ -220,7 +245,7 @@ Run a real local inference:
 adh predict yolov8n \
   --weights textile/artifacts/models/published/yolov8n.pt \
   --image datasets/textile/ZJU-Leaper/Images/052628.jpg \
-  --output results/yolov8n-smoke.json
+  --output results/yolov8n-mwe.json
 ```
 
 Expected result: JSON containing the model identity and one prediction with boxes, labels, and confidence scores. Exact detections depend on the checkpoint and input.
@@ -253,7 +278,7 @@ adh train --list
 adh models
 ```
 
-Fast pipeline smoke test:
+MWE training run:
 
 ```bash
 adh train patchcore --dataset zju-leaper --mode test --no-publish
@@ -284,7 +309,7 @@ adh train moeclip \
   --no-publish
 ```
 
-Use `--no-publish` for smoke runs and experiments. Without it, a successful canonical run updates the published slot used by the UI.
+Use `--no-publish` for MWE runs and experiments. Without it, a successful canonical run updates the published slot used by the UI.
 
 ## 11. Inference
 
@@ -385,7 +410,7 @@ Run `adh doctor`, verify the categorized directory, or pass `--dataset-root`. Th
 
 ### Component checkout not found
 
-Clone the required repository under `components/<name>` and rerun `adh doctor`. The expected root-level layout is mandatory.
+Run `git submodule update --init --recursive` and rerun `adh doctor`. The expected root-level layout is mandatory.
 
 ### SOCKS proxy error when importing Gradio
 
@@ -428,10 +453,6 @@ git diff --check
 ```
 
 The architecture suite verifies, among other rules, that the UI does not import backend business logic and that every published model declares training provenance.
-
-## License and third-party code
-
-See [LICENSE](LICENSE) for this repository. Each component keeps its upstream license and Git history. Dataset users remain responsible for the license and redistribution terms of each original dataset.
 
 ## Additional documentation
 
