@@ -49,6 +49,7 @@ runs/
 # tens of gigabytes and must never enter the source repository.
 # ---------------------------------------------------------------------------
 datasets/*
+!datasets/README.md
 !datasets/textile/
 !datasets/general/
 !datasets/textile/.gitkeep
