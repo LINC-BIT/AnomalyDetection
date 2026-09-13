@@ -36,7 +36,7 @@ class InferenceSessionManager:
         self._active: LoadedModel | None = None
         self._lock = threading.RLock()
 
-    def load(self, model_id: str, spec: dict[str, Any], artifact: Artifact) -> dict[str, Any]:
+    def load(self, model_id: str, spec: dict[str, Any], artifact: Artifact, samples: list[Sample] | None = None) -> dict[str, Any]:
         """Load a selected artifact once, evicting any previously resident model."""
 
         with self._lock:
@@ -44,7 +44,11 @@ class InferenceSessionManager:
                 return self.status()
             self._unload_active()
             started_at = time.perf_counter()
-            adapter = self._model_loader(spec["backend"], spec["name"])
+            model_kwargs = {}
+            if spec.get("name", "").lower() in {"winclip", "winclipadapter"} and samples:
+                from fabric_defect_hub.models.anomalib.presets import prompt_class_for_samples
+                model_kwargs["class_name"] = prompt_class_for_samples(samples)
+            adapter = self._model_loader(spec["backend"], spec["name"], **model_kwargs)
             self._load_artifact(adapter, artifact)
             _move_adapter_to_device(adapter, _runtime_memory()["device"])
             self._active = LoadedModel(

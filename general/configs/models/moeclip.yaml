@@ -1,0 +1,39 @@
+model:
+  name: ViT-L-14-336
+  img_size: 518
+  moe_r: 8
+  moe_lora_alpha: 16
+  moe_num_experts: 4
+  moe_top_k: 2
+  moe_layers: [5, 11, 17, 23]
+  use_fofs: true
+  use_paa: true
+  seg_proj_sharing_strategy: shared
+  image_adapt_weight: 0.1
+  relu: false
+  prompt_class: null
+  prompts: {}
+
+data:
+  dataset: visa
+  test_dataset: mvtec-ad
+  train_selection: {split: test, num_samples: 600, use_defect: true, defect_ratio: 0.5, task: segmentation, seed: 0}
+  test_selection: {split: test, num_samples: 400, use_defect: true, defect_ratio: 0.5, task: segmentation, seed: 0}
+
+train:
+  enabled: true
+  epochs: 20
+  batch_size: 4
+  lr: 0.00005
+  balance_loss_lambda: 0.01
+  etf_loss_lambda: 0.01
+  lr_milestones: [16000, 32000]
+  lr_gamma: 0.5
+  seed: 111
+  num_workers: 0
+  device: null
+
+val: {enabled: true, output_dir: general/artifacts/anomaly_maps/moeclip, max_pixels: 1000000, max_aupro_images: 50, seed: 0}
+predict: {output_dir: general/artifacts/anomaly_maps/moeclip}
+export: {enabled: false, formats: []}
+checkpoint: {work_dir: null, name: general_moeclip, registry_dir: general/artifacts/models}

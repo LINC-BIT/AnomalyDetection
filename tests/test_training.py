@@ -157,11 +157,9 @@ def test_enforce_allows_trainable_fabric_datasets(dataset):
 
 
 @pytest.mark.parametrize("dataset", ["visa", "mvtec-ad", "mvtec-loco"])
-def test_enforce_rejects_eval_only_datasets_for_anomaly_backends(dataset):
-    with pytest.raises(ValueError, match="not a training source"):
-        _enforce_trainable_dataset({"data": {"dataset": dataset}}, "anomalib")
-    with pytest.raises(ValueError, match="not a training source"):
-        _enforce_trainable_dataset({"data": {"dataset": dataset}}, "mambaad")
+def test_enforce_allows_general_datasets_for_anomaly_backends(dataset):
+    _enforce_trainable_dataset({"data": {"dataset": dataset}}, "anomalib")
+    _enforce_trainable_dataset({"data": {"dataset": dataset}}, "mambaad")
 
 
 @pytest.mark.parametrize("dataset", sorted(ZERO_SHOT_TRAINABLE_DATASETS))
@@ -171,7 +169,7 @@ def test_enforce_allows_cross_domain_corpora_for_zero_shot_backend(dataset):
     _enforce_trainable_dataset({"data": {"dataset": dataset}}, "moeclip")
 
 
-@pytest.mark.parametrize("dataset", sorted(ANOMALY_TRAINABLE_DATASETS))
+@pytest.mark.parametrize("dataset", sorted(ANOMALY_TRAINABLE_DATASETS - ZERO_SHOT_TRAINABLE_DATASETS))
 def test_enforce_rejects_fabric_training_for_zero_shot_backend(dataset):
     # Training MoECLIP on fabric would make its fabric scores in-domain and
     # void the zero-shot claim the benchmark is measuring.

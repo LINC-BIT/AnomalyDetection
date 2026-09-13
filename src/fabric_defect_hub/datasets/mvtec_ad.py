@@ -8,9 +8,8 @@ layout: `train/good`, `test/<defect_type>/`, `ground_truth/<defect_type>/`.
 Each category has *multiple* defect-type subfolders (unlike RAW_FABRID's
 single `defect` bucket), and ground-truth masks are named `<id>_mask.png`.
 
-It is registered here primarily to support cross-domain zero-shot /
-robustness evaluation: run a fabric-trained anomaly model against a
-completely different, non-fabric image distribution.
+It supports one-class anomaly training and cross-domain evaluation through
+the same registered dataset interface.
 
 Mirrors `ZJULeaperDataset`/`RawFabricDataset`'s sample-count control so
 every dataset in this project is interchangeable from the loader/UI's

@@ -15,8 +15,9 @@ from fabric_defect_hub.catalog import (
 )
 
 
-def test_canonical_models_has_twenty_entries():
-    assert len(CANONICAL_MODELS) == 20
+def test_canonical_models_include_textile_and_general_entries():
+    assert len(CANONICAL_MODELS) == 29
+    assert {model.domain for model in CANONICAL_MODELS} == {"textile", "general"}
 
 
 def test_canonical_model_keys_are_unique():
@@ -44,9 +45,13 @@ def test_every_published_model_is_reachable_by_its_own_name(model):
 
     from fabric_defect_hub.training import resolve_model_config_and_variant
 
-    path, variant = resolve_model_config_and_variant(model.variant)
+    lookup = model.key if model.key.endswith("_general") else model.variant
+    path, variant = resolve_model_config_and_variant(lookup)
 
-    assert path.name == model.config
+    declared = Path(__file__).parents[1] / model.config
+    if not declared.is_file():
+        declared = Path(__file__).parents[1] / "configs" / "models" / model.config
+    assert path.resolve() == declared.resolve()
     assert variant is not None
     assert variant.strip().lower() == model.variant.strip().lower()
 
@@ -59,10 +64,13 @@ def test_every_catalogued_config_exists_on_disk():
 
     from fabric_defect_hub.training import DEFAULT_MODEL_CONFIG_DIR
 
-    missing = sorted(
-        {model.config for model in CANONICAL_MODELS
-         if not (Path(DEFAULT_MODEL_CONFIG_DIR) / model.config).is_file()}
-    )
+    root = Path(__file__).parents[1]
+    missing = sorted({
+        model.config
+        for model in CANONICAL_MODELS
+        if not (root / model.config).is_file()
+        and not (Path(DEFAULT_MODEL_CONFIG_DIR) / model.config).is_file()
+    })
     assert not missing, f"catalog names configs that do not exist: {missing}"
 
 

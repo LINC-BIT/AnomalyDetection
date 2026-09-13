@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -116,12 +117,16 @@ _EXTENSION = {
 }
 
 
-def find_canonical_model(backend: str, variant: str) -> CanonicalModel | None:
+def find_canonical_model(backend: str, variant: str, domain: str | None = None) -> CanonicalModel | None:
     """Find a CanonicalModel by backend and variant name."""
 
     needle = variant.strip().lower()
     for model in CANONICAL_MODELS:
-        if model.backend == backend and model.variant.strip().lower() == needle:
+        if (
+            model.backend == backend
+            and model.variant.strip().lower() == needle
+            and (domain is None or model.domain == domain)
+        ):
             return model
     return None
 
@@ -147,6 +152,35 @@ def published_path(model: CanonicalModel) -> Path:
     """
     root = GENERAL_ROOT / "artifacts" / "models" / "published" if model.domain == "general" else PUBLISHED_MODEL_ROOT
     return root / f"{model.key}{_EXTENSION[model.backend]}"
+
+
+def published_metadata_path(model: CanonicalModel) -> Path:
+    """Return the metadata sidecar paired with a published weight."""
+
+    weight = published_path(model)
+    return weight.with_suffix(weight.suffix + ".metadata.json")
+
+
+def read_published_metadata(model: CanonicalModel) -> dict[str, Any]:
+    """Read training metadata written when the canonical weight was published."""
+
+    path = published_metadata_path(model)
+    if not path.is_file():
+        return {}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def write_published_metadata(model: CanonicalModel, metadata: dict[str, Any]) -> Path:
+    """Write the UI-facing provenance sidecar for a published weight."""
+
+    path = published_metadata_path(model)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
 
 
 def published_status(path: Path) -> str:
@@ -311,7 +345,13 @@ def metadata_for(model: CanonicalModel) -> dict:
     return {"trusted": True, "source": model.source, **common}
 
 
-def publish_artifact(backend: str, variant: str, registered_artifact_path: str) -> Path | None:
+def publish_artifact(
+    backend: str,
+    variant: str,
+    registered_artifact_path: str,
+    *,
+    domain: str | None = None,
+) -> Path | None:
     """Point the published slot for `(backend, variant)` at a registered
     checkpoint, via a *relative* symlink.
 
@@ -335,7 +375,7 @@ def publish_artifact(backend: str, variant: str, registered_artifact_path: str) 
     treats symlink targets as protected for exactly this reason.
     """
 
-    model = find_canonical_model(backend, variant)
+    model = find_canonical_model(backend, variant, domain=domain)
     if model is None:
         return None
     source = Path(registered_artifact_path).resolve()

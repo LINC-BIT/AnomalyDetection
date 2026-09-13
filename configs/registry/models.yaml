@@ -1,7 +1,9 @@
 schema_version: 1
 weight_policy:
   storage: project_cache
-  cache_root: textile/artifacts/models/published
+  cache_roots:
+    textile: textile/artifacts/models/published
+    general: general/artifacts/models/published
   tracked_by_git: false
   preferred_distribution: huggingface_hub
   legacy_distribution: manual
@@ -39,3 +41,12 @@ models:
     source: manually_imported_upstream_weight
     legacy_weight_url: https://drive.google.com/file/d/1d5iKW1ojGpMkeobbxNd9h_QG27xLWuKZ/view
   - {id: MambaAD, backend: mambaad, variant: resnet34, task: anomaly, config: mambaad_example.yaml, label: "MambaAD · ZJU-Leaper (normal only)", method: MambaAD, trained_on: [zju-leaper], training_split: normal_only, domain: textile, source: local_trained_artifact}
+  - {id: PatchCore_general, backend: anomalib, variant: PatchCore, task: anomaly, config: general/configs/models/anomalib.yaml, label: "PatchCore · General", method: PatchCore, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}
+  - {id: PaDiM_general, backend: anomalib, variant: PaDiM, task: anomaly, config: general/configs/models/anomalib.yaml, label: "PaDiM · General", method: PaDiM, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}
+  - {id: RD4AD_general, backend: anomalib, variant: RD4AD, task: anomaly, config: general/configs/models/anomalib.yaml, label: "RD4AD · General", method: Reverse Distillation, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}
+  - {id: EfficientAD_general, backend: anomalib, variant: EfficientAD, task: anomaly, config: general/configs/models/anomalib.yaml, label: "EfficientAD · General", method: EfficientAD, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}
+  - {id: SuperSimpleNet_general, backend: anomalib, variant: SuperSimpleNet, task: anomaly, config: general/configs/models/anomalib.yaml, label: "SuperSimpleNet · General", method: SuperSimpleNet, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}
+  - {id: STFPM_general, backend: anomalib, variant: STFPM, task: anomaly, config: general/configs/models/anomalib.yaml, label: "STFPM · General", method: STFPM, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}
+  - {id: GANomaly_general, backend: anomalib, variant: GANomaly, task: anomaly, config: general/configs/models/anomalib.yaml, label: "GANomaly · General", method: GANomaly, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}
+  - {id: Dinomaly_general, backend: dinomaly, variant: dinov2reg_vit_base_14, task: anomaly, config: general/configs/models/dinomaly.yaml, label: "Dinomaly · General", method: Dinomaly, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}
+  - {id: MambaAD_general, backend: mambaad, variant: resnet34, task: anomaly, config: general/configs/models/mambaad.yaml, label: "MambaAD · General", method: MambaAD, trained_on: [not-trained], training_split: normal_only, domain: general, source: general_training_slot}

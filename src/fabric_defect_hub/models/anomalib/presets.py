@@ -48,6 +48,29 @@ from __future__ import annotations
 
 from typing import Any
 
+
+def prompt_class_for_samples(samples: list[Any] | None, forced: str | None = None) -> str:
+    """Resolve the noun used by CLIP prompts from dataset sample metadata.
+
+    General anomaly datasets expose ``category`` (for example ``bottle`` or
+    ``pcb1``); textile adapters expose ``fabric_type`` or no class metadata.
+    A mixed-category batch uses the neutral ``object`` noun rather than
+    silently selecting one category.
+    """
+    if forced and str(forced).strip():
+        return str(forced).strip()
+    categories: set[str] = set()
+    for sample in samples or []:
+        metadata = getattr(sample, "metadata", None) or {}
+        value = metadata.get("category")
+        if value:
+            categories.add(str(value).strip())
+    if len(categories) == 1:
+        return next(iter(categories))
+    if len(categories) > 1:
+        return "object"
+    return "fabric"
+
 # README/paper name -> anomalib.models class name.
 MODEL_ALIASES: dict[str, str] = {
     "patchcore": "Patchcore",

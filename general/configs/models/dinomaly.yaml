@@ -1,0 +1,29 @@
+model:
+  name: dinov2reg_vit_base_14
+
+data:
+  dataset: mvtec-ad
+  train_selection: {split: train, num_samples: null, use_defect: false, task: anomaly, seed: 0}
+  test_selection: {split: test, num_samples: null, use_defect: true, task: anomaly, seed: 0}
+
+train:
+  enabled: true
+  total_iters: 5000
+  batch_size: 32
+  image_size: 448
+  crop_size: 392
+  lr: 0.002
+  final_lr: 0.0002
+  warmup_iters: 100
+  weight_decay: 0.0001
+  hm_percent_final: 0.9
+  hm_percent_warmup_iters: 1000
+  hm_factor: 0.1
+  grad_clip_max_norm: 0.1
+  num_workers: 0
+  device: null
+
+val: {enabled: true, output_dir: general/artifacts/anomaly_maps/dinomaly, max_pixels: 1000000, max_aupro_images: 50, seed: 0}
+predict: {output_dir: general/artifacts/anomaly_maps/dinomaly}
+export: {enabled: false, formats: []}
+checkpoint: {work_dir: null, name: general_dinomaly, registry_dir: general/artifacts/models}

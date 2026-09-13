@@ -13,9 +13,9 @@ def test_tianchi_is_both_a_detection_and_anomaly_training_source():
     assert caps.default_root == "datasets/textile/tianchi"
 
 
-def test_cross_domain_benchmarks_are_not_anomaly_trainable():
+def test_general_benchmarks_support_one_class_and_auxiliary_training():
     for name in ("mvtec-ad", "mvtec-loco", "visa"):
-        assert not capabilities_for(name).supports("anomaly_train")
+        assert capabilities_for(name).supports("anomaly_train")
         assert capabilities_for(name).supports("zero_shot_train")
 
 

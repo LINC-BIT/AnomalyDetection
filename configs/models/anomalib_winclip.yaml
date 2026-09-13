@@ -53,4 +53,6 @@ export:
 checkpoint:
   default_root_dir: runs/winclip_zeroshot_zju_pattern1-4
   name: winclip_zeroshot_zju_pattern1-4
-  registry_dir: textile/artifacts/models
+  # WinCLIP is an upstream general-domain zero-shot checkpoint. Its
+  # evaluation target may be textile, but the published slot is general/.
+  registry_dir: general/artifacts/models

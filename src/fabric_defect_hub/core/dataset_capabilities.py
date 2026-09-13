@@ -18,16 +18,11 @@ capabilities here is enough to make it a training-eligible source, a
 `fabric-train` member, or both.
 
 Roles (a dataset may hold more than one):
-- "anomaly_train"       -- in-domain fabric, valid standalone training
-                           source for the one-class anomaly backends
+- "anomaly_train"       -- normal-only training source for one-class anomaly backends
                            (Anomalib/Dinomaly/MambaAD) and MoECLIP's
                            evaluation target.
-- "zero_shot_train"      -- cross-domain auxiliary corpus MoECLIP (the
-                           zero-shot backend) may train on; disjoint from
-                           "anomaly_train" by design -- training a
-                           zero-shot detector on the same fabric it is
-                           later evaluated on would void the zero-shot
-                           claim (see `training._enforce_trainable_dataset`).
+- "zero_shot_train"     -- labelled auxiliary corpus on which MoECLIP may
+                           train. A general benchmark can hold both roles.
 - "detection_train"      -- bbox-labelled, a legitimate source for the
                            Ultralytics/torchvision detection backends.
 - "fabric_train_member"  -- contributes samples to the `fabric-train`
@@ -55,6 +50,7 @@ class DatasetCapabilities:
     default_root: str | None = None
     roles: frozenset[Role] = field(default_factory=frozenset)
     tasks: tuple[str, ...] = ()
+    domain: str = "general"
 
     def supports(self, role: Role) -> bool:
         return role in self.roles
@@ -69,11 +65,12 @@ def register_capabilities(
     default_root: str | None = None,
     roles: frozenset[Role] | set[Role] = frozenset(),
     tasks: tuple[str, ...] = (),
+    domain: str = "general",
 ) -> None:
     if name in _CAPABILITIES:
         raise ValueError(f"capabilities for dataset '{name}' are already registered")
     _CAPABILITIES[name] = DatasetCapabilities(
-        default_root=default_root, roles=frozenset(roles), tasks=tasks
+        default_root=default_root, roles=frozenset(roles), tasks=tasks, domain=domain
     )
 
 
@@ -111,24 +108,28 @@ register_capabilities(
     default_root="datasets/textile/ZJU-Leaper",
     roles={"anomaly_train", "detection_train", "fabric_train_member"},
     tasks=("detection", "segmentation", "anomaly"),
+    domain="textile",
 )
 register_capabilities(
     "raw-fabric",
     default_root="datasets/textile/RAW_FABRID",
     roles={"anomaly_train", "fabric_train_member"},
     tasks=("anomaly", "segmentation"),
+    domain="textile",
 )
 register_capabilities(
     "tilda-400",
     default_root="datasets/textile/TILDA_400",
     roles={"anomaly_train", "fabric_train_member"},
     tasks=("anomaly",),
+    domain="textile",
 )
 register_capabilities(
     "fabric-defects",
     default_root="datasets/textile/Fabric Defects Dataset",
     roles={"anomaly_train", "fabric_train_member"},
     tasks=("anomaly", "segmentation"),
+    domain="textile",
 )
 register_capabilities(
     # Tianchi Guangdong fabric defect challenge: native bbox annotations
@@ -140,6 +141,7 @@ register_capabilities(
     default_root="datasets/textile/tianchi",
     roles={"anomaly_train", "detection_train", "fabric_train_member"},
     tasks=("detection", "anomaly"),
+    domain="textile",
 )
 register_capabilities(
     # The composite itself: not a member of its own union, but otherwise a
@@ -148,22 +150,23 @@ register_capabilities(
     default_root="datasets/textile",
     roles={"anomaly_train"},
     tasks=("anomaly", "segmentation", "detection"),
+    domain="textile",
 )
 register_capabilities(
     "mvtec-ad",
     default_root="datasets/general/MVTec AD",
-    roles={"zero_shot_train"},
+    roles={"anomaly_train", "zero_shot_train"},
     tasks=("anomaly", "segmentation"),
 )
 register_capabilities(
     "mvtec-loco",
     default_root="datasets/general/MVTec LOCO",
-    roles={"zero_shot_train"},
+    roles={"anomaly_train", "zero_shot_train"},
     tasks=("anomaly", "segmentation"),
 )
 register_capabilities(
     "visa",
     default_root="datasets/general/VisA",
-    roles={"zero_shot_train"},
+    roles={"anomaly_train", "zero_shot_train"},
     tasks=("anomaly", "segmentation"),
 )

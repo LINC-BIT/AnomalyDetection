@@ -46,7 +46,7 @@ model:
   moe_lora_alpha: 16
   moe_num_experts: 4
   moe_top_k: 2              # experts each patch is routed to
-  # weights: artifacts/models/published/MoECLIP.pt
+  # weights: general/artifacts/models/published/MoECLIP.pth
   #   Evaluate an existing checkpoint instead of training: set this and
   #   train.enabled: false. The architecture knobs above must match the
   #   ones the checkpoint was trained with.

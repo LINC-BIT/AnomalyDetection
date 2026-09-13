@@ -207,15 +207,16 @@ def test_load_selected_model_delegates_to_session_manager_when_checkpoint_exists
     captured = {}
 
     class FakeSessionManager:
-        def load(self, model_id, spec, artifact):
+        def load(self, model_id, spec, artifact, samples=None):
             captured["model_id"] = model_id
             captured["artifact_path"] = artifact.path
+            captured["samples"] = samples
             return {"active_model": model_id}
 
     result = load_selected_model(FakeSessionManager(), "Fake Model")
 
     assert result == {"active_model": "Fake Model"}
-    assert captured == {"model_id": "Fake Model", "artifact_path": str(present)}
+    assert captured == {"model_id": "Fake Model", "artifact_path": str(present), "samples": []}
 
 
 def test_image_scope_filters_defect_and_normal_samples(monkeypatch, tmp_path):

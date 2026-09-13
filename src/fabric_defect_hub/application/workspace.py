@@ -7,7 +7,7 @@ import random
 from pathlib import Path
 from typing import Any
 
-from fabric_defect_hub.catalog import CANONICAL_MODELS, metadata_for, published_path
+from fabric_defect_hub.catalog import CANONICAL_MODELS, metadata_for, published_path, read_published_metadata
 from fabric_defect_hub.application import load_dataset, load_model
 from fabric_defect_hub.core.availability import backend_is_importable
 from fabric_defect_hub.core.checkpoint import inspect_checkpoint
@@ -22,8 +22,9 @@ RUNTIME_ANOMALY_MAP_ROOT = PROJECT_ROOT / "artifacts" / "runtime" / "anomaly_map
 _SSD_VOLUME_PARENT = Path("anomaly-detection-challenges") / "datasets"
 
 # Generated from `catalog.CANONICAL_MODELS`
-MODEL_CATALOG = {
-    model.label: {
+def _model_catalog_row(model):
+    published_metadata = read_published_metadata(model)
+    return {
         "backend": model.backend,
         "name": model.variant,
         "checkpoint": published_path(model),
@@ -34,11 +35,15 @@ MODEL_CATALOG = {
         "integration": model.integration,
         "training_mode": model.training_mode,
         "method": model.method,
-        "trained_on": list(model.trained_on),
-        "training_split": model.training_split,
-        "evaluated_on": list(model.evaluated_on),
+        "trained_on": published_metadata.get("trained_on", list(model.trained_on)),
+        "training_split": published_metadata.get("training_split", model.training_split),
+        "evaluated_on": published_metadata.get("evaluated_on", list(model.evaluated_on)),
         "domain": model.domain,
     }
+
+
+MODEL_CATALOG = {
+    model.label: _model_catalog_row(model)
     for model in CANONICAL_MODELS
 }
 
@@ -93,16 +98,16 @@ DATASET_CATALOG = {
         "slice_kwarg": "category",
         "task": "anomaly",
     },
-    # Cross-domain, eval-only object benchmark (logical + structural
-    # anomalies); per-image ground-truth mask dirs (datasets/mvtec_loco.py).
+    # General object benchmark (logical + structural anomalies); per-image
+    # ground-truth mask dirs (datasets/mvtec_loco.py).
     "MVTec LOCO": {
         "name": "mvtec-loco",
         "env": "MVTEC_LOCO_ROOT",
         "slice_kwarg": "category",
         "task": "anomaly",
     },
-    # Cross-domain, eval-only object benchmark; pixel masks for the Anomaly
-    # split (datasets/visa.py).
+    # General object benchmark; pixel masks for the Anomaly split
+    # (datasets/visa.py).
     "VisA": {
         "name": "visa",
         "env": "VISA_ROOT",
@@ -538,7 +543,7 @@ def detect_current(state: dict[str, Any], model_label: str, lang: str = DEFAULT_
     return image, prediction_summary(prediction, model.capabilities()), tr(lang, "inference_complete")
 
 
-def load_selected_model(session_manager: Any, model_label: str) -> dict[str, Any]:
+def load_selected_model(session_manager: Any, model_label: str, state: dict[str, Any] | None = None) -> dict[str, Any]:
     """Load a catalog entry through the UI-independent inference service.
 
     Checks the checkpoint file exists *before* handing off to the adapter.
@@ -559,7 +564,8 @@ def load_selected_model(session_manager: Any, model_label: str) -> dict[str, Any
             f"no trained checkpoint at {checkpoint} — train {model_label!r} "
             f"first (see `adh train-all`), nothing was loaded"
         )
-    return session_manager.load(model_label, spec, artifact_for_model(spec))
+    samples = [sample_from_dict(item) for item in (state or {}).get("samples", [])]
+    return session_manager.load(model_label, spec, artifact_for_model(spec), samples=samples)
 
 
 def unload_selected_model(session_manager: Any) -> dict[str, Any]:

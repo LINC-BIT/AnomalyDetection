@@ -6,10 +6,8 @@ as:
     <category>/Data/Images/Anomaly/<id>.JPG
     <category>/Data/Masks/Anomaly/<id>.png       # pixel ground truth
 
-Like MVTec AD, VisA is registered here as a *cross-domain, eval-only*
-benchmark: run a fabric-trained anomaly model against a completely different
-image distribution. It is deliberately NOT in
-`training.ANOMALY_TRAINABLE_DATASETS` — training on it is rejected.
+VisA supports one-class anomaly training from its normal-image split and
+evaluation from the remaining normal and anomalous images.
 
 VisA ships no on-disk train/test partition per category (just Normal/Anomaly
 folders), so — like the flat-folder fabric datasets — the normal images are

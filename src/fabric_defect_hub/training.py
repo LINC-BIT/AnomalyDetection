@@ -42,25 +42,16 @@ DEFAULT_TRAINING_PROFILE = Path("configs/training_profile.yaml")
 # rather than hand-maintained here — see that module's docstring for why.
 DEFAULT_DATASET_ROOTS: dict[str, str] = default_dataset_roots()
 
-# Anomaly (one-class) training is deliberately restricted to *in-domain
-# fabric* sources: the individual fabric datasets and the `fabric-train`
-# union that combines them (see datasets/fabric_train.py). Cross-domain
-# object benchmarks (MVTec AD/LOCO, VisA) are eval-only — training a fabric
-# model on them would defeat the benchmark — and detection-only sets
-# (SDUST-FDD) belong to the ultralytics/torchvision backends, not the
-# one-class anomaly ones. `_enforce_trainable_dataset` rejects anything
-# outside this set for the one-class backends.
+# Anomaly (one-class) training uses every dataset declared with the
+# `anomaly_train` role. This includes the general object benchmarks
+# (MVTec AD/LOCO and VisA) and the textile sources. `_enforce_trainable_dataset`
+# rejects datasets outside this declared set for one-class backends.
 ANOMALY_TRAINABLE_DATASETS: set[str] = names_with_role("anomaly_train")
 
-# ...and the exact mirror image, for zero-shot (ZSAD) backends. MoECLIP
-# learns prompt-aligned anomaly features from labelled defects on an
-# *auxiliary* corpus and is then applied to categories it has never seen —
-# that transfer is the claim being benchmarked. Training it on fabric
-# would make its fabric numbers in-domain and quietly void that claim, so
-# the fabric sources above are rejected here and the cross-domain object
-# benchmarks (eval-only for every other model) are the allowed training
-# corpora instead. Which fabric set it is then *evaluated* on is a
-# separate config key (`data.test_dataset`), unrestricted.
+# MoECLIP uses the separate `zero_shot_train` role because it learns from
+# labelled anomalies rather than the normal-only split used by one-class
+# models. MVTec AD/LOCO and VisA therefore hold both training roles. Its
+# evaluation target remains a separate `data.test_dataset` value.
 ZERO_SHOT_TRAINABLE_DATASETS: set[str] = names_with_role("zero_shot_train")
 
 # Per backend: (train-split selection key, val/test-split selection key) in
@@ -445,7 +436,10 @@ def _resolve_by_catalog(needle: str, directory: Path) -> tuple[Path, str] | None
     for entry in CANONICAL_MODELS:
         if needle not in {entry.key.strip().lower(), entry.variant.strip().lower()}:
             continue
-        path = directory / entry.config
+        declared = Path(entry.config)
+        path = declared if declared.is_absolute() else Path(__file__).resolve().parents[2] / declared
+        if not path.is_file():
+            path = directory / entry.config
         if not path.is_file():
             # The catalog names a config that isn't in this directory --
             # possible when `config_dir` is overridden (tests, a caller's own
@@ -978,12 +972,8 @@ def _enforce_trainable_dataset(raw: dict[str, Any], backend: str) -> None:
             "the fabric set you want it evaluated on instead."
         )
     raise ValueError(
-        f"dataset {dataset!r} is not a training source for the one-class "
-        f"'{backend}' backend. Anomaly training is restricted to in-domain "
-        f"fabric sources: {allowed}. Cross-domain benchmarks (mvtec-ad, "
-        "mvtec-loco, visa) are eval-only for these models — use them for "
-        "inference/benchmark, not training. To train on the combined fabric "
-        "corpus use 'fabric-train'."
+        f"dataset {dataset!r} is not a registered one-class training source "
+        f"for the '{backend}' backend. Supported datasets: {allowed}."
     )
 
 
@@ -1070,7 +1060,29 @@ def run_train(
         model_key = BACKEND_MODEL_KEY[resolved_backend]
         resolved_variant = raw.get("model", {}).get(model_key)
         if resolved_variant:
-            destination = publish_artifact(resolved_backend, resolved_variant, result.registered_artifact.path)
+            from fabric_defect_hub.core.dataset_capabilities import capabilities_for
+
+            dataset_name = raw.get("data", {}).get("dataset")
+            domain = capabilities_for(dataset_name).domain if dataset_name else None
+            destination = publish_artifact(
+                resolved_backend,
+                resolved_variant,
+                result.registered_artifact.path,
+                domain=domain,
+            )
+            if destination is not None:
+                from fabric_defect_hub.catalog import find_canonical_model, write_published_metadata
+
+                published_model = find_canonical_model(resolved_backend, resolved_variant, domain=domain)
+                if published_model is not None:
+                    write_published_metadata(
+                        published_model,
+                        {
+                            "trained_on": [dataset_name],
+                            "training_split": raw.get("data", {}).get("train_selection", {}).get("split"),
+                            "evaluated_on": [raw.get("data", {}).get("test_dataset") or dataset_name],
+                        },
+                    )
             published = str(destination) if destination is not None else None
 
     manifest_path: str | None = None

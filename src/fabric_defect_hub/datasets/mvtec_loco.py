@@ -16,8 +16,7 @@ not a single `<id>_mask.png` file as in MVTec AD. There is also a
 `validation/` split on disk, which this adapter ignores (this project's
 split contract is train/test only).
 
-Registered as a *cross-domain, eval-only* benchmark (like MVTec AD / VisA):
-NOT in `training.ANOMALY_TRAINABLE_DATASETS`.
+Registered as a general anomaly dataset for one-class training and evaluation.
 
 Homepage: https://www.mvtec.com/company/research/datasets/mvtec-loco
 """

@@ -1,0 +1,43 @@
+model:
+  name: PatchCore
+
+data:
+  dataset: mvtec-ad
+  train_selection:
+    split: train
+    num_samples: null
+    use_defect: false
+    task: anomaly
+    seed: 0
+  test_selection:
+    split: test
+    num_samples: null
+    use_defect: true
+    task: anomaly
+    seed: 0
+
+train:
+  enabled: true
+  model_kwargs: {}
+  engine_kwargs:
+    max_epochs: 1
+  num_workers: 0
+
+val:
+  enabled: true
+  output_dir: general/artifacts/anomaly_maps/anomalib
+  max_pixels: 1000000
+  max_aupro_images: 50
+  seed: 0
+
+predict:
+  output_dir: general/artifacts/anomaly_maps/anomalib
+
+export:
+  enabled: false
+  formats: []
+
+checkpoint:
+  default_root_dir: general/artifacts/runs/anomalib
+  name: general_anomalib
+  registry_dir: general/artifacts/models

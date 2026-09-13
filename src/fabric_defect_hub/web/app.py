@@ -317,9 +317,9 @@ def create_app():
                         image, summary, status = detect_loaded_model(sessions, current_state, model_label, lang)
                         return image, render_prediction_tags(summary, lang), status, format_session_status(sessions.status(), lang)
 
-                    def load_model_handler(model_label, lang):
+                    def load_model_handler(model_label, current_state, lang):
                         try:
-                            return format_session_status(load_selected_model(sessions, model_label), lang)
+                            return format_session_status(load_selected_model(sessions, model_label, current_state), lang)
                         except Exception as exc:
                             return tr(lang, "model_load_failed", error_type=type(exc).__name__, error=exc)
 
@@ -343,7 +343,7 @@ def create_app():
                     )
                     model_choice.change(
                         model_status,
-                        inputs=[model_choice, lang_state],
+                        inputs=[model_choice, state, lang_state],
                         outputs=model_state,
                     )
                     def model_choices(task_type, domain):

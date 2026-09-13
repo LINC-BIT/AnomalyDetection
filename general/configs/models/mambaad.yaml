@@ -1,0 +1,26 @@
+model:
+  name: resnet34
+
+data:
+  dataset: mvtec-ad
+  train_selection: {split: train, num_samples: null, use_defect: false, task: anomaly, seed: 0}
+  test_selection: {split: test, num_samples: null, use_defect: true, task: anomaly, seed: 0}
+
+train:
+  enabled: true
+  total_iters: 5000
+  batch_size: 16
+  image_size: 256
+  lr: 0.005
+  weight_decay: 0.0001
+  warmup_iters: 0
+  loss_lambda: 5.0
+  decay_at: 0.8
+  decay_rate: 0.1
+  num_workers: 0
+  device: null
+
+val: {enabled: true, output_dir: general/artifacts/anomaly_maps/mambaad, max_pixels: 1000000, max_aupro_images: 50, seed: 0}
+predict: {output_dir: general/artifacts/anomaly_maps/mambaad}
+export: {enabled: false, formats: []}
+checkpoint: {work_dir: null, name: general_mambaad, registry_dir: general/artifacts/models}

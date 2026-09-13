@@ -1,16 +1,15 @@
 # Cloud Completion Checklist
 
-This document is only for the four canonical models that do **not** have a
-published project weight on the current local machine. The other 16 canonical
-models already have published artifacts and must not be uploaded to, or
-retrained on, the cloud merely to recreate them.
+This document is retained as a historical cloud-run checklist. The published
+project weights have now been uploaded; do not rerun the missing-model batch
+merely to recreate them.
 
 ## Scope
 
 | Model | Why it is missing locally | Cloud data | Base weight behavior |
 | --- | --- | --- | --- |
 | EfficientAD | Needs a separate natural-image regularization set | ZJU-Leaper + Imagenette | Anomalib/timm downloads or reuses its pretrained teacher |
-| WinCLIP | Training-free, no learned ZJU checkpoint | ZJU-Leaper test set | OpenCLIP downloads or reuses its cache at first inference |
+| WinCLIP | Upstream zero-shot checkpoint; no learned ZJU checkpoint | ZJU-Leaper test set | OpenCLIP/LAION-400M pretrained backbone; no MVTec or textile fitting |
 | MoECLIP | Needs an auxiliary zero-shot training corpus | MVTec AD + ZJU-Leaper | **Manual** `ViT-L-14-336px.pt` placement required |
 | MambaAD | High-resource model; no accepted published baseline yet | ZJU-Leaper | timm downloads or reuses its pretrained ResNet teacher |
 

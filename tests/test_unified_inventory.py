@@ -6,7 +6,7 @@ from fabric_defect_hub.application import model_inventory, platform_inventory
 
 def test_all_canonical_models_have_classification_and_integration():
     rows = model_inventory()
-    assert len(rows) == 20
+    assert len(rows) == 29
     assert len({row["id"] for row in rows}) == len(rows)
     assert {row["category"] for row in rows} == {
         "supervised_defect_detection",
@@ -24,14 +24,14 @@ def test_component_models_point_to_component_integration():
     assert rows["MoECLIP"]["integration"] == "component"
 
 
-def test_inventory_uses_domain_owned_textile_weights():
+def test_inventory_uses_domain_owned_weights():
     for row in model_inventory():
-        assert Path(row["weight"]).parts[-5:-3] == ("textile", "artifacts")
+        assert Path(row["weight"]).parts[-5:-3] == (row["domain"], "artifacts")
 
 
 def test_platform_inventory_is_the_shared_serializable_contract():
     inventory = platform_inventory()
-    assert len(inventory["models"]) == 20
+    assert len(inventory["models"]) == 29
     assert len(inventory["datasets"]) == 9
 
 

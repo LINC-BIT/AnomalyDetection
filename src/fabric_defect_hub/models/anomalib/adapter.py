@@ -35,6 +35,7 @@ from fabric_defect_hub.models.anomalib.presets import (
     default_model_kwargs,
     resolve_model_class,
     resolve_model_class_name,
+    prompt_class_for_samples,
 )
 from fabric_defect_hub.models.base import Artifact, ExportedArtifact, ModelAdapter, ModelCapabilities
 
@@ -114,6 +115,8 @@ class AnomalibAdapter(ModelAdapter):
         config = resolve_train_config(config, self.TRAIN_CONFIG_KEYS)
 
         model_kwargs = {**default_model_kwargs(self.name), **config.get("model_kwargs", {})}
+        if self.resolved_class_name == "WinClip" and "prompt_class" not in model_kwargs:
+            model_kwargs["class_name"] = prompt_class_for_samples(config.get("train_samples") or config.get("test_samples"))
         self._validate_model_kwargs(model_kwargs)
         if self._is_zero_shot_winclip(model_kwargs):
             return self._zero_shot_winclip_artifact(model_kwargs, config)
