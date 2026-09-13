@@ -1,3 +1,6 @@
+# ---------------------------------------------------------------------------
+# Tool, editor, and environment state
+# ---------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 .DS_Store
@@ -13,25 +16,43 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+
+# ---------------------------------------------------------------------------
+# Generated outputs. Nothing below is source. These paths are produced by
+# training, inference, evaluation, benchmarking, and export runs, and they are
+# regenerated from the configuration and the weights.
+# ---------------------------------------------------------------------------
+runs/
 **/data/*
 !**/data/.gitkeep
 **/artifacts/*
 !**/artifacts/.gitkeep
 **/results/*
 !**/results/.gitkeep
+
+# Model and export binaries.
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.engine
+*.torchscript
+
+# Run products.
+*.npy
+*.jsonl
+*.csv
+*.log
+
+# ---------------------------------------------------------------------------
+# Datasets. Keep only placeholders and documentation. Dataset bytes can be
+# tens of gigabytes and must never enter the source repository.
+# ---------------------------------------------------------------------------
 datasets/*
 !datasets/textile/
 !datasets/general/
 !datasets/textile/.gitkeep
 !datasets/general/.gitkeep
-*.pt
-*.pth
-*.ckpt
-*.onnx
-*.torchscript
-
-# Keep only domain placeholders and documentation. Dataset bytes can be
-# tens of gigabytes and must never enter the source repository.
 datasets/textile/*
 !datasets/textile/.gitkeep
 !datasets/textile/DATASET.md
