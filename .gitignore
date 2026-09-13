@@ -6,6 +6,8 @@ __pycache__/
 .cache/
 .venv/
 .pytest_cache/
+# DSH agent tooling state (project memory store); not project content.
+.dsh-project-memory/
 .coverage
 htmlcov/
 build/
