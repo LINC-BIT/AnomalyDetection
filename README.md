@@ -1,47 +1,58 @@
 # AnomalyDetection
 
-**One interface for supervised defect detection, supervised defect segmentation, and industrial anomaly detection.**
+**One interface for supervised defect detection, and unsupervised anomaly detection.**
 
-AnomalyDetection is an extensible, config-driven, multi-domain platform with unified contracts. Nine dataset adapters, 29 model entries, and six backends; the model manifest—not the source code—controls which models are published. It is operated via a web UI, the `adh` CLI, and the Python package `fabric_defect_hub` (a historical import name covering all task families).
+AnomalyDetection is an **extensible, multi-domain platform** built on **unified contracts**. It ships **nine dataset adapters** and **29 model entries**, and is operated through a **web UI**.
 
 ---
 
 ## Quick Links
 
-| Resource | Entry point |
-|---|---|
-| **Install** | [Section 4](#4-installation) — `python -m pip install -r requirements-full.txt` |
-| **Verify without data** | [Section 4.4](#44-verify-the-installation) — `adh list`, `adh inventory`, `adh doctor` |
-| **Minimal Working Example** | [Section 3](#3-minimal-working-example) — a visible result on one image |
-| **Requirements** | [Section 5.1](#51-software) (software) and [Section 5.2](#52-hardware-profiles) (hardware profiles) |
-| **Datasets** | [Section 8](#8-data-preparation) — nine registered datasets, three with automated download |
-| **Weights** | [Section 9](#9-weight-preparation) — published slots, state reporting, Hugging Face Hub distribution |
-| **Web interface** | [Section 10](#10-web-interface) — `adh-ui`, default `http://127.0.0.1:6008` |
-| **Command line** | [Section 11](#11-command-line-workflows) — `adh train`, `adh predict`, `adh evaluate`, `adh benchmark` |
-| **Architecture** | [Section 6](#6-architecture) — layering rule, registries, contracts |
-| **Recorded demonstrations** | [Section 10.5](#105-recorded-demonstrations) — `detection.mp4`, `benchmark.mp4` |
-| **Supported models** | [Section 7.2](#72-supported-models) — the 29 model identifiers of the manifest |
-| **Testing** | [Section 14](#14-testing-and-quality-gates) — `make check` |
-| **Troubleshooting** | [Section 16](#16-troubleshooting) — dataset, weight, web interface, and memory problems |
+<table align="center">
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>Entry point</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Requirements</strong></td><td><a href="#3-requirements">Section 3</a> — software, and hardware profiles</td></tr>
+    <tr><td><strong>Install</strong></td><td><a href="#4-installation">Section 4</a> — <code>python -m pip install -r requirements-full.txt</code></td></tr>
+    <tr><td><strong>Verify without data</strong></td><td><a href="#44-verify-the-installation">Section 4.4</a> — <code>adh list</code>, <code>adh inventory</code>, <code>adh doctor</code></td></tr>
+    <tr><td><strong>Minimal Working Example</strong></td><td><a href="#5-minimal-working-example">Section 5</a> — a visible result on one image</td></tr>
+    <tr><td><strong>Datasets</strong></td><td><a href="#8-data-preparation">Section 8</a> — nine registered datasets, three with automated download</td></tr>
+    <tr><td><strong>Weights</strong></td><td><a href="#9-weight-preparation">Section 9</a> — the 19 distributed weights, and the nine trainable <code>general</code> slots</td></tr>
+    <tr><td><strong>Web interface</strong></td><td><a href="#10-web-interface">Section 10</a> — <code>adh-ui</code>, default <code>http://127.0.0.1:6008</code></td></tr>
+    <tr><td><strong>Command line</strong></td><td><a href="#11-command-line-workflows">Section 11</a> — <code>adh train</code>, <code>adh predict</code>, <code>adh evaluate</code>, <code>adh benchmark</code></td></tr>
+    <tr><td><strong>Supported models</strong></td><td><a href="#72-supported-models">Section 7.2</a> — the 29 model identifiers of the manifest</td></tr>
+    <tr><td><strong>Registered datasets</strong></td><td><a href="#73-registered-datasets">Section 7.3</a> — default roots, tasks, and training roles</td></tr>
+    <tr><td><strong>Architecture</strong></td><td><a href="#6-architecture">Section 6</a> — the layering rule, the registries, and the contracts</td></tr>
+    <tr><td><strong>Testing</strong></td><td><a href="#14-testing-and-quality-gates">Section 14</a> — <code>make check</code></td></tr>
+    <tr><td><strong>Troubleshooting</strong></td><td><a href="#16-troubleshooting">Section 16</a> — dataset, weight, web interface, and memory problems</td></tr>
+    <tr><td><strong>Recorded demonstrations</strong></td><td><a href="#105-recorded-demonstrations">Section 10.5</a> — <code>detection.mp4</code>, <code>benchmark.mp4</code></td></tr>
+  </tbody>
+</table>
 
 ## Outline
 
 <a href="#1-overview">1. Overview</a><br>
-<a href="#2-task-families">2. Task families</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#21-the-four-task-families">2.1 The four task families</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#22-metric-availability-rules">2.2 Metric availability rules</a><br>
-<a href="#3-minimal-working-example">3. Minimal Working Example</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#31-step-1-install-the-platform">3.1 Step 1: Install the platform</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#32-step-2-verify-the-installation-without-data">3.2 Step 2: Verify the installation without data</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#33-step-3-run-inference-in-the-web-interface">3.3 Step 3: Run inference in the web interface</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#11-weights">1.1 Weights</a><br>
+<a href="#2-application-domains-and-task-families">2. Application domains and task families</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#21-application-domains">2.1 Application domains</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#22-the-four-task-families">2.2 The four task families</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#23-metric-availability-rules">2.3 Metric availability rules</a><br>
+<a href="#3-requirements">3. Requirements</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#31-software">3.1 Software</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#32-hardware-profiles">3.2 Hardware profiles</a><br>
 <a href="#4-installation">4. Installation</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#41-obtain-the-source-and-initialise-components">4.1 Obtain the source and initialise components</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#42-create-the-python-environment">4.2 Create the Python environment</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#43-install-dependencies">4.3 Install dependencies</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#44-verify-the-installation">4.4 Verify the installation</a><br>
-<a href="#5-requirements">5. Requirements</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#51-software">5.1 Software</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#52-hardware-profiles">5.2 Hardware profiles</a><br>
+<a href="#5-minimal-working-example">5. Minimal Working Example</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#51-step-1-install-the-platform">5.1 Step 1: Install the platform</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#52-step-2-verify-the-installation-without-data">5.2 Step 2: Verify the installation without data</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#53-step-3-run-inference-in-the-web-interface">5.3 Step 3: Run inference in the web interface</a><br>
 <a href="#6-architecture">6. Architecture</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#61-directory-layout">6.1 Directory layout</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#62-layering-and-the-dependency-rule">6.2 Layering and the dependency rule</a><br>
@@ -50,6 +61,8 @@ AnomalyDetection is an extensible, config-driven, multi-domain platform with uni
 <a href="#7-application-domains-datasets-and-models">7. Application domains, datasets, and models</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#71-application-domains">7.1 Application domains</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#72-supported-models">7.2 Supported models</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#721-textile-application-domain">7.2.1 Textile application domain</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#722-general-application-domain">7.2.2 General application domain</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#73-registered-datasets">7.3 Registered datasets</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#74-choosing-a-model">7.4 Choosing a model</a><br>
 <a href="#8-data-preparation">8. Data preparation</a><br>
@@ -60,9 +73,10 @@ AnomalyDetection is an extensible, config-driven, multi-domain platform with uni
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#85-public-dataset-sources">8.5 Public dataset sources</a><br>
 <a href="#9-weight-preparation">9. Weight preparation</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#91-published-slot-layout">9.1 Published-slot layout</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#92-downloading-published-weights">9.2 Downloading published weights</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#93-verifying-weight-availability">9.3 Verifying weight availability</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#94-the-weight-manifest">9.4 The weight manifest</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#92-downloading-the-distributed-weights">9.2 Downloading the distributed weights</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#93-training-a-general-domain-weight">9.3 Training a general-domain weight</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#94-verifying-weight-availability">9.4 Verifying weight availability</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#95-the-weight-manifest">9.5 The weight manifest</a><br>
 <a href="#10-web-interface">10. Web interface</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#101-launch">10.1 Launch</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#102-model-session">10.2 Model session</a><br>
@@ -90,40 +104,55 @@ AnomalyDetection is an extensible, config-driven, multi-domain platform with uni
 <a href="#17-tools-reference">17. Tools reference</a><br>
 <a href="#18-terminology">18. Terminology</a><br>
 <a href="#19-additional-documentation">19. Additional documentation</a><br>
-<a href="#20-things-to-do">20. Things to DO</a><br>
 
 ---
 
 ## 1. Overview
 
-- **Background.** Industrial inspection needs three things at once: a model that localizes
-  defects, a model that outlines them, and a model that flags an outlier when no defect class
-  was ever defined. Each of those needs arrives with a different dataset, a different annotation
-  format, and a different research codebase.
+- **Motivation.** Industrial inspection requires three capabilities: a model that **localizes**
+  defects, a model that **outlines** them, and a model that **flags an outlier** when no defect
+  class was defined. Each capability is served by a separate dataset, annotation format, and
+  research codebase.
 
-- **Method: one interface, many backends.** Instead of one pipeline per framework,
-  AnomalyDetection defines unified data contracts — `Sample`, `Prediction`, and
-  `ExperimentResult` — and makes every backend implement the same `ModelAdapter` contract. A
-  backend declares its capabilities once, and every consumer (the CLI, the web interface, the
-  evaluator, the profiler) reads that declaration instead of guessing.
+- **Design: one interface, many backends.** Rather than one pipeline per framework, the platform
+  defines unified data contracts — `Sample`, `Prediction`, and `ExperimentResult` — and every
+  backend implements the same **`ModelAdapter`** contract. A backend declares its capabilities
+  once, and every consumer (CLI, web interface, evaluator, profiler) reads that declaration
+  rather than inferring it.
 
-- **Published models are data, not code.** The model manifest
-  [`configs/registry/models.yaml`](configs/registry/models.yaml) is the authoritative catalogue
-  of what the platform publishes: method, task, application domain, training corpus, evaluation
-  corpora, model configuration, and weight source. Adding a conforming entry updates every
-  consumer.
+- **Model catalogue.** The **model manifest**
+  ([`configs/registry/models.yaml`](configs/registry/models.yaml)) is the authoritative catalogue
+  of published models: method, task, application domain, training corpus, evaluation corpora,
+  model configuration, and weight source. Adding one conforming entry updates **every** consumer.
 
-- **Evaluation.** Four task families are scored by four evaluators with declared metric keys
-  ([Section 2](#2-task-families)). A metric that cannot be computed is reported as unavailable
-  rather than inferred from output the model does not produce.
+- **Evaluation.** Four **task families** are scored by four evaluators with declared **metric
+  keys** ([Section 2](#2-application-domains-and-task-families)). A metric that cannot be
+  computed is reported as **unavailable**, never inferred from output the model does not produce.
 
-- **Evaluation is reproducible by construction.** Every training run appends a provenance record
-  (timestamp, Git revision, working-tree state, host, platform, package versions, component
-  revisions) to an append-only weight manifest, and every evaluation is appended to a run log.
+- **Provenance.** Every training run appends a **provenance record** — timestamp, Git revision,
+  working-tree state, host, platform, package versions, component revisions — to an append-only
+  **weight manifest**; every evaluation is appended to a **run log**.
 
-## 2. Task families
+### 1.1 Weights
 
-### 2.1 The four task families
+- **Distributed by the project:** the textile-trained weights, and the WinCLIP and MoECLIP
+  adapters ([Section 9.2](#92-downloading-the-distributed-weights)).
+- **Trained by the user:** the nine general training slots, which declare no weight
+  ([Section 9.3](#93-training-a-general-domain-weight)).
+
+## 2. Application domains and task families
+
+### 2.1 Application domains
+
+Models, algorithms, and datasets are grouped by **application domain**. The `general` domain holds
+the domain-independent methods and datasets, which is most of the platform; `textile` is the
+domain-specific group registered today, and further groups such as `pcb` are added the same way
+([Section 15.3](#153-add-an-application-domain), [Section 7.1](#71-application-domains)).
+
+Of the domain-specific groups, only **`textile`** is provided. To use any other domain, train the
+model on that domain's datasets ([Section 9.3](#93-training-a-general-domain-weight)).
+
+### 2.2 The four task families
 
 The platform solves four task families through one interface. A backend fills only the prediction
 fields that its capability declaration reports.
@@ -175,120 +204,65 @@ fields that its capability declaration reports.
   </tbody>
 </table>
 
-The task of a dataset sample, not a global setting, selects the evaluator. The option
-`--task` forces a specific evaluator instead ([Section 11.4](#114-evaluation)). The
-`industrial` task family is implemented and evaluable but no published model identifier declares
-it; it is exercised through the Python API and the evaluator contract.
+The **task of a dataset sample**, not a global setting, selects the evaluator; `--task` forces a
+specific evaluator instead ([Section 11.4](#114-evaluation)). The **`industrial`** family is
+implemented and evaluable, but **no published model identifier declares it** — it is exercised
+through the Python API and the evaluator contract.
 
-### 2.2 Metric availability rules
+### 2.3 Metric availability rules
 
 Three rules determine which metric keys are computable.
 
 1. Image-level anomaly metrics require a sample label and a prediction score.
 2. Pixel-level anomaly metrics require a ground-truth mask and a model-produced anomaly map. A
-   model that does not declare `anomaly_map` cannot produce a heat map, and the web interface
-   therefore shows no heat map for it. GANomaly is such a model.
+   model that does not declare `anomaly_map` produces no heat map; GANomaly is one such model.
 3. The `instance_segmentation` task is scored by the `segmentation` evaluator over a unioned
    binary mask.
 
 ---
 
-## 3. Minimal Working Example
+## 3. Requirements
 
-This section is the shortest path from a clean checkout to a visible result. Each step is
-specified in full in the section referenced beside it.
+### 3.1 Software
 
-### 3.1 Step 1: Install the platform
+<table align="center">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Requirement</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Python</strong></td><td><strong>3.10 or newer</strong> is required. <strong>3.11–3.13</strong> are recommended for training, because PyTorch emits TorchScript deprecation warnings on 3.14. This document uses <strong>3.12</strong>.</td></tr>
+    <tr><td><strong>Environment manager</strong></td><td><strong>Conda</strong> is recommended. The name <code>anomalib_env</code> is historical and does not restrict which backends may be installed.</td></tr>
+    <tr><td><strong>Operating system</strong></td><td><strong>macOS or Linux.</strong></td></tr>
+    <tr><td><strong>Graphics processing unit</strong></td><td><strong>Optional for inference.</strong> A CUDA-capable NVIDIA GPU is recommended for training.</td></tr>
+    <tr><td><strong>CUDA</strong></td><td>Required only for NVIDIA acceleration and for the CUDA-only optional dependency groups.</td></tr>
+    <tr><td><strong>Git</strong></td><td>Required, because three components are Git submodules.</td></tr>
+  </tbody>
+</table>
 
-```bash
-git clone --recurse-submodules https://github.com/LINC-BIT/AnomalyDetection.git
-cd AnomalyDetection
-conda create -n anomalib_env python=3.12 -y
-conda activate anomalib_env
-git submodule update --init --recursive
-python -m pip install -r requirements-full.txt
-```
+### 3.2 Hardware profiles
 
-`[[FILL: confirm the canonical clone URL and, if the project is mirrored, the mirror URL.]]`
+These figures are **recommendations, not guaranteed minimums**. On a constrained machine, use a
+smaller **batch size** and the **`test` shot mode**.
 
-The complete installation procedure, including the lean dependency set and the optional
-dependency groups, is stated in [Section 4](#4-installation).
-
-### 3.2 Step 2: Verify the installation without data
-
-The following commands require no dataset and no weight.
-
-```bash
-python examples/01_inspect_catalog.py
-adh list
-adh inventory
-adh doctor
-```
-
-Expected output, as recorded on the development machine:
-
-```text
-AnomalyDetection version: 0.2.0
-Registered models: 29
-Registered datasets: 9
-Models: yolov8n, yolov8s, yolo11n, fasterrcnn_resnet50_fpn, cascadercnn_resnet50_fpn, detr_resnet50, maskrcnn_resnet50_fpn, unetplusplus_resnet34, deeplabv3plus_resnet50, PatchCore, PaDiM, RD4AD, EfficientAD, SuperSimpleNet, STFPM, GANomaly, WinCLIP, Dinomaly, MoECLIP, MambaAD, PatchCore_general, PaDiM_general, RD4AD_general, EfficientAD_general, SuperSimpleNet_general, STFPM_general, GANomaly_general, Dinomaly_general, MambaAD_general
-Datasets: fabric-defects, fabric-train, mvtec-ad, mvtec-loco, raw-fabric, tianchi, tilda-400, visa, zju-leaper
-```
-
-`adh list` prints the registered datasets, backends, evaluators, and profilers. `adh inventory`
-prints the model manifest. `adh doctor` prints, for each backend, whether the backend is
-trainable on this machine and which dataset would be selected. The expected output of the first
-command is shown above; the expected outputs of the remaining three are stated in
-[Section 4.4](#44-verify-the-installation).
-
-If a command fails, read [Section 16](#16-troubleshooting) before continuing.
-
-### 3.3 Step 3: Run inference in the web interface
-
-Step 1. Launch the web interface as described in [Section 10.1](#101-launch).
-
-```bash
-adh-ui
-```
-
-Step 2. Open the printed URL. The default URL is `http://127.0.0.1:6008`.
-
-Step 3. In **Task type**, select **Anomaly detection**.
-
-![Minimal Working Example, step 3: select the task type](docs/images/img1.png)
-
-Step 4. In **Application domain**, select `general`, because the model used in this example
-belongs to the `general` application domain.
-
-![Minimal Working Example, step 4: select the application domain](docs/images/img2.png)
-
-Step 5. In **Model**, select `WinCLIP · LAION-400M zero-shot`. Confirm that the panel states the
-application domain `general` and the published slot
-`general/artifacts/models/published/WinCLIP.ckpt`.
-
-![Minimal Working Example, step 5: select the model](docs/images/img3.png)
-
-If that published slot is empty on your machine, substitute any model identifier whose
-`weight_status` field is `file` or `symlink` in the output of `adh inventory`
-([Section 9.3](#93-verifying-weight-availability)).
-
-Step 6. Select **Load model**, and wait until the status reports the model as loaded.
-
-![Minimal Working Example, step 6: load the model](docs/images/img4.png)
-
-Step 7. Select the dataset `ZJU-Leaper`, select a pattern or **All textures**, and select the
-`test` split. Select **Full-shot**. Then select **Load random images**.
-
-![Minimal Working Example, step 7: select the dataset and the split](docs/images/img5.png)
-
-Step 8. Select **Run detection**, and wait for the process to finish.
-
-![Minimal Working Example, step 8: run detection](docs/images/img6.png)
-
-Expected result: the gallery displays the loaded images and the anomaly score of each image,
-and, for a model that reports an anomaly map, the anomaly heat map.
-
-`[[FILL: record the observed anomaly scores, the observed runtime, and a screenshot of the completed run, so that a reader can compare a local result with a reference result.]]`
+<table align="center">
+  <thead>
+    <tr>
+      <th>Workflow</th>
+      <th>Processor and memory</th>
+      <th>Graphics processing unit</th>
+      <th>Disk</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Catalogue inspection, test suite, web interface layout</td><td>4 or more cores, 16 GB RAM</td><td>Not required</td><td>10 GB, plus the weights</td></tr>
+    <tr><td>Minimal Working Example inference</td><td>8 or more cores, 16 GB RAM</td><td>Optional</td><td>The weights, plus the selected dataset</td></tr>
+    <tr><td>Full textile training</td><td>8 or more cores, 32 GB RAM</td><td>NVIDIA recommended; capacity depends on the model and the batch size</td><td>The dataset and the run artifacts, typically tens of GB</td></tr>
+    <tr><td>Full benchmark suite</td><td>16 or more cores, 32 GB to 64 GB RAM</td><td>Recommended</td><td>All datasets, weights, anomaly maps, exports, and logs</td></tr>
+  </tbody>
+</table>
 
 ---
 
@@ -313,7 +287,7 @@ Expected result of `git submodule status`: three lines, one each for
 `components/anomalydiffusion`, `components/dinomaly`, and `components/moeclip`, each beginning
 with the pinned revision.
 
-Do not clone a component repository manually. The parent repository pins the tested revision
+**Do not clone a component repository manually.** The parent repository pins the tested revision
 through `.gitmodules` and a Git link.
 
 ### 4.2 Create the Python environment
@@ -324,8 +298,7 @@ conda activate anomalib_env
 python --version
 ```
 
-Expected result: the shell prompt is prefixed with `(anomalib_env)`. The environment name is
-historical and does not restrict which backends may be installed.
+Expected result: the shell prompt is prefixed with `(anomalib_env)`.
 
 ### 4.3 Install dependencies
 
@@ -343,8 +316,7 @@ historical and does not restrict which backends may be installed.
   </tbody>
 </table>
 
-Optional dependency groups are declared in `pyproject.toml`. Install a group only when it is
-needed.
+Optional dependency groups are declared in `pyproject.toml`.
 
 ```bash
 python -m pip install -e ".[mambaad-cuda]"           # CUDA-only fused selective-scan kernel
@@ -359,9 +331,9 @@ The `Makefile` provides the same two dependency sets as `make install` and `make
 
 ### 4.4 Verify the installation
 
-Four commands verify the installation. None of them requires a dataset or a weight. The first is
-`python examples/01_inspect_catalog.py`, stated in [Section 3.2](#32-step-2-verify-the-installation-without-data);
-the remaining three are stated here.
+Four commands verify the installation, and **none of them needs a dataset or a weight**. The
+first, `python examples/01_inspect_catalog.py`, is stated in
+[Section 5.2](#52-step-2-verify-the-installation-without-data); the other three are here.
 
 ```bash
 adh list
@@ -381,26 +353,22 @@ Expected output on a machine with all six frameworks installed:
 }
 ```
 
-`model_backends.known` lists every backend the project knows how to talk to;
+`model_backends.known` lists every backend the project supports;
 `model_backends.available` lists the backends whose framework is importable on this machine.
 
 ```bash
 adh inventory
 ```
 
-Expected result: a JSON object with the keys `models` and `datasets`. Each entry of `models`
-states the model identifier, the label, the backend, the model variant, the task, the category,
-the subtype, the integration, the training mode, the method, the training corpus, the training
-split, the evaluation corpora, the application domain, the model configuration, the
-published-slot path, the published-slot status, the weight source, and the legacy weight URL.
+Expected result: a JSON object with the keys `models` and `datasets`; each `models` entry states
+one manifest record in full.
 
 ```bash
 adh doctor
 ```
 
-Expected result: a JSON object keyed by backend. For each backend, `framework_installed` states
-whether the framework is importable, `trainable_now` states whether both the framework and a
-suitable dataset are available, and `reason` states which dataset would be selected and why.
+Expected result: a JSON object keyed by backend. `trainable_now` is true only when both the
+framework and a suitable dataset are available, and `reason` names the selected dataset.
 
 ```json
 {
@@ -421,48 +389,96 @@ depends on which datasets are staged on the machine.
 
 ---
 
-## 5. Requirements
+## 5. Minimal Working Example
 
-### 5.1 Software
+This section is the shortest path from a clean checkout to a visible result.
 
-<table align="center">
-  <thead>
-    <tr>
-      <th>Item</th>
-      <th>Requirement</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>Python</td><td>Version 3.10 or newer is required. Versions 3.11 to 3.13 are recommended for training, because PyTorch emits TorchScript deprecation warnings on version 3.14. The commands in this document use version 3.12. The verification recorded on the development machine used version 3.14.6.</td></tr>
-    <tr><td>Environment manager</td><td>Conda is recommended. The environment name used throughout this document is <code>anomalib_env</code>; the name is historical and does not restrict which backends may be installed.</td></tr>
-    <tr><td>Operating system</td><td>macOS or Linux.</td></tr>
-    <tr><td>Graphics processing unit</td><td>Optional for inference. A CUDA-capable NVIDIA graphics processing unit is recommended for training.</td></tr>
-    <tr><td>CUDA</td><td>Required only for NVIDIA acceleration and for the CUDA-only optional dependency groups.</td></tr>
-    <tr><td>Git</td><td>Required, because three components are Git submodules.</td></tr>
-  </tbody>
-</table>
+### 5.1 Step 1: Install the platform
 
-### 5.2 Hardware profiles
+The canonical clone URL is **`https://github.com/LINC-BIT/AnomalyDetection.git`**; no mirror is
+published. The full procedure — the lean and complete dependency sets, optional groups, and the
+submodule check — is in [Section 4](#4-installation).
 
-These figures are recommendations, not guaranteed minimums. On a constrained machine, use a
-smaller batch size and the `test` shot mode.
+```bash
+git clone --recurse-submodules https://github.com/LINC-BIT/AnomalyDetection.git
+cd AnomalyDetection
+conda create -n anomalib_env python=3.12 -y
+conda activate anomalib_env
+git submodule update --init --recursive
+python -m pip install -r requirements-full.txt
+```
 
-<table align="center">
-  <thead>
-    <tr>
-      <th>Workflow</th>
-      <th>Processor and memory</th>
-      <th>Graphics processing unit</th>
-      <th>Disk</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>Catalogue inspection, test suite, web interface layout</td><td>4 or more cores, 16 GB RAM</td><td>Not required</td><td>10 GB, plus the weights</td></tr>
-    <tr><td>Minimal Working Example inference</td><td>8 or more cores, 16 GB RAM</td><td>Optional</td><td>The weights, plus the selected dataset</td></tr>
-    <tr><td>Full textile training</td><td>8 or more cores, 32 GB RAM</td><td>NVIDIA recommended; capacity depends on the model and the batch size</td><td>The dataset and the run artifacts, typically tens of GB</td></tr>
-    <tr><td>Full benchmark suite</td><td>16 or more cores, 32 GB to 64 GB RAM</td><td>Recommended</td><td>All datasets, weights, anomaly maps, exports, and logs</td></tr>
-  </tbody>
-</table>
+### 5.2 Step 2: Verify the installation without data
+
+The following commands require no dataset and no weight.
+
+```bash
+python examples/01_inspect_catalog.py
+adh list
+adh inventory
+adh doctor
+```
+
+Expected output, as recorded on the development machine:
+
+```text
+AnomalyDetection version: 0.2.0
+Registered models: 29
+Registered datasets: 9
+Models: yolov8n, yolov8s, yolo11n, fasterrcnn_resnet50_fpn, cascadercnn_resnet50_fpn, detr_resnet50, maskrcnn_resnet50_fpn, unetplusplus_resnet34, deeplabv3plus_resnet50, PatchCore, PaDiM, RD4AD, EfficientAD, SuperSimpleNet, STFPM, GANomaly, WinCLIP, Dinomaly, MoECLIP, MambaAD, PatchCore_general, PaDiM_general, RD4AD_general, EfficientAD_general, SuperSimpleNet_general, STFPM_general, GANomaly_general, Dinomaly_general, MambaAD_general
+Datasets: fabric-defects, fabric-train, mvtec-ad, mvtec-loco, raw-fabric, tianchi, tilda-400, visa, zju-leaper
+```
+
+The remaining expected outputs are in [Section 4.4](#44-verify-the-installation).
+
+If a command fails, read [Section 16](#16-troubleshooting) before continuing.
+
+### 5.3 Step 3: Run inference in the web interface
+
+**Launch.** Start the web interface as described in [Section 10.1](#101-launch).
+
+```bash
+adh-ui
+```
+
+**Open the URL.** The default URL is `http://127.0.0.1:6008`.
+
+**Select the task type.** In **Task type**, select **Anomaly detection**.
+
+<p align="center"><img src="docs/images/img1.png" alt="Select the task type" width="80%"></p>
+
+**Select the application domain.** In **Application domain**, select `general`, because the model
+used in this example belongs to the `general` domain.
+
+<p align="center"><img src="docs/images/img2.png" alt="Select the application domain" width="80%"></p>
+
+**Select the model.** In **Model**, select `WinCLIP · LAION-400M zero-shot`. Confirm that the panel
+states the application domain `general` and the published slot
+`general/artifacts/models/published/WinCLIP.ckpt`.
+
+<p align="center"><img src="docs/images/img3.png" alt="Select the model" width="80%"></p>
+
+If that published slot is empty locally, substitute any model identifier whose
+`weight_status` field is `file` or `symlink` in the output of `adh inventory`
+([Section 9.4](#94-verifying-weight-availability)).
+
+**Load the model.** Select **Load model**, and wait until the status reports the model as loaded.
+
+<p align="center"><img src="docs/images/img4.png" alt="Load the model" width="80%"></p>
+
+**Select the dataset.** Select the dataset `ZJU-Leaper`, a pattern or **All textures**, and the
+`test` split. Select **Full-shot**, then **Load random images**.
+
+<p align="center"><img src="docs/images/img5.png" alt="Select the dataset and the split" width="80%"></p>
+
+**Run detection.** Select **Run detection**, and wait for the process to finish.
+
+<p align="center"><img src="docs/images/img6.png" alt="Run detection" width="80%"></p>
+
+Expected result: the gallery displays the loaded images and the anomaly score of each image and,
+for a model that reports an anomaly map, the anomaly heat map.
+
+Reference anomaly scores, runtime, and a completed-run capture are **not provided**.
 
 ---
 
@@ -506,8 +522,8 @@ AnomalyDetection/
 
 ### 6.2 Layering and the dependency rule
 
-A layer may import the layers above it in the following list and must not import the layers
-below it.
+A layer may import the layers above it in the following list and **must not import the layers
+below it**.
 
 1. `core/` — contracts, registries, and utilities. Imports no backend.
 2. `datasets/`, `models/`, `evaluation/`, `profiling/`, `quantization/`, `recipes/` —
@@ -516,14 +532,14 @@ below it.
    interface.
 4. `cli.py` and `web/` — presentation.
 
-Two mechanisms enforce this rule. `tests/test_web_layering.py` parses every module of `web/` with
-the `ast` module and fails if a module imports a backend package or contains a backend name as a
-string literal. The `architecture` pytest marker, declared in `pyproject.toml`, runs the
+**Two mechanisms enforce this rule.** `tests/test_web_layering.py` parses every module of `web/`
+with `ast` and fails if a module imports a backend package or contains a backend name as a string
+literal. The **`architecture`** pytest marker, declared in `pyproject.toml`, runs the
 source-boundary audits.
 
 ### 6.3 Registries
 
-Two registries answer two different questions.
+Two registries answer **two different questions**.
 
 1. The backend registry answers how an implementation runs. A decorator registers each
    implementation: `@register_model`, `@register_dataset`, `@register_evaluator`,
@@ -532,8 +548,8 @@ Two registries answer two different questions.
    application domain, training corpus, evaluation corpora, model configuration, and weight
    source.
 
-The application services join the two registries, so adding a conforming entry to the model
-manifest updates every consumer.
+The application services join the two registries, so **adding a conforming entry to the model
+manifest updates every consumer**.
 
 ### 6.4 Contracts
 
@@ -580,18 +596,20 @@ An application domain is a data family together with its assets. Two domains are
   </tbody>
 </table>
 
-The `domain` field of the model manifest records the application domain of a weight, and a
-training run writes its weight into the published slot of the application domain of the dataset
-that produced it. A weight must not be relabelled from one application domain to another.
+The **`domain`** field of the manifest records the application domain of a weight, and a training
+run publishes its weight into the slot of the **domain of the training dataset**. **A weight must
+not be relabelled** from one application domain to another.
 
 ### 7.2 Supported models
 
 The model manifest is authoritative. Run `adh inventory` for the machine-readable view and
 `adh models` for the backend-grouped view.
 
-The manifest declares 29 model identifiers: 18 in the `textile` application domain and 11 in the
-`general` application domain. Two identifiers may share a backend and a model variant when they
-belong to different application domains, which is the case for the nine general training slots.
+The manifest declares **29 model identifiers**: **18** in `textile` and **11** in `general`. Two
+identifiers may share a backend and a variant when they belong to **different application
+domains** — which is the case for the nine general training slots. The textile entries and
+`MoECLIP` are distributed with weights; the **nine general training slots** are not
+([Section 9.3](#93-training-a-general-domain-weight)).
 
 #### 7.2.1 Textile application domain
 
@@ -658,8 +676,7 @@ belong to different application domains, which is the case for the nine general 
 
 ### 7.3 Registered datasets
 
-Nine dataset identifiers are registered. Each identifier declares a default root, the tasks for
-which it can supply ground truth, and the training roles it may serve.
+Nine dataset identifiers are registered.
 
 <table align="center">
   <thead>
@@ -695,7 +712,7 @@ The training roles have the following meanings.
    corpus for the detection backends `ultralytics` and `torchvision`.
 4. `fabric_train_member` — the dataset contributes samples to the `fabric-train` composite.
 
-A dataset that declares none of these roles can be evaluated but not trained on. The
+A dataset that declares **none** of these roles **can be evaluated but not trained on**. The
 `fabric-train` composite is not a member of its own union.
 
 ### 7.4 Choosing a model
@@ -725,10 +742,10 @@ The manifests and the diagnosis commands answer most selection questions directl
 
 ### 8.1 Registered datasets and default roots
 
-A dataset is available to the command-line interface when its directory exists at the declared
-default root, relative to the repository root. The roots are listed in
+A dataset is available to the command-line interface when its directory exists at the **declared
+default root**, relative to the repository root. The roots are listed in
 [Section 7.3](#73-registered-datasets) and are declared once in `core/dataset_capabilities.py`.
-The `--dataset-root` option overrides the declared root for one command.
+The **`--dataset-root`** option overrides the declared root for one command.
 
 ### 8.2 Staging a dataset manually
 
@@ -766,7 +783,8 @@ adapter.
   </tbody>
 </table>
 
-`[[FILL: for each dataset that must be staged manually, record the acquisition procedure, the archive size, the license, the download date, and the exact directory structure that was staged.]]`
+Acquisition procedures, archive sizes, licenses, and download dates for the manually staged
+datasets are **not provided**.
 
 ### 8.3 Automated download
 
@@ -786,6 +804,10 @@ staged.
 `zju-leaper` accepts `--repo-id` to select a different Hugging Face dataset repository. The
 default is `AnupamaBandara/ZLU_Leaper`.
 
+Downloading a `general` dataset such as `mvtec-ad` or `visa` is the first step of training a
+`general`-domain model; [Section 9.3](#93-training-a-general-domain-weight) carries the
+worked example through to a published weight.
+
 ### 8.4 Verifying data availability
 
 ```bash
@@ -793,10 +815,26 @@ adh doctor
 ```
 
 Expected result: for every backend whose required kind of dataset is staged, the `dataset` field
-names that dataset and `trainable_now` is `true`. A backend whose `dataset` field is absent has
-no staged dataset of the required kind.
+names that dataset and `trainable_now` is `true`.
 
-`[[FILL: record the expected category or pattern count for each staged dataset, so that a reader can detect a partial download.]]`
+Each staged dataset declares a fixed number of categories, classes, or patterns. A smaller count
+means a **partial download**.
+
+<table align="center">
+  <thead>
+    <tr>
+      <th>Dataset identifier</th>
+      <th>Unit</th>
+      <th>Expected count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>mvtec-ad</code></td><td>categories</td><td>15</td></tr>
+    <tr><td><code>mvtec-loco</code></td><td>categories</td><td>5</td></tr>
+    <tr><td><code>visa</code></td><td>classes</td><td>12</td></tr>
+    <tr><td><code>zju-leaper</code></td><td>patterns</td><td>19</td></tr>
+  </tbody>
+</table>
 
 ### 8.5 Public dataset sources
 
@@ -813,10 +851,10 @@ no staged dataset of the required kind.
     <tr><td>MVTec LOCO</td><td><a href="https://www.mvtec.com/company/research/datasets/mvtec-loco">official page</a></td><td>Not available</td></tr>
     <tr><td>VisA</td><td><a href="https://github.com/amazon-science/spot-diff">official repository</a></td><td><code>visa</code></td></tr>
     <tr><td>ZJU-Leaper</td><td><a href="https://huggingface.co/datasets/AnupamaBandara/ZLU_Leaper">AnupamaBandara/ZLU_Leaper</a></td><td><code>zju-leaper</code></td></tr>
-    <tr><td>RAW-FABRID</td><td><code>[[FILL: source URL]]</code></td><td>Not available</td></tr>
-    <tr><td>TILDA-400</td><td><code>[[FILL: source URL]]</code></td><td>Not available</td></tr>
-    <tr><td>Fabric Defects Dataset</td><td><code>[[FILL: source URL]]</code></td><td>Not available</td></tr>
-    <tr><td>Tianchi Guangdong fabric defect challenge</td><td><code>[[FILL: source URL]]</code></td><td>Not available</td></tr>
+    <tr><td>RAW-FABRID</td><td><a href="https://www.mdpi.com/2306-5729/11/5/116">MDPI Data 11(5):116</a></td><td>Not available</td></tr>
+    <tr><td>TILDA-400</td><td>Not provided</td><td>Not available</td></tr>
+    <tr><td>Fabric Defects Dataset</td><td>Not provided</td><td>Not available</td></tr>
+    <tr><td>Tianchi Guangdong fabric defect challenge</td><td>Not provided</td><td>Not available</td></tr>
   </tbody>
 </table>
 
@@ -824,14 +862,18 @@ no staged dataset of the required kind.
 
 ## 9. Weight preparation
 
-A weight is an immutable runtime artifact and is not committed to Git. The model manifest
+A weight is an **immutable runtime artifact** and is **not committed to Git**. The model manifest
 declares where each weight resolves. A published slot without a weight is reported as `missing`;
-a weight without a conforming model-identifier entry is unsupported.
+a weight without a conforming model-identifier entry is **unsupported**.
+
+The **19 distributed weights** are downloaded
+([Section 9.2](#92-downloading-the-distributed-weights)); the **nine `general` training slots**
+are produced by training on a `general` dataset
+([Section 9.3](#93-training-a-general-domain-weight)).
 
 ### 9.1 Published-slot layout
 
-A published slot resolves under the `<application domain>/artifacts/models/published/`
-directory, where `<application domain>` is the application domain of the model identifier.
+A published slot resolves under `<application domain>/artifacts/models/published/`.
 
 ```text
 textile/artifacts/models/published/<model identifier><extension>
@@ -841,34 +883,19 @@ general/artifacts/models/published/<model identifier><extension>
 The extension is determined by the backend: `.pt` for `ultralytics` and `torchvision`, `.ckpt`
 for `anomalib`, and `.pth` for `dinomaly`, `moeclip`, and `mambaad`.
 
-A published slot holds one of four states, reported by `adh inventory` in the `weight_status`
-field.
-
-<table align="center">
-  <thead>
-    <tr>
-      <th>State</th>
-      <th>Meaning</th>
-      <th>Usable</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td><code>file</code></td><td>A regular file is present.</td><td>Yes</td></tr>
-    <tr><td><code>symlink</code></td><td>A symbolic link is present and resolves.</td><td>Yes</td></tr>
-    <tr><td><code>broken_link</code></td><td>A symbolic link is present and does not resolve, typically because the tree was copied without <code>artifacts/models/</code>.</td><td>No</td></tr>
-    <tr><td><code>missing</code></td><td>Nothing is present.</td><td>No</td></tr>
-  </tbody>
-</table>
+`adh inventory` reports the state of each slot in the `weight_status` field. Only `file` and
+`symlink` are usable; `broken_link` and `missing` are not.
 
 A training run with publishing enabled replaces the published slot of the matching model
 identifier with a relative symbolic link to the trained artifact. A tree copied from another
-machine therefore arrives with regular files, which remain usable without a migration step.
+machine therefore contains regular files, which remain usable without a migration step.
 
-### 9.2 Downloading published weights
+### 9.2 Downloading the distributed weights
 
-The published textile weights are distributed from a Hugging Face Hub repository. The download
-tool takes the repository identifier and the filename inside the repository as positional
-arguments and requires `--output`.
+The 19 distributed weights are hosted on a Hugging Face Hub repository.
+
+The download tool takes the repository identifier and the filename inside the repository as
+positional arguments and requires `--output`.
 
 ```bash
 python tools/download_weights.py AuroraLeeeeee/AnomalyDetection-textile-weights \
@@ -883,22 +910,111 @@ python tools/download_weights.py AuroraLeeeeee/AnomalyDetection-textile-weights 
 ```
 
 Use the same pattern for every other file, with the exact filename that `adh inventory` reports
-in the `weight` field. Do not move a weight from one application domain to another.
+in the `weight` field. **Do not move a weight from one application domain to another.**
 
-`[[FILL: record the exact Hugging Face Hub repository identifier, the revision, and the SHA-256 checksum of every distributed file. The repository identifier shown above must be confirmed before release.]]`
+The repository is **`AuroraLeeeeee/AnomalyDetection-textile-weights`**. Despite its historical
+name, it holds the published files of **both** application domains.
 
-`[[FILL: record the acquisition procedure for the weights that are not distributed through the Hugging Face Hub repository, namely the anomalib weights, the Dinomaly weight, the MambaAD weight, and the MoECLIP weight. The MoECLIP weight is currently a manual import from a legacy Google Drive location.]]`
+Pinned revisions and SHA-256 checksums of the distributed files are **not provided**.
 
-Two model identifiers require special handling.
+Two model identifiers need special handling.
 
-1. `WinCLIP` is an upstream LAION-400M-pretrained zero-shot model. Its published slot is a
-   metadata handle rather than a serialized weight, because the `k_shot = 0` configuration has
-   no learned state to restore. The adapter reconstructs the model from the metadata.
-   `[[FILL: state whether the WinCLIP published slot must be distributed, or whether the model is always reconstructed.]]`
-2. `MoECLIP` is an adapter trained on an auxiliary corpus. Its training corpus and its evaluation
-   corpus are different datasets, and both are recorded in the model manifest.
+1. **`WinCLIP`** is an upstream LAION-400M-pretrained zero-shot model. Because the `k_shot = 0`
+   configuration has no learned state to restore, its published slot is a **metadata handle**
+   rather than a serialized weight: the slot is distributed like any other file, and the adapter
+   reconstructs the model from the metadata.
+2. **`MoECLIP`** is an adapter trained on an auxiliary corpus. Its training corpus and its
+   evaluation corpus are different datasets, and both are recorded in the model manifest.
 
-### 9.3 Verifying weight availability
+### 9.3 Training a general-domain weight
+
+The nine **general training slots** ([Section 1.1](#11-weights)) declare **no weight**. Training
+one uses the same `adh train` entry point as any other model; only the dataset changes.
+
+The example below trains `PatchCore` on the `bottle` category of **MVTec AD**, publishes it into
+the `PatchCore_general` slot, and makes it available in the web interface.
+
+**Step 1. Stage the dataset.** MVTec AD is one of the three datasets with an automated download
+([Section 8.3](#83-automated-download)). Pass the declared default root exactly.
+
+```bash
+python tools/download_datasets.py mvtec-ad --root "datasets/general/MVTec AD" --category bottle
+```
+
+Omitting `--category` trains on every category. VisA works the same way, with `visa` and
+`datasets/general/VisA`.
+
+**Step 2. Confirm that the backend and the dataset are ready.**
+
+```bash
+adh doctor
+```
+
+Expected result: the `anomalib` entry states `trainable_now: true` and names `mvtec-ad` as the
+selected dataset.
+
+**Step 3. Train.** Publishing is enabled by default, so this command fills the published slot;
+`--no-publish` is the option that suppresses it. `--variant PatchCore` selects the method inside
+the `anomalib` configuration, so one configuration file trains any anomalib method.
+
+```bash
+adh train general/configs/models/anomalib.yaml \
+  --variant PatchCore \
+  --dataset mvtec-ad \
+  --category bottle
+```
+
+The run writes a trained artifact under `artifacts/models/`, appends a provenance record to the
+weight manifest, and points `general/artifacts/models/published/PatchCore_general.ckpt` at it.
+[Section 11.2](#112-training) states the full option set of a training run.
+
+**Step 4. Confirm that the weight is now in place.**
+
+```bash
+adh inventory
+```
+
+Expected result: the `PatchCore_general` entry reports `weight_status: symlink` (or `file`) and a
+`weight` field that names the published slot. Before step 3 the same entry reported `missing`.
+
+**Step 5. Use it.** Launch `adh-ui`, select the task type **Anomaly detection**, the application
+domain `general`, and the model `PatchCore · General`, then load the model as in
+[Section 5.3](#53-step-3-run-inference-in-the-web-interface). The same weight can be scored from the
+command line:
+
+```bash
+adh evaluate general/configs/models/anomalib.yaml \
+  --weights general/artifacts/models/published/PatchCore_general.ckpt \
+  --dataset mvtec-ad \
+  --category bottle \
+  --split test \
+  --output-dir artifacts/runtime/anomaly_maps
+```
+
+**Other methods and datasets.** Replace `--variant` to train a different anomalib method on the
+same corpus, or point `--dataset` at another staged dataset. `PatchCore` and `PaDiM` are
+feature-based and complete quickly; `RD4AD`, `EfficientAD`, `SuperSimpleNet`, `STFPM`,
+`GANomaly`, `Dinomaly`, and `MambaAD` train a network and require a CUDA-capable GPU for
+practical runtimes.
+
+```bash
+# The same corpus, a different method.
+adh train general/configs/models/anomalib.yaml --variant PaDiM --dataset mvtec-ad --category bottle
+
+# A different general dataset.
+adh train general/configs/models/anomalib.yaml --variant PatchCore --dataset visa --category capsules
+
+# Dinomaly and MambaAD have their own general configurations.
+adh train general/configs/models/dinomaly.yaml --dataset mvtec-ad --category bottle
+adh train general/configs/models/mambaad.yaml --dataset visa --category capsules
+```
+
+Use `--mode test --no-publish` for an eight-image wiring check that leaves every published slot
+untouched. It does not produce a usable weight.
+
+Reference wall-clock time and image AUROC for this run are **not provided**.
+
+### 9.4 Verifying weight availability
 
 ```bash
 adh inventory
@@ -923,18 +1039,17 @@ are empty.
   </tbody>
 </table>
 
-A missing weight is resolved either by training the corresponding model identifier or by placing
-the weight at the exact path reported by `adh inventory`. Do not rename the weight of a different
-architecture to satisfy a published slot.
+A missing weight is resolved by **training** the corresponding model identifier, or by placing the
+weight at the **exact path** reported by `adh inventory`. **Never rename the weight of a different
+architecture** to satisfy a published slot.
 
-### 9.4 The weight manifest
+### 9.5 The weight manifest
 
-Every training run that produces a trained artifact appends one provenance record to
-`artifacts/models/weight_manifest.jsonl` and writes a snapshot of the resolved configuration to
-`artifacts/models/records/<record identifier>.config.json`. The provenance record retains both
-the trained artifact and the published slot, so replacing the published slot never destroys the
-provenance of the trained artifact. The record contents are stated in
-[Section 13.2](#132-reproducibility-checklist).
+Every training run that produces a trained artifact appends one **provenance record** to
+`artifacts/models/weight_manifest.jsonl`, and writes the resolved configuration to
+`artifacts/models/records/<record identifier>.config.json`. The record keeps both the trained
+artifact and the published slot, so **replacing the published slot never destroys provenance**.
+The record contents are listed in [Section 13.2](#132-reproducibility-checklist).
 
 ---
 
@@ -948,8 +1063,8 @@ adh-ui
 ```
 
 Expected result: the process starts a local server and prints a URL. The default URL is
-`http://127.0.0.1:6008`. The web interface listens on all interfaces, so a remote host is
-reachable at the address of that host and the same port.
+`http://127.0.0.1:6008`; the server listens on all interfaces, so a remote host is reachable at
+the same port.
 
 ```bash
 GRADIO_SERVER_PORT=7860 adh-ui
@@ -972,7 +1087,7 @@ Select the controls in the stated order.
 The model panel states the method, the training corpus, the training split, the published-slot
 status, and the prediction fields that the capability declaration reports. Select **Load model**
 before running inference. The complete click-by-click procedure is stated in
-[Section 3.3](#33-step-3-run-inference-in-the-web-interface).
+[Section 5.3](#53-step-3-run-inference-in-the-web-interface).
 
 ### 10.3 Benchmark
 
@@ -1001,9 +1116,8 @@ The results are grouped into two categories.
   </tbody>
 </table>
 
-A metric that cannot be computed is reported as unavailable rather than inferred from output that
-the model does not produce. The web interface writes each benchmark run to the run log
-`runs/leaderboard_log.jsonl` and writes anomaly maps under
+A metric that cannot be computed is reported as **unavailable**. Each benchmark run is appended
+to the run log `runs/leaderboard_log.jsonl`, and its anomaly maps are written under
 `artifacts/runtime/anomaly_maps/benchmark/`.
 
 ### 10.4 Run history
@@ -1029,7 +1143,9 @@ The tab reads existing files only and never reruns an experiment.
   </tbody>
 </table>
 
-`[[FILL: record the recording date, the platform version, and the commit revision shown in each recording, so that a reader can tell which revision the recording demonstrates.]]`
+Both recordings were made on **2026-07-20**.
+
+The commit revision shown in each recording is **not provided**.
 
 ---
 
@@ -1045,8 +1161,8 @@ same three ways.
 3. As a model keyword matched against the `model.variant` field or the `model.name` field of
    every model configuration under `--config-dir`, for example `yolov8n` or `patchcore`.
 
-The default value of `--config-dir` is `configs/models`. The following three commands list three
-different things and must not be confused.
+The default value of `--config-dir` is `configs/models`. The three commands below list different
+objects and are not interchangeable.
 
 <table align="center">
   <thead>
@@ -1064,9 +1180,9 @@ different things and must not be confused.
 
 ### 11.2 Training
 
-A training run is configured by a model configuration and then modified by the `--dataset`,
-`--variant`, `--mode`, and `--set` options. The option `--set` overrides any value of the
-resolved model configuration by dotted path and has the highest priority of any override layer.
+A training run is configured by a **model configuration**, then modified by `--dataset`,
+`--variant`, `--mode`, and `--set`. **`--set`** overrides any value of the resolved configuration
+by dotted path and has the **highest priority** of any override layer.
 
 ```bash
 # Train a one-class anomaly model on a general dataset.
@@ -1096,12 +1212,11 @@ adh train moeclip \
   --no-publish
 ```
 
-The `test` shot mode is an eight-image wiring check. It does not produce a usable weight and must
-be combined with `--no-publish`.
+The **`test` shot mode** is an **eight-image wiring check**. It **does not produce a usable
+weight**, and must be combined with `--no-publish`.
 
-Publishing is enabled by default. A successful run whose model identifier appears in the model
-manifest replaces that identifier's published slot, which is the location that the web interface
-reads.
+Publishing is **enabled by default**. A successful run whose model identifier appears in the
+manifest replaces that identifier's published slot — the location the web interface reads.
 
 ```bash
 # A smoke run that does not touch any published slot.
@@ -1110,8 +1225,7 @@ adh train patchcore --dataset zju-leaper --mode test --no-publish
 
 Expected result: a JSON object with the keys `backend`, `resolved_config`, `resolved_variant`,
 `metrics`, `trained_artifact`, `registered_artifact`, `published_path`, `weight_manifest_path`,
-and `exports`. `metrics` holds the validation metrics that the backend reports, and
-`weight_manifest_path` is the absolute path of the weight manifest.
+and `exports`.
 
 ### 11.3 Inference
 
@@ -1133,11 +1247,11 @@ adh predict patchcore \
   --output-dir artifacts/runtime/anomaly_maps
 ```
 
-The option `--output-dir` persists one anomaly map per sample as
+The option **`--output-dir`** persists one anomaly map per sample as
 `<output directory>/<sample identifier>.npy`. It is meaningful only for a model whose capability
-declaration includes `anomaly_map`; it cannot make an image-level model such as GANomaly produce
-a heat map. The option `--output` writes the predictions as a JSON array whose schema is
-`schemas/prediction.schema.json`.
+declaration includes `anomaly_map`; it **cannot** make an image-level model such as GANomaly
+produce a heat map. The option **`--output`** writes the predictions as a JSON array whose schema
+is `schemas/prediction.schema.json`.
 
 Expected result for the single-image command:
 
@@ -1161,7 +1275,7 @@ Expected result for the single-image command:
 }
 ```
 
-`[[FILL: replace the anomaly score above with the value observed on the reference machine for the documented reference image.]]`
+The values above are illustrative.
 
 ### 11.4 Evaluation
 
@@ -1174,14 +1288,14 @@ adh evaluate patchcore \
   --output-dir artifacts/runtime/anomaly_maps
 ```
 
-The option `--task` forces a specific evaluator instead of using the task of the dataset samples.
-The option `--output-dir` is what makes the pixel-level metrics computable, because those metrics
-require a persisted anomaly map; without it, an anomaly model is scored on image-level metrics
-alone.
+The option **`--task`** forces a specific evaluator instead of using the task of the dataset
+samples. The option **`--output-dir`** is what makes the **pixel-level metrics** computable,
+because those metrics require a persisted anomaly map; without it, an anomaly model is scored on
+**image-level metrics alone**.
 
 Expected result: a JSON object with the keys `backend`, `resolved_config`, `variant`,
 `sample_count`, and `metrics`. The keys of `metrics` are those listed in
-[Section 2.1](#21-the-four-task-families).
+[Section 2.2](#22-the-four-task-families).
 
 Cross-pattern robustness is measured by scoring the same weight on held-out patterns and
 reducing the per-pattern accuracy drops to one number.
@@ -1208,7 +1322,7 @@ degradation of zero.
 
 ### 11.5 Benchmarking
 
-A benchmark is declared by a benchmark configuration whose top-level keys are `runs`,
+A benchmark is declared by a **benchmark configuration** whose top-level keys are `runs`,
 `output_dir`, `leaderboard`, `report_path`, and `run_log_path`. The `runs` key is a non-empty
 list, and each entry declares one experiment.
 
@@ -1216,10 +1330,13 @@ list, and each entry declares one experiment.
 adh benchmark configs/archive/benchmark_example.yaml
 ```
 
-Expected result: a JSON array of experiment results, one element per run. The example
-configuration writes its outputs under `artifacts/benchmarks/example`.
+The example scores `fasterrcnn_resnet50_fpn` on the `test` split of ZJU-Leaper and writes its
+outputs under `artifacts/benchmarks/example`. It resolves the dataset root from the
+**`ZJU_LEAPER_ROOT`** environment variable, so set that variable before the run.
 
-`[[FILL: add a benchmark configuration that a reader can run without editing, using a dataset and weights that the reader already has, and record its expected leaderboard.]]`
+Expected result: a JSON array of experiment results, one element per run.
+
+The expected leaderboard of the example benchmark is **not provided**.
 
 ### 11.6 Batch training
 
@@ -1229,7 +1346,7 @@ batch, with one log file and one state record per model identifier.
 ```bash
 adh train-all --dry-run
 adh train-all --only yolov8n PatchCore --mode test --no-publish
-adh train-all --run-id [[FILL: batch run identifier]] --resume
+adh train-all --run-id <run-id> --resume
 ```
 
 Expected result: a JSON object with the keys `batch_state`, `succeeded`, `total`, and `results`.
@@ -1260,13 +1377,13 @@ The directory of `batch_state` holds the per-model state and the per-model log.
 
 ## 12. Configuration and environment variables
 
-Two YAML files carry configuration. The model manifest `configs/registry/models.yaml` declares
-the published models and is the source of truth. A model configuration under `configs/models/` or
-`general/configs/models/` declares the executable parameters of one run; the model manifest
-refers to a model configuration by filename, and the runtime resolves it under `configs/models/`
-unless an explicit path is supplied.
+**Two YAML files carry configuration.** The **model manifest**
+(`configs/registry/models.yaml`) declares the published models and is the **source of truth**. A
+**model configuration** under `configs/models/` or `general/configs/models/` declares the
+executable parameters of one run; the manifest refers to it by filename, and the runtime resolves
+it under `configs/models/` unless an explicit path is given.
 
-No secret and no machine-specific absolute path may enter a committed YAML file. Use an
+**No secret and no machine-specific absolute path may enter a committed YAML file.** Use an
 environment variable instead.
 
 <table align="center">
@@ -1295,11 +1412,12 @@ environment variable instead.
   </tbody>
 </table>
 
-The shell tool `tools/run_full_benchmark.sh` reads a second set of `FDH_*` variables that are not
-part of the runtime configuration, notably `FDH_POWER_MODE` (required), `FDH_DATASET`,
-`FDH_DATASET_ROOT`, `FDH_MODELS`, `FDH_PATTERN`, `FDH_HELD_OUT_PATTERNS`, `FDH_NUM_SAMPLES`,
-`FDH_MEASURED_RUNS`, `FDH_WARMUP_RUNS`, `FDH_DEVICE`, `FDH_OUTPUT`, `FDH_ANOMALY_MAP_DIR`,
-`FDH_PYTHON`, and `FDH_RUN_ID`. Read the script header for their meanings and defaults.
+The shell tool `tools/run_full_benchmark.sh` reads a second set of `FDH_*` variables that are
+**not part of the runtime configuration**, notably `FDH_POWER_MODE` (**required**),
+`FDH_DATASET`, `FDH_DATASET_ROOT`, `FDH_MODELS`, `FDH_PATTERN`, `FDH_HELD_OUT_PATTERNS`,
+`FDH_NUM_SAMPLES`, `FDH_MEASURED_RUNS`, `FDH_WARMUP_RUNS`, `FDH_DEVICE`, `FDH_OUTPUT`,
+`FDH_ANOMALY_MAP_DIR`, `FDH_PYTHON`, and `FDH_RUN_ID`. Read the script header for their meanings
+and defaults.
 
 The web interface additionally resolves the location of each dataset from a dataset-specific
 environment variable before it falls back to the declared default root. The command-line
@@ -1363,27 +1481,26 @@ results/
 
 ### 13.2 Reproducibility checklist
 
-A provenance record states the timestamp, the Git revision, whether the working tree was
-modified, the host and platform, the Python environment, the versions of the installed packages,
-and the revisions of the component checkouts. The same provenance block is attached both to the
+A **provenance record** states the timestamp, the Git revision, whether the working tree was
+modified, the host and platform, the Python environment, the installed package versions, and the
+revisions of the component checkouts. The **same provenance block** is attached both to the
 weight manifest and to the run log, so a training result and an evaluation result can be traced
 to the same revision.
 
-Before reporting a result, confirm every item of the following list.
+Before reporting a result, **confirm every item** of the following list.
 
-1. The model identifier and the model configuration are stated exactly.
-2. The dataset identifier and the split are stated exactly.
-3. The shot mode and the sample count are stated exactly.
-4. The published-slot state was `file` or `symlink` when the run started.
-5. The provenance record of the run was retained.
-6. The anomaly maps were retained if any pixel-level metric is reported.
-7. The metric keys are quoted exactly as the evaluator emits them, and the metric key reported as
-   the headline result is named.
-8. Any metric that could not be computed is reported as unavailable rather than as zero.
+1. The model identifier, model configuration, dataset identifier, split, shot mode, and sample
+   count are stated exactly.
+2. The published-slot state was `file` or `symlink` when the run started.
+3. The provenance record of the run was retained.
+4. The anomaly maps were retained if any pixel-level metric is reported.
+5. The metric keys are quoted exactly as the evaluator emits them, and the headline metric is
+   named.
+6. Any metric that could not be computed is reported as unavailable rather than as zero.
 
-Do not commit a generated dataset, a trained artifact, an anomaly map, a cache, or a result.
+**Do not commit** a generated dataset, a trained artifact, an anomaly map, a cache, or a result.
 Distribute a durable weight through the channel documented in
-[Section 9.2](#92-downloading-published-weights).
+[Section 9.2](#92-downloading-the-distributed-weights).
 
 ---
 
@@ -1406,8 +1523,8 @@ Distribute a durable weight through the channel documented in
   </tbody>
 </table>
 
-A test marked `slow` requires the real framework dependencies, the real weights, and access to
-the dataset, and is not part of the default run.
+A test marked **`slow`** requires the real framework dependencies, the real weights, and access
+to the dataset, and is **not part of the default run**.
 
 ---
 
@@ -1446,8 +1563,8 @@ the dataset, and is not part of the default run.
 5. Train or calibrate the weights of the new domain and add separate model-manifest entries with
    the correct `domain` and `trained_on` values.
 
-Do not copy a reusable algorithm into an application-domain directory, and do not relabel a
-weight of one application domain as a weight of another.
+**Do not copy a reusable algorithm into an application-domain directory, and do not relabel a
+weight of one application domain as a weight of another.**
 
 ---
 
@@ -1525,17 +1642,14 @@ weight of one application domain as a weight of another.
   </tbody>
 </table>
 
-The tools `preflight_cloud_models.py` and `smoke_test_all_backends.py` accept no arguments and
-act when they are invoked. Do not invoke them with `--help` intending to inspect their interface.
-
-`[[FILL: add one worked example, with its expected output, for each tool that a reader is expected to use.]]`
+`preflight_cloud_models.py` and `smoke_test_all_backends.py` accept **no arguments** and act as
+soon as they are invoked; **`--help` does not print usage**.
 
 ---
 
 ## 18. Terminology
 
-This section defines every technical term used in this document. Each term carries exactly one
-meaning. `<application domain>` is a placeholder for either `textile` or `general`.
+`<application domain>` is a placeholder for either `textile` or `general`.
 
 <table align="center">
   <thead>
@@ -1546,33 +1660,31 @@ meaning. `<application domain>` is a placeholder for either `textile` or `genera
     </tr>
   </thead>
   <tbody>
-    <tr><td>application domain</td><td>A data family and its assets. The registered application domains are <code>textile</code> and <code>general</code>.</td><td><code>configs/registry/models.yaml</code> (<code>domain</code>)</td></tr>
-    <tr><td>backend</td><td>The execution framework through which a model runs. The registered backends are <code>ultralytics</code>, <code>torchvision</code>, <code>anomalib</code>, <code>dinomaly</code>, <code>moeclip</code>, and <code>mambaad</code>.</td><td><code>core/registry.py</code>, <code>loader._MODEL_BACKEND_MODULES</code></td></tr>
-    <tr><td>model variant</td><td>The architecture selected within a backend, for example <code>yolov8n</code> or <code>PatchCore</code>.</td><td><code>configs/registry/models.yaml</code> (<code>variant</code>)</td></tr>
-    <tr><td>model identifier</td><td>The stable identifier of one entry of the model manifest, for example <code>PatchCore</code> or <code>PatchCore_general</code>.</td><td><code>configs/registry/models.yaml</code> (<code>id</code>)</td></tr>
-    <tr><td>model manifest</td><td>The single authoritative catalogue of published models: <code>configs/registry/models.yaml</code>.</td><td><code>catalog.py</code></td></tr>
-    <tr><td>model configuration</td><td>A YAML file that declares the executable parameters of one run, for example <code>configs/models/ultralytics_example.yaml</code>.</td><td><code>configs/models/</code>, <code>general/configs/models/</code></td></tr>
-    <tr><td>optimization recipe</td><td>A paper-anchored hyperparameter profile registered under <code>src/fabric_defect_hub/recipes/</code>. An optimization recipe is not a model configuration.</td><td><code>fabric_defect_hub.recipes</code></td></tr>
-    <tr><td>dataset adapter</td><td>A <code>DatasetAdapter</code> subclass that converts one source dataset into <code>Sample</code> objects.</td><td><code>src/fabric_defect_hub/datasets/</code></td></tr>
-    <tr><td>sample</td><td>One image together with its annotations, represented by <code>core.types.Sample</code>.</td><td><code>core/types.py</code></td></tr>
-    <tr><td>prediction</td><td>One model output, represented by <code>core.types.Prediction</code>.</td><td><code>core/types.py</code></td></tr>
-    <tr><td>task</td><td>One of <code>detection</code>, <code>segmentation</code>, <code>instance_segmentation</code>, <code>anomaly</code>, and <code>industrial</code>.</td><td><code>models/base.py</code> (<code>TASKS</code>)</td></tr>
-    <tr><td>annotation</td><td>A task-native ground-truth field of a sample: <code>boxes</code>, <code>masks</code>, <code>labels</code>, <code>is_anomalous</code>, or <code>anomaly_mask</code>.</td><td><code>core/types.py</code> (<code>Annotations</code>)</td></tr>
-    <tr><td>capability declaration</td><td>A <code>ModelCapabilities</code> or <code>DatasetCapabilities</code> value that states, without executing the model or reading the dataset, which tasks and which output fields are supported.</td><td><code>models/base.py</code>, <code>core/dataset_capabilities.py</code></td></tr>
-    <tr><td>shot mode</td><td>The sample budget of a training run: <code>full</code>, <code>medium</code>, <code>few</code>, or <code>test</code>.</td><td><code>training.ShotMode</code></td></tr>
-    <tr><td>split</td><td>The partition drawn from a dataset: <code>train</code> or <code>test</code>.</td><td><code>cli.py</code> (<code>--split</code>)</td></tr>
-    <tr><td>trained artifact</td><td>The run-specific weight file written under <code>artifacts/models/</code>. The source symbol is <code>registered_artifact</code>.</td><td><code>training.run_train</code></td></tr>
-    <tr><td>published slot</td><td>The fixed path <code>&lt;application domain&gt;/artifacts/models/published/&lt;model identifier&gt;&lt;extension&gt;</code> that the web interface reads. A published slot holds either a regular file or a symbolic link.</td><td><code>catalog.published_path</code></td></tr>
-    <tr><td>weight</td><td>A model parameter file.</td><td>—</td></tr>
-    <tr><td>weight manifest</td><td>The append-only provenance log <code>artifacts/models/weight_manifest.jsonl</code>.</td><td><code>weight_registry.py</code></td></tr>
-    <tr><td>provenance record</td><td>One line of the weight manifest.</td><td><code>core/provenance.py</code></td></tr>
-    <tr><td>run log</td><td>The append-only evaluation log <code>runs/leaderboard_log.jsonl</code>.</td><td><code>application/benchmark.py</code></td></tr>
-    <tr><td>anomaly map</td><td>A per-pixel anomaly score array persisted as <code>&lt;output directory&gt;/&lt;sample identifier&gt;.npy</code>.</td><td><code>models/anomalib/adapter.py</code></td></tr>
-    <tr><td>Minimal Working Example</td><td>The shortest procedure that produces a visible result, stated in <a href="#3-minimal-working-example">Section 3</a>.</td><td>this document</td></tr>
+    <tr><td><strong>application domain</strong></td><td>A data family and its assets. The registered application domains are <code>textile</code> and <code>general</code>.</td><td><code>configs/registry/models.yaml</code> (<code>domain</code>)</td></tr>
+    <tr><td><strong>backend</strong></td><td>The execution framework through which a model runs. The registered backends are <code>ultralytics</code>, <code>torchvision</code>, <code>anomalib</code>, <code>dinomaly</code>, <code>moeclip</code>, and <code>mambaad</code>.</td><td><code>core/registry.py</code>, <code>loader._MODEL_BACKEND_MODULES</code></td></tr>
+    <tr><td><strong>model variant</strong></td><td>The architecture selected within a backend, for example <code>yolov8n</code> or <code>PatchCore</code>.</td><td><code>configs/registry/models.yaml</code> (<code>variant</code>)</td></tr>
+    <tr><td><strong>model identifier</strong></td><td>The stable identifier of one entry of the model manifest, for example <code>PatchCore</code> or <code>PatchCore_general</code>.</td><td><code>configs/registry/models.yaml</code> (<code>id</code>)</td></tr>
+    <tr><td><strong>model manifest</strong></td><td>The single authoritative catalogue of published models: <code>configs/registry/models.yaml</code>.</td><td><code>catalog.py</code></td></tr>
+    <tr><td><strong>model configuration</strong></td><td>A YAML file that declares the executable parameters of one run, for example <code>configs/models/ultralytics_example.yaml</code>.</td><td><code>configs/models/</code>, <code>general/configs/models/</code></td></tr>
+    <tr><td><strong>optimization recipe</strong></td><td>A paper-anchored hyperparameter profile registered under <code>src/fabric_defect_hub/recipes/</code>. An optimization recipe is not a model configuration.</td><td><code>fabric_defect_hub.recipes</code></td></tr>
+    <tr><td><strong>dataset adapter</strong></td><td>A <code>DatasetAdapter</code> subclass that converts one source dataset into <code>Sample</code> objects.</td><td><code>src/fabric_defect_hub/datasets/</code></td></tr>
+    <tr><td><strong>sample</strong></td><td>One image together with its annotations, represented by <code>core.types.Sample</code>.</td><td><code>core/types.py</code></td></tr>
+    <tr><td><strong>prediction</strong></td><td>One model output, represented by <code>core.types.Prediction</code>.</td><td><code>core/types.py</code></td></tr>
+    <tr><td><strong>task</strong></td><td>One of <code>detection</code>, <code>segmentation</code>, <code>instance_segmentation</code>, <code>anomaly</code>, and <code>industrial</code>.</td><td><code>models/base.py</code> (<code>TASKS</code>)</td></tr>
+    <tr><td><strong>annotation</strong></td><td>A task-native ground-truth field of a sample: <code>boxes</code>, <code>masks</code>, <code>labels</code>, <code>is_anomalous</code>, or <code>anomaly_mask</code>.</td><td><code>core/types.py</code> (<code>Annotations</code>)</td></tr>
+    <tr><td><strong>capability declaration</strong></td><td>A <code>ModelCapabilities</code> or <code>DatasetCapabilities</code> value that states, without executing the model or reading the dataset, which tasks and which output fields are supported.</td><td><code>models/base.py</code>, <code>core/dataset_capabilities.py</code></td></tr>
+    <tr><td><strong>shot mode</strong></td><td>The sample budget of a training run: <code>full</code>, <code>medium</code>, <code>few</code>, or <code>test</code>.</td><td><code>training.ShotMode</code></td></tr>
+    <tr><td><strong>split</strong></td><td>The partition drawn from a dataset: <code>train</code> or <code>test</code>.</td><td><code>cli.py</code> (<code>--split</code>)</td></tr>
+    <tr><td><strong>trained artifact</strong></td><td>The run-specific weight file written under <code>artifacts/models/</code>. The source symbol is <code>registered_artifact</code>.</td><td><code>training.run_train</code></td></tr>
+    <tr><td><strong>published slot</strong></td><td>The fixed path <code>&lt;application domain&gt;/artifacts/models/published/&lt;model identifier&gt;&lt;extension&gt;</code> that the web interface reads. A published slot holds either a regular file or a symbolic link.</td><td><code>catalog.published_path</code></td></tr>
+    <tr><td><strong>weight</strong></td><td>A model parameter file.</td><td>—</td></tr>
+    <tr><td><strong>weight manifest</strong></td><td>The append-only provenance log <code>artifacts/models/weight_manifest.jsonl</code>.</td><td><code>weight_registry.py</code></td></tr>
+    <tr><td><strong>provenance record</strong></td><td>One line of the weight manifest.</td><td><code>core/provenance.py</code></td></tr>
+    <tr><td><strong>run log</strong></td><td>The append-only evaluation log <code>runs/leaderboard_log.jsonl</code>.</td><td><code>application/benchmark.py</code></td></tr>
+    <tr><td><strong>anomaly map</strong></td><td>A per-pixel anomaly score array persisted as <code>&lt;output directory&gt;/&lt;sample identifier&gt;.npy</code>.</td><td><code>models/anomalib/adapter.py</code></td></tr>
+    <tr><td><strong>Minimal Working Example</strong></td><td>The shortest procedure that produces a visible result, stated in <a href="#5-minimal-working-example">Section 5</a>.</td><td>this document</td></tr>
   </tbody>
 </table>
-
-Two rules follow from the table.
 
 1. `model configuration` never means `optimization recipe`, and `published slot` never means
    `weight`.
@@ -1599,6 +1711,7 @@ Two rules follow from the table.
     <tr><td><a href="docs/cloud_training_checklist.md">docs/cloud_training_checklist.md</a></td><td>The cloud training checklist.</td></tr>
     <tr><td><a href="docs/report.md">docs/report.md</a></td><td>The benchmark report format and the metric taxonomy.</td></tr>
     <tr><td><a href="docs/add_new.md">docs/add_new.md</a></td><td>Adding a dataset, an application domain, or a backend.</td></tr>
+    <tr><td><a href="docs/open-items.md">docs/open-items.md</a></td><td>The information this document does not yet provide.</td></tr>
     <tr><td><a href="docs/adr/0001-unified-registry-and-adapters.md">docs/adr/0001-unified-registry-and-adapters.md</a></td><td>The architecture decision record for the unified registry and the adapters.</td></tr>
     <tr><td><a href="general/README.md">general/README.md</a></td><td>The <code>general</code> application domain.</td></tr>
     <tr><td><a href="textile/README.md">textile/README.md</a></td><td>The <code>textile</code> application domain.</td></tr>
@@ -1606,39 +1719,5 @@ Two rules follow from the table.
     <tr><td><a href="examples/README.md">examples/README.md</a></td><td>The Minimal Working Example scripts.</td></tr>
     <tr><td><a href="CONTRIBUTING.md">CONTRIBUTING.md</a></td><td>The contribution procedure.</td></tr>
     <tr><td><a href="LICENSE">LICENSE</a></td><td>The license.</td></tr>
-  </tbody>
-</table>
-
-Maintainer contact and license statement: `[[FILL: record the maintainer contact and confirm the license statement.]]`
-
----
-
-## 20. Things to DO
-
-The following placeholders must be completed by the maintainers. Each placeholder is written in
-the document as `[[FILL: description]]`.
-
-<table align="center">
-  <thead>
-    <tr>
-      <th>Section</th>
-      <th>Placeholder</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td><a href="#31-step-1-install-the-platform">3.1</a></td><td>Confirm the canonical clone URL and, if the project is mirrored, the mirror URL.</td></tr>
-    <tr><td><a href="#33-step-3-run-inference-in-the-web-interface">3.3</a></td><td>Record the observed anomaly scores, the observed runtime, and a screenshot of the completed Minimal Working Example run.</td></tr>
-    <tr><td><a href="#82-staging-a-dataset-manually">8.2</a></td><td>Record the acquisition procedure, the archive size, the license, the download date, and the staged directory structure for each dataset that must be staged manually.</td></tr>
-    <tr><td><a href="#84-verifying-data-availability">8.4</a></td><td>Record the expected category or pattern count for each staged dataset.</td></tr>
-    <tr><td><a href="#85-public-dataset-sources">8.5</a></td><td>Record the source URL for RAW-FABRID, TILDA-400, the Fabric Defects Dataset, and the Tianchi challenge.</td></tr>
-    <tr><td><a href="#92-downloading-published-weights">9.2</a></td><td>Record the Hugging Face Hub repository identifier, the revision, and the SHA-256 checksum of every distributed file.</td></tr>
-    <tr><td><a href="#92-downloading-published-weights">9.2</a></td><td>Record the acquisition procedure for the weights that are not distributed through the Hugging Face Hub repository.</td></tr>
-    <tr><td><a href="#92-downloading-published-weights">9.2</a></td><td>State whether the WinCLIP published slot must be distributed, or whether the model is always reconstructed from its metadata.</td></tr>
-    <tr><td><a href="#105-recorded-demonstrations">10.5</a></td><td>Record the recording date, the platform version, and the commit revision shown in each recording.</td></tr>
-    <tr><td><a href="#113-inference">11.3</a></td><td>Replace the example anomaly score with the value observed on the reference machine.</td></tr>
-    <tr><td><a href="#115-benchmarking">11.5</a></td><td>Add a benchmark configuration that a reader can run without editing, and record its expected leaderboard.</td></tr>
-    <tr><td><a href="#116-batch-training">11.6</a></td><td>Record a reference batch run identifier.</td></tr>
-    <tr><td><a href="#17-tools-reference">17</a></td><td>Add one worked example, with its expected output, for each tool that a reader is expected to use.</td></tr>
-    <tr><td><a href="#19-additional-documentation">19</a></td><td>Record the maintainer contact and the license statement.</td></tr>
   </tbody>
 </table>
