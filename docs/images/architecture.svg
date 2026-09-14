@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1000" viewBox="0 0 1240 1000">
+<defs>
+<marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+</marker>
+</defs>
+<rect width="1240" height="1000" fill="white"/>
+<text x="40" y="38" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#0f172a">AnomalyDetection - system architecture</text>
+<rect x="40" y="60" width="1160" height="140" rx="12" fill="#eef2f7" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="86" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Frontend - Gradio web UI</text>
+<rect x="60" y="105" width="350" height="80" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="74" y="129" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Model session</text>
+<text x="74" y="152" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">task type - application domain - model</text>
+<text x="74" y="170" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">dataset, split, shot mode, random images</text>
+<rect x="445" y="105" width="350" height="80" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="459" y="129" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Benchmark</text>
+<text x="459" y="152" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">dataset, shot mode, model identifiers</text>
+<text x="459" y="170" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">optional profiling and resolution sweep</text>
+<rect x="830" y="105" width="350" height="80" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="844" y="129" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Run history</text>
+<text x="844" y="152" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">read a saved JSON / JSONL report</text>
+<text x="844" y="170" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">filter by metric, list past runs</text>
+<line x1="620" y1="200" x2="620" y2="248" stroke="#475569" stroke-width="1.8" marker-end="url(#head)"/>
+<text x="628.0" y="228.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#334155">event handlers</text>
+<rect x="40" y="250" width="1160" height="130" rx="12" fill="#eef2f7" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="276" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Application layer - the only business boundary for the CLI and the web UI</text>
+<rect x="60" y="296" width="560" height="68" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="74" y="320" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Application services (`application/`)</text>
+<text x="74" y="343" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">workspace (model session) - benchmark - run records</text>
+<rect x="650" y="296" width="530" height="68" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="664" y="320" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Command line (`adh`)</text>
+<text x="664" y="343" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">train - predict - evaluate - benchmark - train-all - doctor</text>
+<line x1="620" y1="380" x2="620" y2="418" stroke="#475569" stroke-width="1.8" marker-end="url(#head)"/>
+<text x="628.0" y="403.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#334155">shared services</text>
+<rect x="40" y="420" width="1160" height="120" rx="12" fill="#eef2f7" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="446" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Core - the interfaces every layer shares</text>
+<rect x="60" y="462" width="1120" height="66" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="74" y="486" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">Contracts and registries</text>
+<text x="74" y="509" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">ModelAdapter / DatasetAdapter / Evaluator contracts - capability declarations</text>
+<text x="74" y="527" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">model, dataset and evaluator registries - Sample / Prediction - provenance - configuration</text>
+<rect x="40" y="580" width="1160" height="230" rx="12" fill="#eef2f7" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="606" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Backends - one interface, many implementations</text>
+<rect x="60" y="630" width="270" height="150" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="74" y="654" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Model backends</text>
+<text x="74" y="677" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">ultralytics</text>
+<text x="74" y="695" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">torchvision</text>
+<text x="74" y="713" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">anomalib</text>
+<text x="74" y="731" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">dinomaly</text>
+<text x="74" y="749" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">moeclip</text>
+<text x="74" y="767" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">mambaad</text>
+<rect x="350" y="630" width="270" height="150" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="364" y="654" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Dataset adapters</text>
+<text x="364" y="677" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">9 registered datasets</text>
+<text x="364" y="695" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">textile: 6</text>
+<text x="364" y="713" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">general: 3</text>
+<text x="364" y="731" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">declared tasks and roles</text>
+<rect x="640" y="630" width="270" height="150" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="654" y="654" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Evaluation</text>
+<text x="654" y="677" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">detection (boxes)</text>
+<text x="654" y="695" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">segmentation (pixels)</text>
+<text x="654" y="713" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">anomaly (image / pixel)</text>
+<text x="654" y="731" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">industrial - cross-domain</text>
+<rect x="930" y="630" width="250" height="150" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="944" y="654" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Profiling / quantization</text>
+<text x="944" y="677" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">pytorch - onnxruntime</text>
+<text x="944" y="695" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">tensorrt - flops - power</text>
+<text x="944" y="713" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">fp16 / INT8 ONNX export</text>
+<line x1="195" y1="540" x2="195" y2="626" stroke="#475569" stroke-width="1.8" marker-end="url(#head)"/>
+<line x1="485" y1="540" x2="485" y2="626" stroke="#475569" stroke-width="1.8" marker-end="url(#head)"/>
+<line x1="775" y1="540" x2="775" y2="626" stroke="#475569" stroke-width="1.8" marker-end="url(#head)"/>
+<line x1="1055" y1="540" x2="1055" y2="626" stroke="#475569" stroke-width="1.8" marker-end="url(#head)"/>
+<line x1="195" y1="780" x2="195" y2="815" stroke="#475569" stroke-width="1.8"/>
+<line x1="485" y1="780" x2="485" y2="815" stroke="#475569" stroke-width="1.8"/>
+<line x1="775" y1="780" x2="775" y2="815" stroke="#475569" stroke-width="1.8"/>
+<line x1="1055" y1="780" x2="1055" y2="815" stroke="#475569" stroke-width="1.8"/>
+<line x1="195" y1="815" x2="1055" y2="815" stroke="#475569" stroke-width="1.8"/>
+<line x1="620" y1="815" x2="620" y2="856" stroke="#475569" stroke-width="1.8" marker-end="url(#head)"/>
+<text x="628.0" y="839.5" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#334155">artifacts and logs</text>
+<rect x="40" y="860" width="1160" height="110" rx="12" fill="#eef2f7" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="886" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Outputs</text>
+<rect x="60" y="896" width="1120" height="56" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+<text x="74" y="920" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">Run products</text>
+<text x="74" y="943" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">published slots (`&lt;domain&gt;/artifacts/models/published/`) - weight_manifest.jsonl</text>
+<text x="74" y="961" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#334155">leaderboard_log.jsonl - results/ - anomaly maps - benchmark reports - exported models</text>
+</svg>

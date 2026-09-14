@@ -46,7 +46,7 @@ Run these commands from the project root:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip
-python -m pip install -r requirements-full.txt
+python -m pip install -e ".[all]"
 
 export ZJU_LEAPER_ROOT="$PWD/data/ZJU-Leaper"
 export MVTEC_AD_ROOT="$PWD/data/MVTec AD"

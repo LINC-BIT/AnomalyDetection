@@ -183,7 +183,7 @@ def create_app():
     try:
         gr = _import_gradio_for_local_ui()
     except ImportError as exc:
-        raise RuntimeError("Install the UI dependencies first: pip install -r requirements.txt") from exc
+        raise RuntimeError('Install the UI dependencies first: pip install -e ".[ui]"') from exc
 
     sessions = InferenceSessionManager()
     default_model = next(iter(MODEL_CATALOG))
@@ -343,7 +343,7 @@ def create_app():
                     )
                     model_choice.change(
                         model_status,
-                        inputs=[model_choice, state, lang_state],
+                        inputs=[model_choice, lang_state],
                         outputs=model_state,
                     )
                     def model_choices(task_type, domain):
@@ -371,7 +371,7 @@ def create_app():
                     )
                     load_model_button.click(
                         load_model_handler,
-                        inputs=[model_choice, lang_state],
+                        inputs=[model_choice, state, lang_state],
                         outputs=runtime_state,
                     )
                     unload_model_button.click(

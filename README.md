@@ -17,7 +17,7 @@ AnomalyDetection is an **extensible, multi-domain platform** that runs every bac
   </thead>
   <tbody>
     <tr><td><strong>Requirements</strong></td><td><a href="#3-requirements">Section 3</a> — software, and hardware profiles</td></tr>
-    <tr><td><strong>Install</strong></td><td><a href="#4-installation">Section 4</a> — <code>python -m pip install -r requirements-full.txt</code></td></tr>
+    <tr><td><strong>Install</strong></td><td><a href="#4-installation">Section 4</a> — <code>python -m pip install -e ".[all]"</code></td></tr>
     <tr><td><strong>Verify without data</strong></td><td><a href="#44-verify-the-installation">Section 4.4</a> — <code>adh list</code>, <code>adh inventory</code>, <code>adh doctor</code></td></tr>
     <tr><td><strong>Minimal Working Example</strong></td><td><a href="#5-minimal-working-example">Section 5</a> — a visible result on one image</td></tr>
     <tr><td><strong>Datasets</strong></td><td><a href="#8-data-preparation">Section 8</a> — nine registered datasets, three with automated download</td></tr>
@@ -270,29 +270,32 @@ Prompt prefix: `(anomalib_env)`.
 <table align="center">
   <thead>
     <tr>
-      <th>Dependency set</th>
+      <th>Scenario</th>
       <th>Contents</th>
       <th>Installation command</th>
     </tr>
   </thead>
   <tbody>
-    <tr><td>Complete</td><td>six backends; profiling, quantization, and test dependencies; installs the project (<code>-e .</code>)</td><td><code>python -m pip install -r requirements-full.txt</code></td></tr>
-    <tr><td>Lean</td><td>web interface and lightweight inference; the project install is separate</td><td><code>python -m pip install -r requirements.txt</code><br><code>python -m pip install --no-deps --no-build-isolation -e .</code></td></tr>
+    <tr><td>Everything</td><td>web interface, the six backends, evaluation and profiling, and the test suite</td><td><code>python -m pip install -e ".[all]"</code></td></tr>
+    <tr><td>Frontend</td><td>web interface and lightweight inference</td><td><code>python -m pip install -e ".[ui]"</code></td></tr>
+    <tr><td>Training</td><td>the six training backends</td><td><code>python -m pip install -e ".[train]"</code></td></tr>
+    <tr><td>Evaluation</td><td>evaluation, profiling, export, and quantization</td><td><code>python -m pip install -e ".[eval]"</code></td></tr>
   </tbody>
 </table>
 
-Optional groups (`pyproject.toml`):
+Scenarios combine, for example `python -m pip install -e ".[train,eval]"`. The per-backend and per-profiler groups remain available for a narrower install:
 
 ```bash
-python -m pip install -e ".[mambaad-cuda]"           # CUDA-only fused selective-scan kernel
-python -m pip install -e ".[profiling-onnxruntime]"  # ONNX Runtime profiler
-python -m pip install -e ".[profiling-flops]"        # FLOPs counter
-python -m pip install -e ".[profiling-power-nvidia]" # NVIDIA power draw through NVML
-python -m pip install -e ".[profiling-tensorrt]"     # TensorRT profiler; NVIDIA hardware only
-python -m pip install -e ".[quantization]"           # fp16 and INT8 ONNX quantization
+python -m pip install -e ".[anomalib]"                # one training backend
+python -m pip install -e ".[profiling-onnxruntime]"   # ONNX Runtime profiler
+python -m pip install -e ".[profiling-flops]"         # FLOPs counter
+python -m pip install -e ".[profiling-power-nvidia]"  # NVIDIA power draw through NVML
+python -m pip install -e ".[profiling-tensorrt]"      # TensorRT profiler; NVIDIA hardware only
+python -m pip install -e ".[quantization]"            # fp16 and INT8 ONNX quantization
+python -m pip install -e ".[cuda]"                    # every CUDA-only accelerator
 ```
 
-`make install` and `make install-ui`: the same two dependency sets.
+`make install`, `make install-ui`, `make install-train`, and `make install-eval` run the same scenarios and add `cuda` automatically when a CUDA GPU is detected.
 
 ### 4.4 Verify the installation
 
@@ -363,7 +366,7 @@ cd AnomalyDetection
 conda create -n anomalib_env python=3.12 -y
 conda activate anomalib_env
 git submodule update --init --recursive
-python -m pip install -r requirements-full.txt
+python -m pip install -e ".[all]"
 ```
 
 ### 5.2 Step 2: Verify the installation without data

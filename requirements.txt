@@ -1,3 +1,20 @@
+# Frontend (web interface) and lightweight inference -- the same dependency set
+# as the `ui` extra in pyproject.toml.
+#
+#   python -m pip install -r requirements.txt
+#
+# This file exists for hosts that install a plain requirements file, such as
+# Hugging Face Spaces. Everywhere else install the project with the scenario
+# extras from pyproject.toml, which bring the project itself along:
+#
+#   pip install -e ".[ui]"         web interface and lightweight inference
+#   pip install -e ".[train]"      the six training backends
+#   pip install -e ".[eval]"       evaluation, profiling, export, quantization
+#   pip install -e ".[all]"        everything, plus the test suite
+#   pip install -e ".[all,cuda]"   add the CUDA-only accelerators
+#
+# tools/install_deps.py <scenario> runs the same install and adds the `cuda`
+# extra automatically when it detects an NVIDIA GPU on this machine.
 gradio>=5.0,<7
 httpx[socks]>=0.28,<1
 numpy

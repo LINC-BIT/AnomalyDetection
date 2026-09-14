@@ -6,20 +6,23 @@ project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 venv_dir="${project_dir}/.venv"
 
 case "${profile}" in
-  core|ui|full) ;;
-  *) echo "Usage: $0 [core|ui|full]" >&2; exit 2 ;;
+  core|ui|train|eval|all) ;;
+  *) echo "Usage: $0 [core|ui|train|eval|all]" >&2; exit 2 ;;
 esac
 
 python3 -m venv "${venv_dir}"
 "${venv_dir}/bin/python" -m pip install --upgrade pip
 
-if [[ "${profile}" == "ui" ]]; then
-  "${venv_dir}/bin/python" -m pip install -r "${project_dir}/requirements.txt"
-elif [[ "${profile}" == "full" ]]; then
-  "${venv_dir}/bin/python" -m pip install -r "${project_dir}/requirements-full.txt"
+if [[ "${profile}" == "core" ]]; then
+  # Project only: the CLI and the catalogue commands, no scenario extras.
+  "${venv_dir}/bin/python" -m pip install --no-deps -e "${project_dir}"
+else
+  # install_deps.py installs the scenario extras and adds the `cuda` extra
+  # when it detects an NVIDIA GPU on this machine.
+  "${venv_dir}/bin/python" "${project_dir}/tools/install_deps.py" "${profile}" \
+    --python "${venv_dir}/bin/python"
 fi
 
-"${venv_dir}/bin/python" -m pip install -e "${project_dir}"
 PYTHONPATH="${project_dir}/src" "${venv_dir}/bin/python" "${project_dir}/examples/01_inspect_catalog.py"
 
 echo

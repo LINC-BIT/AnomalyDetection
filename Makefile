@@ -1,8 +1,10 @@
-.PHONY: help install install-ui doctor inventory ui test test-architecture check
+.PHONY: help install install-ui install-train install-eval doctor inventory ui test test-architecture check
 
 help:
-	@echo "make install            Install the full project in editable mode"
-	@echo "make install-ui         Install UI/inference dependencies"
+	@echo "make install            Install everything (detects CUDA automatically)"
+	@echo "make install-ui         Install the web interface / inference dependencies"
+	@echo "make install-train      Install the training backends (detects CUDA automatically)"
+	@echo "make install-eval       Install the evaluation / profiling dependencies"
 	@echo "make doctor             Check backends, datasets, and weights"
 	@echo "make inventory          Print the unified model/dataset manifest"
 	@echo "make ui                 Launch the AnomalyDetection UI"
@@ -11,12 +13,16 @@ help:
 	@echo "make check              Run all pre-commit checks"
 
 install:
-	python -m pip install -r requirements-full.txt
-	python -m pip install --no-deps --no-build-isolation -e .
+	python tools/install_deps.py all
 
 install-ui:
-	python -m pip install -r requirements.txt
-	python -m pip install --no-deps --no-build-isolation -e .
+	python tools/install_deps.py ui
+
+install-train:
+	python tools/install_deps.py train
+
+install-eval:
+	python tools/install_deps.py eval
 
 doctor:
 	adh doctor
