@@ -503,9 +503,9 @@ What running it costs in time, work and power.
 
 ## 4. Workflows
 
-<p align="center"><img src="docs/images/architecture.svg" alt="System architecture" width="92%"></p>
+<p align="center"><img src="docs/images/structure.png" alt="System architecture" width="80%"></p>
 
-The web front-end and the command line run on the same application services and the same backend contracts (`ModelAdapter`, `DatasetAdapter`, `Evaluator`); regenerate the figure with `python tools/render_architecture.py`.
+The web front-end and the command line run on the same application services and the same backend contracts (`ModelAdapter`, `DataConverter`, `ModelWrapper`, `RuntimeSupport`)
 
 ### 4.1 Web front-end
 
