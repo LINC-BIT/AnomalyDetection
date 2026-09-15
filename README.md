@@ -52,9 +52,6 @@
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#61-example-add-a-dataset">6.1 Example: add a dataset</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#62-example-add-a-model-backend">6.2 Example: add a model backend</a><br>
 
-
----
-
 ## 1. Introduction
 
 AnomalyDetection is an **extensible, multi-domain platform** that collects **18 classical methods**, multiple datasets for benchmarking, and a **Web front-end**.
