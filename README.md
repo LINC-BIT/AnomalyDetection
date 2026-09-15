@@ -1,52 +1,55 @@
 <h1 align="center">AnomalyDetection</h1>
 
+> **TODO — work in progress.** This document is not finished: the visualization figures still have
+> to be added, and the narrative logic and the cross-references still have to be reviewed.
+
 ---
 
 ## Outline
 
-- [Outline](#outline)
-- [1. Introduction](#1-introduction)
-- [2. Environment Setup](#2-environment-setup)
-  - [2.1 Requirements](#21-requirements)
-    - [2.1.1 Hardware Requirements](#211-hardware-requirements)
-    - [2.1.2 Software Requirements](#212-software-requirements)
-  - [2.2 Installation](#22-installation)
-    - [2.2.1 Clone the Repository](#221-clone-the-repository)
-    - [2.2.2 Install Python Environment](#222-install-python-environment)
-    - [2.2.3 Install Dependencies](#223-install-dependencies)
-    - [2.2.4 Verify Installation](#224-verify-installation)
-    - [2.2.5 Download Datasets](#225-download-datasets)
-    - [2.2.6 Download Checkpoints](#226-download-checkpoints)
-- [3. Models, Datasets, and Metrics](#3-models-datasets-and-metrics)
-  - [3.1 Supported Models](#31-supported-models)
-  - [3.2 Supported Datasets](#32-supported-datasets)
-  - [3.3 Supported Metrics](#33-supported-metrics)
-    - [3.3.1 Technical Metrics: Image level](#331-technical-metrics-image-level)
-    - [3.3.2 Technical Metrics: Pixel level](#332-technical-metrics-pixel-level)
-    - [3.3.3 Technical Metrics: Instance level](#333-technical-metrics-instance-level)
-    - [3.3.4 Technical Metrics: Cross-domain](#334-technical-metrics-cross-domain)
-    - [3.3.5 Overhead Metrics: Compute](#335-overhead-metrics-compute)
-    - [3.3.6 Overhead Metrics: Memory](#336-overhead-metrics-memory)
-- [4. Workflows](#4-workflows)
-  - [4.1 Web front-end](#41-web-front-end)
-    - [4.1.1 Start the web front-end](#411-start-the-web-front-end)
-    - [4.1.2 Image Anomaly Detection](#412-image-anomaly-detection)
-    - [4.1.3 Benchmarking](#413-benchmarking)
-    - [4.1.4 Read benchmark run history](#414-read-benchmark-run-history)
-  - [4.2 The backend command line interface](#42-the-backend-command-line-interface)
-    - [4.2.1 Model Configuration](#421-model-configuration)
-    - [4.2.2 Training](#422-training)
-    - [4.2.3 Inference](#423-inference)
-    - [4.2.4 Evaluation](#424-evaluation)
-    - [4.2.5 Benchmarking](#425-benchmarking)
-    - [4.2.6 Batch training](#426-batch-training)
-    - [4.2.7 Catalogue and diagnostic commands](#427-catalogue-and-diagnostic-commands)
-- [5. Examples](#5-examples)
-  - [5.1 Start the web front-end](#51-start-the-web-front-end)
-  - [5.2 Run Anomaly Detection Example](#52-run-anomaly-detection-example)
-- [6. Extensibility](#6-extensibility)
-  - [6.1 Example: add a dataset](#61-example-add-a-dataset)
-  - [6.2 Example: add a model backend](#62-example-add-a-model-backend)
+<a href="#outline">Outline</a><br>
+<a href="#1-introduction">1. Introduction</a><br>
+<a href="#2-environment-setup">2. Environment Setup</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#21-requirements">2.1 Requirements</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#211-hardware-requirements">2.1.1 Hardware Requirements</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#212-software-requirements">2.1.2 Software Requirements</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#22-installation">2.2 Installation</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#221-clone-the-repository">2.2.1 Clone the Repository</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#222-install-python-environment">2.2.2 Install Python Environment</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#223-install-dependencies">2.2.3 Install Dependencies</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#224-verify-installation">2.2.4 Verify Installation</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#225-download-datasets">2.2.5 Download Datasets</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#226-download-checkpoints">2.2.6 Download Checkpoints</a><br>
+<a href="#3-models-datasets-and-metrics">3. Models, Datasets, and Metrics</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#31-supported-models">3.1 Supported Models</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#32-supported-datasets">3.2 Supported Datasets</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#33-supported-metrics">3.3 Supported Metrics</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#331-technical-metrics-image-level">3.3.1 Technical Metrics: Image level</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#332-technical-metrics-pixel-level">3.3.2 Technical Metrics: Pixel level</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#333-technical-metrics-instance-level">3.3.3 Technical Metrics: Instance level</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#334-technical-metrics-cross-domain">3.3.4 Technical Metrics: Cross-domain</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#335-overhead-metrics-compute">3.3.5 Overhead Metrics: Compute</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#336-overhead-metrics-memory">3.3.6 Overhead Metrics: Memory</a><br>
+<a href="#4-workflows">4. Workflows</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#41-web-front-end">4.1 Web front-end</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#411-start-the-web-front-end">4.1.1 Start the web front-end</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#412-image-anomaly-detection">4.1.2 Image Anomaly Detection</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#413-benchmarking">4.1.3 Benchmarking</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#414-read-benchmark-run-history">4.1.4 Read benchmark run history</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#42-the-backend-command-line-interface">4.2 The backend command line interface</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#421-model-configuration">4.2.1 Model Configuration</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#422-training">4.2.2 Training</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#423-inference">4.2.3 Inference</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#424-evaluation">4.2.4 Evaluation</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#425-benchmarking">4.2.5 Benchmarking</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#426-batch-training">4.2.6 Batch training</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#427-catalogue-and-diagnostic-commands">4.2.7 Catalogue and diagnostic commands</a><br>
+<a href="#5-examples">5. Examples</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#51-start-the-web-front-end">5.1 Start the web front-end</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#52-run-anomaly-detection-example">5.2 Run Anomaly Detection Example</a><br>
+<a href="#6-extensibility">6. Extensibility</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#61-example-add-a-dataset">6.1 Example: add a dataset</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#62-example-add-a-model-backend">6.2 Example: add a model backend</a><br>
 
 
 ---
