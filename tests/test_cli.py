@@ -1,6 +1,19 @@
+from types import SimpleNamespace
+
 import pytest
 
-from fabric_defect_hub.cli import _infer_backend, _parse_set_overrides, _run_doctor, _run_list, build_parser
+from fabric_defect_hub.cli import (
+    _infer_backend,
+    _parse_set_overrides,
+    _run_cross_domain_sweep,
+    _run_doctor,
+    _run_evaluate,
+    _run_list,
+    _run_predict,
+    _run_train,
+    build_parser,
+)
+from fabric_defect_hub.inference.runner import PredictInput
 
 
 @pytest.mark.parametrize(
@@ -257,3 +270,196 @@ def test_run_doctor_reports_every_known_backend_runnable_first():
     trainable_flags = [entry["trainable_now"] for entry in backends.values()]
     first_false = next((i for i, flag in enumerate(trainable_flags) if not flag), len(trainable_flags))
     assert all(trainable_flags[:first_false]), "all runnable backends must sort before any non-runnable one"
+
+
+def _cross_domain_args(patterns: str, source_pattern=None):
+    return SimpleNamespace(
+        cross_domain_patterns=patterns,
+        cross_domain_k=3,
+        cross_domain_mode="worst",
+        cross_domain_metric=None,
+        pattern=source_pattern,
+        model="patchcore",
+        weights="w.ckpt",
+        backend=None,
+        variant=None,
+        config_dir="configs/models",
+        task=None,
+        output_dir=None,
+        enable_tiling=False,
+        enable_tta=False,
+        tile_size=None,
+        tile_overlap=None,
+    )
+
+
+def _patch_cross_domain(monkeypatch, seen_source, seen_patterns):
+    from fabric_defect_hub.evaluation import cross_domain
+    from fabric_defect_hub.inference import runner
+
+    def fake_run_evaluate(model, *, source=None, **kwargs):
+        seen_patterns.append(source.pattern)
+        return SimpleNamespace(metrics={"map_50": 0.9})
+
+    def fake_sweep(*, acc_src, target_patterns, evaluate_pattern, k, mode):
+        seen_source.append(list(target_patterns))
+        return {"mode": mode, "k": k, "drops": [evaluate_pattern(p) for p in target_patterns]}
+
+    monkeypatch.setattr(runner, "run_evaluate", fake_run_evaluate)
+    monkeypatch.setattr(cross_domain, "pattern_sweep_degradation", fake_sweep)
+
+
+@pytest.mark.parametrize("raw,expected", [("5,6,7,8", [5, 6, 7, 8]), ("pattern5,pattern6", ["pattern5", "pattern6"])])
+def test_cross_domain_patterns_reach_the_adapter_resolved(monkeypatch, raw, expected):
+    """`5` and `pattern5` must both work.
+
+    The adapter rejects the bare string "5" and the sweep treats that
+    ValueError as "not staged", so an unresolved token used to make every
+    held-out pattern silently report as skipped rather than fail loudly.
+    """
+
+    seen_source, seen_patterns = [], []
+    _patch_cross_domain(monkeypatch, seen_source, seen_patterns)
+
+    source = PredictInput(dataset="zju-leaper", pattern="pattern1")
+    source_run = SimpleNamespace(metrics={"task": "detection", "map_50": 0.7})
+
+    _run_cross_domain_sweep(_cross_domain_args(raw), source_run, source)
+
+    assert seen_source == [expected]
+    assert seen_patterns == expected
+
+
+def test_cross_domain_sweep_resolves_its_source_pattern(monkeypatch):
+    """`--pattern 5` must survive too, not only the held-out list."""
+
+    seen_source, seen_patterns = [], []
+    _patch_cross_domain(monkeypatch, seen_source, seen_patterns)
+
+    source = PredictInput(dataset="zju-leaper", pattern="5")
+    source_run = SimpleNamespace(metrics={"task": "detection", "map_50": 0.7})
+
+    _run_cross_domain_sweep(_cross_domain_args("6", source_pattern="5"), source_run, source)
+
+    # only the held-out patterns are scored here; the source was scored before
+    assert seen_patterns == [6]
+    assert seen_source == [[6]]
+
+
+def test_evaluate_source_pattern_accepts_both_forms(monkeypatch):
+    """`adh evaluate --pattern 5` and `--pattern pattern5` must agree.
+
+    Only the cross-domain sweep used to resolve a bare number, so the same
+    flag meant two different things depending on whether a sweep was
+    requested.
+    """
+
+    from fabric_defect_hub.inference import runner
+
+    seen = []
+
+    def fake_run_evaluate(model, *, source=None, **kwargs):
+        seen.append(source.pattern)
+        return SimpleNamespace(backend=None, config_path=None, variant=None, sample_count=0, metrics={})
+
+    monkeypatch.setattr(runner, "run_evaluate", fake_run_evaluate)
+
+    args = SimpleNamespace(
+        model="patchcore", weights="w.ckpt", dataset="zju-leaper",
+        dataset_root=None, split="test", num_samples=None, pattern="5",
+        category=None, seed=0, backend=None, variant=None,
+        config_dir="configs/models", task=None, output_dir=None,
+        output=None, cross_domain_patterns=None,
+        enable_tiling=False, enable_tta=False, tile_size=None, tile_overlap=None,
+    )
+    _run_evaluate(args)
+    args.pattern = "pattern5"
+    _run_evaluate(args)
+
+    assert seen == [5, "pattern5"]
+
+
+def test_cross_domain_sweep_accepts_a_bare_number_list(monkeypatch):
+    """The comma-separated list form documented in the help must resolve."""
+
+    seen_source, seen_patterns = [], []
+    _patch_cross_domain(monkeypatch, seen_source, seen_patterns)
+
+    source = PredictInput(dataset="zju-leaper")
+    source_run = SimpleNamespace(metrics={"task": "detection", "map_50": 0.7})
+
+    _run_cross_domain_sweep(_cross_domain_args("5,6"), source_run, source)
+
+    assert seen_source == [[5, 6]]
+    assert seen_patterns == [5, 6]
+
+
+def _train_args(pattern):
+    return SimpleNamespace(
+        list=False, model="patchcore", config_dir="configs/models",
+        backend=None, variant=None, dataset="zju-leaper", dataset_root=None,
+        test_dataset=None, test_dataset_root=None, mode="test",
+        num_samples=None, val_num_samples=None, use_defect=None,
+        defect_ratio=None, pattern=pattern, category=None, seed=None,
+        set_overrides=[], profile=None, no_profile=False, no_publish=True,
+        enable_tiling=False, tile_size=None, tile_overlap=None,
+    )
+
+
+def _train_run_stub(seen):
+    from fabric_defect_hub.models.base import Artifact
+
+    def fake_run_train(model, *, overrides=None, **kwargs):
+        seen.append(overrides.pattern)
+        artifact = Artifact(path="p", backend="anomalib")
+        return SimpleNamespace(
+            backend="anomalib", config_path="c.yaml", variant="PatchCore",
+            published_path=None, weight_manifest_path=None,
+            result=SimpleNamespace(
+                metrics={}, trained_artifact=artifact,
+                registered_artifact=artifact, exports=[],
+            ),
+        )
+    return fake_run_train
+
+
+def test_train_pattern_accepts_both_forms(monkeypatch):
+    """`adh train --pattern 5` must resolve like `--pattern pattern5`."""
+
+    from fabric_defect_hub import training
+
+    seen = []
+    monkeypatch.setattr(training, "run_train", _train_run_stub(seen))
+
+    _run_train(_train_args("5"))
+    _run_train(_train_args("pattern5"))
+
+    assert seen == [5, "pattern5"]
+
+
+def test_predict_pattern_accepts_both_forms(monkeypatch):
+    """`adh predict --pattern 5` must resolve like `--pattern pattern5`."""
+
+    from fabric_defect_hub.inference import runner
+
+    seen = []
+
+    def fake_run_predict(model, *, source=None, **kwargs):
+        seen.append(source.pattern)
+        return SimpleNamespace(backend="anomalib", config_path="c.yaml", variant="PatchCore", predictions=[])
+
+    monkeypatch.setattr(runner, "run_predict", fake_run_predict)
+
+    def args_for(pattern):
+        return SimpleNamespace(
+            images=[], dataset="zju-leaper", dataset_root=None, split="test",
+            num_samples=None, pattern=pattern, category=None, seed=0,
+            model="patchcore", weights="w.ckpt", backend=None, variant=None,
+            config_dir="configs/models", output_dir=None, output=None,
+            enable_tiling=False, enable_tta=False, tile_size=None, tile_overlap=None,
+        )
+
+    _run_predict(args_for("5"))
+    _run_predict(args_for("pattern5"))
+
+    assert seen == [5, "pattern5"]

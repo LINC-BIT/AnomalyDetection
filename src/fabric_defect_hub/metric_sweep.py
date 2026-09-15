@@ -415,16 +415,15 @@ def _predict_source(request: SweepRequest, pattern: str | None = None, task: str
 def _coerce_pattern(pattern: str | int | None) -> str | int | None:
     """`"5"` -> `5`.
 
-    Patterns arrive from a comma-separated command-line list, so they are
-    strings; `ZJULeaperDataset` accepts `patternN` or an *int* N but rejects
-    the bare string `"5"`. Converting here rather than in the CLI keeps the
-    Gradio front end and any automation script from having to know the same
-    quirk.
+    The conversion itself lives in `datasets/zju_leaper.py`, next to the
+    resolution rule it compensates for; this alias is kept because the sweep
+    reads patterns off a comma-separated list and callers refer to it by this
+    name.
     """
 
-    if isinstance(pattern, str) and pattern.strip().isdigit():
-        return int(pattern.strip())
-    return pattern
+    from fabric_defect_hub.datasets.zju_leaper import coerce_pattern
+
+    return coerce_pattern(pattern)
 
 
 def _accuracy(model: TrainedModel, request: SweepRequest) -> dict[str, Any]:

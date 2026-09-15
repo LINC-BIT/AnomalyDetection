@@ -1,7 +1,8 @@
 <h1 align="center">AnomalyDetection</h1>
 
-> **TODO — work in progress.** This document is not finished: the visualization figures still have
-> to be added, and the narrative logic and the cross-references still have to be reviewed.
+> **TODO — work in progress.** This document is not finished: some reference values (measured
+> runtimes, weight checksums, recorded-demo revisions) are still outstanding. They are tracked in
+> [`docs/open-items.md`](docs/open-items.md).
 
 ---
 
@@ -20,6 +21,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#224-verify-installation">2.2.4 Verify Installation</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#225-download-datasets">2.2.5 Download Datasets</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#226-download-checkpoints">2.2.6 Download Checkpoints</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#227-directory-layout">2.2.7 Directory layout</a><br>
 <a href="#3-models-datasets-and-metrics">3. Models, Datasets, and Metrics</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#31-supported-models">3.1 Supported Models</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#32-supported-datasets">3.2 Supported Datasets</a><br>
@@ -59,6 +61,8 @@
 AnomalyDetection is an **extensible, multi-domain platform** that collects **18 classical methods**, multiple datasets for benchmarking, and a **Web front-end**.
 
 Industrial inspection demands high-speed, high-accuracy anomaly detection. However, existing methods remain fragmented with disparate formats and lack joint assessments of accuracy and deployment cost. To address this, we present a unified benchmarking platform that integrates SOTA methods to systematically evaluate both predictive performance and computational overhead.
+
+Throughout this document, a **benchmark** means scoring one or more models, on one dataset, under one configuration, and reading the outcome as the metrics of section 3.3. Section 3 is what can be measured; section 4 is how to run a measurement.
 
 ## 2. Environment Setup
 
@@ -127,6 +131,8 @@ cd AnomalyDetection
 
 Do not clone submodules manually. If submodule initialization fails or is executed incorrectly, re-run `git submodule update --init --recursive` to restore the submodules.
 
+If a component checkout turns out to be missing, restore it and check what landed: `git submodule update --init --recursive`, then `git submodule status`, then `adh doctor`.
+
 #### 2.2.2 Install Python Environment
 
 Create and activate the Python environment:
@@ -156,6 +162,8 @@ Choose the scenario according to the deployment; **Full** is recommended.
   </tbody>
 </table>
 
+If importing the web interface raises a SOCKS proxy error, install the root requirements file, which provides `httpx[socks]`: `python -m pip install -r requirements.txt`.
+
 #### 2.2.4 Verify Installation
 
 Use the following commands to verify the installation, no dataset and no weight is required:
@@ -165,7 +173,7 @@ adh doctor
 adh list
 ```
 
-Expected running output:
+Example output of `adh doctor` (one entry per backend, runnable backends first):
 
 ```json
 {
@@ -175,11 +183,20 @@ Expected running output:
       "dataset_kind": "one-class",
       "dataset": "fabric-defects",
       "trainable_now": true,
-      "reason": "picked 'fabric-defects' (staged). Other staged alternatives: fabric-train, mvtec-ad, mvtec-loco, raw-fabric, tianchi, tilda-400, visa, zju-leaper."
+      "reason": "No dataset was requested; picked 'fabric-defects' (staged). Other staged alternatives: fabric-train, mvtec-ad, mvtec-loco, raw-fabric, tianchi, tilda-400, visa, zju-leaper."
+    },
+    "dinomaly": {
+      "framework_installed": true,
+      "dataset_kind": "one-class",
+      "dataset": "fabric-defects",
+      "trainable_now": true,
+      "reason": "No dataset was requested; picked 'fabric-defects' (staged). Other staged alternatives: fabric-train, mvtec-ad, mvtec-loco, raw-fabric, tianchi, tilda-400, visa, zju-leaper."
     }
   }
 }
 ```
+
+`trainable_now` is true when the backend's framework is installed *and* a suitable dataset is staged; `reason` names the dataset that would be picked and the staged alternatives. Both depend on the local machine, so a different host prints different values.
 
 ```json
 {
@@ -193,6 +210,8 @@ Expected running output:
 }
 ```
 
+`known` lists every supported backend; `available` lists the ones importable on this machine, so it is a subset of `known` whenever an optional framework is not installed.
+
 Other catalogue and diagnostic commands work the same way:
 - `adh inventory` prints the machine-readable model and dataset inventory, 
 - `adh models` lists the model variants of each backend, 
@@ -201,7 +220,9 @@ Other catalogue and diagnostic commands work the same way:
 
 #### 2.2.5 Download Datasets
 
-Datasets are staged with the download tool, which takes the registered dataset identifier and the declared root:
+Three of the registered datasets have an automated download; the rest are staged by hand. Both routes end at the same place: a dataset is available once its **declared root** exists, is not empty, and is spelled exactly as declared. Run the download from the repository root.
+
+**Automated download.** The tool takes the registered dataset identifier and the declared root:
 
 <table align="center">
   <thead>
@@ -217,7 +238,76 @@ Datasets are staged with the download tool, which takes the registered dataset i
   </tbody>
 </table>
 
-These three datasets are downloaded in full. To download a single category instead, add `--category <name>`; the available category names are listed on each dataset's own page — [MVTec AD](https://www.mvtec.com/company/research/datasets/mvtec-ad), [VisA](https://github.com/amazon-science/spot-diff), [ZJU-Leaper](https://huggingface.co/datasets/AnupamaBandara/ZLU_Leaper).
+Without further flags each of these downloads the whole dataset. Three details decide whether it lands where the platform looks for it:
+
+- `--category <name>` fetches a single category, for MVTec AD and VisA only.
+- Category names are the dataset's own — `bottle`, `cable`, `capsule`, … for MVTec AD; `candle`, `capsules`, `pcb1`, … for VisA. Each dataset's page lists them: [MVTec AD](https://www.mvtec.com/company/research/datasets/mvtec-ad), [VisA](https://github.com/amazon-science/spot-diff), [ZJU-Leaper](https://huggingface.co/datasets/AnupamaBandara/ZLU_Leaper).
+- Pass the root exactly as written above. For MVTec AD that includes the space in `MVTec AD`; any other spelling is outside the registered root and `adh doctor` reports the dataset as not staged.
+
+ZJU-Leaper has no categories to select: it is divided into patterns, which selection uses through `--pattern` at run time, not at download time.
+
+**Manual staging.** These five have no automated download:
+
+- MVTec LOCO
+- RAW-FABRID
+- TILDA-400
+- Fabric Defects Dataset
+- Tianchi
+
+Stage each one with the same three steps: create its declared root, copy the extracted dataset into it, then confirm it is picked up.
+
+```bash
+mkdir -p "datasets/general/MVTec LOCO"
+# Copy the extracted dataset into that directory.
+adh doctor
+```
+
+Each adapter documents its expected layout in its module docstring, under `src/fabric_defect_hub/datasets/`. To point one command at a copy staged elsewhere, pass `--dataset-root`.
+
+**Verify the data.** `adh doctor` decides on mere presence: a non-empty directory at the declared root is "staged". An empty folder therefore does not count, but a partial download does, so check the staged copy against these counts:
+
+<table align="center">
+  <thead>
+    <tr>
+      <th>Dataset identifier</th>
+      <th>Unit</th>
+      <th>Expected count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>mvtec-ad</code></td><td>categories</td><td>15</td></tr>
+    <tr><td><code>mvtec-loco</code></td><td>categories</td><td>5</td></tr>
+    <tr><td><code>visa</code></td><td>categories</td><td>12</td></tr>
+    <tr><td><code>zju-leaper</code></td><td>patterns</td><td>19</td></tr>
+  </tbody>
+</table>
+
+When a dataset is reported as unavailable, find its declared root below, check the directory is complete, and point one command at another copy with `--dataset-root` if it is staged elsewhere.
+
+Identifier, name shown in the web front-end, and declared root for every registered dataset:
+
+<table align="center">
+  <thead>
+    <tr>
+      <th>Identifier</th>
+      <th>Name in the web front-end</th>
+      <th>Declared root</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>zju-leaper</code></td><td>ZJU-Leaper</td><td><code>datasets/textile/ZJU-Leaper</code></td></tr>
+    <tr><td><code>raw-fabric</code></td><td>RAW-FABRID</td><td><code>datasets/textile/RAW_FABRID</code></td></tr>
+    <tr><td><code>tilda-400</code></td><td>TILDA-400</td><td><code>datasets/textile/TILDA_400</code></td></tr>
+    <tr><td><code>fabric-defects</code></td><td>Fabric Defects</td><td><code>datasets/textile/Fabric Defects Dataset</code></td></tr>
+    <tr><td><code>tianchi</code></td><td>Tianchi</td><td><code>datasets/textile/tianchi</code></td></tr>
+    <tr><td><code>fabric-train</code></td><td>—</td><td><code>datasets/textile</code></td></tr>
+    <tr><td><code>mvtec-ad</code></td><td>MVTec AD</td><td><code>datasets/general/MVTec AD</code></td></tr>
+    <tr><td><code>mvtec-loco</code></td><td>MVTec LOCO</td><td><code>datasets/general/MVTec LOCO</code></td></tr>
+    <tr><td><code>visa</code></td><td>VisA</td><td><code>datasets/general/VisA</code></td></tr>
+  </tbody>
+</table>
+
+`fabric-train` is a composite: it has a root but no data of its own, and it is not listed in the web front-end's dataset dropdown.
 
 #### 2.2.6 Download Checkpoints
 
@@ -248,6 +338,40 @@ python tools/download_weights.py \
   textile/artifacts/models/published/yolov8n.pt \
   --output textile/artifacts/models/published/yolov8n.pt
 ```
+
+If a weight turns out to be missing, `adh inventory` reports its `weight` and `weight_status`. Place the weight at the path it reports. Never rename a weight of a different architecture: download the one the manifest names, or train it.
+
+#### 2.2.7 Directory layout
+
+Run every command in this README from the repository root. The paths it prints and accepts are relative to that directory.
+
+```text
+AnomalyDetection/
+├── src/fabric_defect_hub/          # the platform: datasets, model backends, evaluation, CLI, web interface
+├── configs/
+│   ├── registry/models.yaml        # the model manifest: what is published, and where each weight lives
+│   ├── models/                     # model configurations (textile)
+│   └── training_profile.yaml       # shared training profile
+├── datasets/
+│   ├── textile/                    # ZJU-Leaper, RAW-FABRID, TILDA-400, Fabric Defects Dataset, tianchi
+│   └── general/                    # MVTec AD, MVTec LOCO, VisA
+├── textile/  and  general/         # one directory per application domain
+│   ├── configs/models/             # model configurations (general)
+│   └── artifacts/models/published/ # published weights, one file per model identifier
+├── artifacts/                      # written by runs
+│   ├── models/                     # trained weights, the weight manifest, per-run config records
+│   ├── benchmarks/                 # benchmark results
+│   └── runtime/anomaly_maps/       # saved anomaly maps
+├── results/                        # JSON written by `--output`
+├── runs/                           # the append-only run log, plus training run output
+├── tools/                          # download, export, and benchmark scripts
+└── docs/                           # focused guides, figures, and the recorded demonstrations
+```
+
+Two conventions explain most of the paths used later:
+
+- A dataset counts as staged when its **declared root** exists, is not empty, and is spelled exactly as declared (`datasets/textile/ZJU-Leaper`, `datasets/general/MVTec AD`). `adh doctor` reports what it finds.
+- The web front-end and the CLI read the **same** tree, so anything a run produces under `artifacts/` is what the front-end then serves.
 
 ## 3. Models, Datasets, and Metrics
 
@@ -306,7 +430,7 @@ Nine datasets are registered.
     <tr><td>TILDA-400</td><td>Fabric</td><td>25,600</td><td>4 defect types</td><td>Image-level label</td></tr>
     <tr><td>Fabric Defects Dataset</td><td>Fabric</td><td>2,430</td><td>5 defect types</td><td>Pixel-level masks</td></tr>
     <tr><td>Tianchi Fabric Defect</td><td>Fabric</td><td>9,576</td><td>34 defect types</td><td>Bounding boxes</td></tr>
-    <tr><td>Fabric-Train (composite)</td><td>Fabric</td><td>152,291 (its 5 members combined)</td><td>5 fabric datasets combined</td><td>Bounding boxes, pixel-level masks</td></tr>
+    <tr><td>Fabric-Train (composite)</td><td>Fabric</td><td>97,459 (its 5 members' train splits combined)</td><td>5 fabric datasets combined</td><td>Bounding boxes, pixel-level masks</td></tr>
     <tr><td>MVTec AD</td><td>Industrial objects</td><td>5,354</td><td>15 categories</td><td>Pixel-level masks</td></tr>
     <tr><td>MVTec LOCO AD</td><td>Everyday objects</td><td>3,346</td><td>5 categories</td><td>Pixel-level masks</td></tr>
     <tr><td>VisA</td><td>General objects</td><td>10,821</td><td>12 categories</td><td>Pixel-level masks</td></tr>
@@ -315,13 +439,18 @@ Nine datasets are registered.
 
 Image and category counts are measured from the staged copy under `datasets/`; `Annotation` is what the dataset's adapter exposes.
 
+Except for the composite, a count is the train split plus the test split as the adapter loads them. `Fabric-Train` is its members' train splits, being a training corpus.
+
 ### 3.3 Supported Metrics
 
 Metrics are divided into two parts. 
 - **technical** metrics evaluate model accuracy across different levels.
 - **overhead** metrics evaluate the  running cost of the model.
 
-The following table summarizes the supported metrics for each category and scope.
+The following table summarizes the supported metrics for each category and scope. These tables are the vocabulary of a benchmark result:
+
+- a benchmark reports its numbers under exactly these headings, one table per scope;
+- a metric the model's capability declaration cannot produce leaves that cell empty, rather than reporting a zero.
 
 <table align="center">
   <thead>
@@ -539,9 +668,15 @@ if the default port has been occupied, please set a different port using the `GR
 GRADIO_SERVER_PORT=7860 adh-ui
 ```
 
-#### 4.1.2 Image Anomaly Detection
+If the launch stops because the port is already in use, `adh-ui` names the process holding it and prints the three ways out:
 
-I've cleaned up and structured the instructions so they flow logically from setup to execution without the confusion at the end:
+- open the instance already running there;
+- stop that process;
+- move to another port with `GRADIO_SERVER_PORT`.
+
+The manifest is read at process start, so an interface showing an obsolete label needs a restart of `adh-ui` to pick the change up.
+
+#### 4.1.2 Image Anomaly Detection
 
 To complete **Image Anomaly Detection**, follow these step-by-step instructions after the webpage loads:
 
@@ -595,9 +730,14 @@ Upon completion, the system returns an image gallery featuring:
 * A calculated **per-image anomaly score**.
 * A visual **heat map** (if supported by the selected model).
 
+If no heat map appears, the model's capability declaration has no `anomaly_map` field:
+
+- `GANomaly` scores the distance between two latent vectors, so it is image-level only;
+- over a dataset, pixel-level metrics need that same map, so they are reported only for a model that produces one, and only when an output directory is supplied to persist it.
+
 #### 4.1.3 Benchmarking
 
-This module is used to evaluate and compare the performance of different models on anomaly detection tasks. The user interface is shown below:
+This is the module that produces the benchmark defined at the start of section 3: it scores the selected models on one dataset under one configuration and reports the metrics of section 3.3. The user interface is shown below:
 
 <p align="center"><img src="docs/images/img8.png" alt="Web front-end homepage" width="80%"></p>
 
@@ -610,7 +750,7 @@ Please follow the steps below to perform benchmarking:
 
 Check the Results:
 
-* Results are grouped as detailed in [Supported Metrics](#33-supported-metrics). Any metric that cannot be computed is flagged as `unavailable`.
+* Results are grouped by the metric tables of [3.3 Supported Metrics](#33-supported-metrics). A table that no selected model can fill is shown as `empty` with the reason, and the declared-but-unbuilt one as `not_implemented`; neither is reported as a zero.
 * Every benchmark run appends a record to `runs/leaderboard_log.jsonl`, and generated anomaly maps are saved to `artifacts/runtime/anomaly_maps/benchmark/`.
 
 #### 4.1.4 Read benchmark run history
@@ -690,6 +830,18 @@ adh train patchcore --dataset zju-leaper --mode test --no-publish
 
 Publishing is on by default: a successful run whose identifier is in the manifest replaces that identifier's published slot, which is the file the web front-end reads.
 
+If a run fails because the dataset is not a training source, the training corpus is missing a role the backend needs:
+
+- One-class backends need `anomaly_train`. MVTec AD, MVTec LOCO, VisA, and the textile sources declare it; `adh doctor` reports what a machine can actually train on.
+- A zero-shot backend such as `moeclip` is restricted the other way round: it trains on an auxiliary corpus. The fabric set belongs in `--test-dataset`, not `--dataset`.
+
+If training runs out of memory:
+
+- run `--mode test` first to check the pipeline;
+- lower the input resolution, or switch to a smaller model variant;
+- for `ultralytics` only, the batch size is a real training argument: `--set train.batch=<n>`.
+- A CUDA accelerator has to match the installed PyTorch and CUDA toolchain.
+
 Result keys: `backend`, `resolved_config`, `resolved_variant`, `metrics`, `trained_artifact`, `registered_artifact`, `published_path`, `weight_manifest_path`, `exports`.
 
 #### 4.2.3 Inference
@@ -735,14 +887,16 @@ Cross-pattern robustness scores the same weights on held-out patterns and reduce
 adh evaluate patchcore \
   --weights textile/artifacts/models/published/PatchCore.ckpt \
   --dataset zju-leaper \
-  --pattern pattern1-4 \
-  --cross-domain-patterns 5,6,7,8 \
+  --pattern pattern1 \
+  --cross-domain-patterns pattern5,pattern6,pattern7,pattern8 \
   --cross-domain-k 3 \
   --cross-domain-mode worst \
   --output-dir artifacts/runtime/anomaly_maps
 ```
 
 `--cross-domain-metric` selects the metric (default: the task headline metric); `--cross-domain-mode` is `worst` (mean over the largest drops) or `best` (mean over the smallest). The mode is echoed in the output. Patterns that cannot be scored are skipped, never counted as zero degradation.
+
+`--pattern` accepts one selector per flag, written either as `patternN` or as a bare `N`; `--cross-domain-patterns` takes a comma-separated list of the same.
 
 #### 4.2.5 Benchmarking
 
@@ -764,7 +918,7 @@ adh train-all --only yolov8n PatchCore --mode test --no-publish
 adh train-all --run-id <run-id> --resume
 ```
 
-Result keys: `batch_state`, `succeeded`, `total`, `results`; the `batch_state` directory holds the per-model state and log.
+Result keys: `batch_state`, `succeeded`, `total`, `results`; the `batch_state` directory holds the per-model state and log. `--dry-run` instead returns `plan` and `model_count`, and writes nothing. `--resume` requires `--run-id`.
 
 #### 4.2.7 Catalogue and diagnostic commands
 
@@ -825,9 +979,22 @@ Select `textile` in Application Domain dropdown:
 
 Select the `PatchCore` in Model dropdown:
 
-<p align="center"><img src="docs/images/img3.png" alt="Select the model" width="80%"></p>
+<p align="center"><img src="docs/images/img10.png" alt="Select the model" width="80%"></p>
 
-**Step 4: Select the dataset.**
+**Step 4: Load the model.**
+
+Click **Load model** and wait for the panel to turn green:
+
+<p align="center"><img src="docs/images/img4.png" alt="Load the model" width="80%"></p>
+
+Loading reads the weight named in the panel's **Weight** field from the corresponding domain's published directory, so that file has to be present before this step:
+
+- either download it in [2.2.6 Download Checkpoints](#226-download-checkpoints);
+- or let a training run produce it.
+
+If it is missing, the panel says **Checkpoint missing** and names the exact expected path instead of loading anything. Place the file there, or pick a different model whose weight is present.
+
+**Step 5: Select the dataset.**
 
 Select `ZJU-Leaper`, choose **All textures**, set split to **test** mode, and use **Full-shot** as sampling regime, then click the **Load random images** button:
 
@@ -835,17 +1002,19 @@ Select `ZJU-Leaper`, choose **All textures**, set split to **test** mode, and us
 
 please wait for the images to load.
 
-**Step 5: Run detection.**
+**Step 6: Run detection.**
 
 Click the **Run detection** button and wait for completion.
 
-<p align="center"><img src="docs/images/img6.png" alt="Run detection" width="80%"></p>
+<p align="center"><img src="docs/images/img11.png" alt="Run detection" width="80%"></p>
 
-The corresponding anomaly heat map of the image will be displayed on the right side, and the corresponding anomaly score will be shown below.
+The corresponding anomaly heat map of the image will be displayed on the right side, and the corresponding anomaly score will be shown below. The score is a number between 0 and 1, higher meaning more anomalous.
 
 ## 6. Extensibility
 
 Extension follows registration rather than modification: the command line, the web front-end, the evaluator and the profiler resolve every component through the same registries and capability declarations, so a new dataset, model backend, or application domain is introduced without a change to any consumer.
+
+The two worked examples below use placeholder names (`example-fabric`, `mybackend`, `MyMethod`); their file paths and identifiers do not exist in this checkout until the declarations shown are added.
 
 <table align="center">
   <thead>

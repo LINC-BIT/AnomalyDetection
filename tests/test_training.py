@@ -313,6 +313,22 @@ def test_cli_pattern_wins_over_configured_pattern():
     assert out["data"]["train_selection"]["pattern"] == "pattern7"
 
 
+def test_cli_pattern_number_selects_one_pattern():
+    """`--pattern 5` reaches the adapter as pattern 5, not as the string "5".
+
+    The adapter rejects a bare digit string (it falls through to the texture
+    name lookup), so the CLI normalizes it first.
+    """
+
+    from fabric_defect_hub.datasets.zju_leaper import coerce_pattern
+
+    raw = {"data": {"dataset": "zju-leaper", "train_selection": {"pattern": [1, 2, 3, 4]}}}
+    out = apply_dataset_overrides(
+        raw, "ultralytics", DatasetOverrides(mode="full", pattern=coerce_pattern("5"))
+    )
+    assert out["data"]["train_selection"]["pattern"] == 5
+
+
 def test_unrestricted_zju_medium_mode_uses_all_patterns():
     raw = {"data": {"dataset": "zju-leaper", "train_selection": {"num_samples": 300}}}
     out = apply_dataset_overrides(raw, "ultralytics", DatasetOverrides(mode="medium"))

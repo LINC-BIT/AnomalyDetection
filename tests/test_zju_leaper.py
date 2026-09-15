@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from fabric_defect_hub.datasets.zju_leaper import ZJULeaperDataset
+from fabric_defect_hub.datasets.zju_leaper import ZJULeaperDataset, coerce_pattern
 
 
 def _dataset_root(tmp_path, index):
@@ -86,3 +86,40 @@ def test_malformed_bbox_is_skipped_with_warning(tmp_path):
     assert len(samples) == 1
     assert samples[0].annotations.boxes is None
     assert samples[0].annotations.labels is None
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("5", 5),            # the comma-separated command-line form
+        (" 5 ", 5),          # tolerated whitespace
+        ("pattern5", "pattern5"),
+        ("group3", "group3"),
+        ("Knot Pattern", "Knot Pattern"),
+        ("total", "total"),
+        (None, None),
+        (7, 7),
+    ],
+)
+def test_coerce_pattern_normalizes_only_bare_numbers(raw, expected):
+    assert coerce_pattern(raw) == expected
+
+
+def test_bare_number_and_patternN_name_the_same_index(tmp_path):
+    """`--pattern 5` and `--pattern pattern5` must not diverge.
+
+    A bare `"5"` reaching the adapter unresolved is looked up as a texture
+    name and rejected; the cross-domain sweep swallows that ValueError as
+    "pattern not staged", so the divergence used to be silent.
+    """
+
+    root = _pattern_root(tmp_path, {5: _index(["p5-a", "p5-b"])})
+
+    from_string = ZJULeaperDataset(root=str(root), pattern=coerce_pattern("5"), use_defect=False)
+    from_name = ZJULeaperDataset(root=str(root), pattern=coerce_pattern("pattern5"), use_defect=False)
+
+    assert from_string._imageset_files() == from_name._imageset_files()
+    assert {s.id for s in from_string.load_samples()} == {"p5-a", "p5-b"}
+
+    with pytest.raises(ValueError, match="unknown pattern '5'"):
+        ZJULeaperDataset(root=str(root), pattern="5", use_defect=False).load_samples()

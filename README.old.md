@@ -414,7 +414,7 @@ adh-ui
 **Model:** `WinCLIP · LAION-400M zero-shot`; the panel must state domain `general` and slot
 `general/artifacts/models/published/WinCLIP.ckpt`.
 
-<p align="center"><img src="docs/images/img3.png" alt="Select the model" width="80%"></p>
+<p align="center"><img src="docs/images/img10.png" alt="Select the model" width="80%"></p>
 
 If that slot is empty locally, substitute any identifier whose `adh inventory` `weight_status` is
 `file` or `symlink` ([Section 9.4](#94-verifying-weight-availability)).
@@ -430,7 +430,7 @@ If that slot is empty locally, substitute any identifier whose `adh inventory` `
 
 **Run detection:** wait for completion.
 
-<p align="center"><img src="docs/images/img6.png" alt="Run detection" width="80%"></p>
+<p align="center"><img src="docs/images/img11.png" alt="Run detection" width="80%"></p>
 
 Result: gallery of images with per-image anomaly scores, plus the heat map when the model reports
 one.

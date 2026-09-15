@@ -38,6 +38,23 @@ from fabric_defect_hub.datasets.base import DatasetAdapter
 _DEFECT_LABEL = "defect"  # ZJU-Leaper is single-class (defect vs normal)
 
 
+def coerce_pattern(pattern: str | int | None) -> str | int | None:
+    """`"5"` -> `5`; `"pattern5"` and `None` pass through unchanged.
+
+    `_resolve_pattern_file` accepts `patternN` or an *int* N, but not the bare
+    string `"5"` — that string is looked up as a texture name and rejected.
+    Callers that read a pattern off a comma-separated command line only ever
+    have strings, so they convert a digit string to an int here first.
+
+    This lives next to the resolution quirk it compensates for, rather than in
+    any one caller, so the CLI and the metric sweep cannot drift apart on it.
+    """
+
+    if isinstance(pattern, str) and pattern.strip().isdigit():
+        return int(pattern.strip())
+    return pattern
+
+
 @register_dataset("zju-leaper")
 class ZJULeaperDataset(DatasetAdapter):
     """Configurable adapter over the ZJU-Leaper fabric dataset.

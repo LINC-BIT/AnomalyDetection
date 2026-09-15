@@ -118,7 +118,10 @@ def build_parser() -> argparse.ArgumentParser:
     defect_group.add_argument("--use-defect", dest="use_defect", action="store_true", default=None)
     defect_group.add_argument("--no-use-defect", dest="use_defect", action="store_false")
     train_parser.add_argument("--defect-ratio", type=float, help="fraction of the loaded split that is defective")
-    train_parser.add_argument("--pattern", help="ZJU-Leaper pattern/group filter override")
+    train_parser.add_argument(
+        "--pattern",
+        help="ZJU-Leaper pattern/group filter override: one of patternN, N, groupN, or a texture name",
+    )
     train_parser.add_argument("--category", help="MVTec-AD category filter override")
     train_parser.add_argument("--seed", type=int, help="subsampling RNG seed override")
     train_parser.add_argument(
@@ -228,7 +231,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     predict_parser.add_argument("--split", default="test", choices=("train", "test"), help="dataset split to draw from")
     predict_parser.add_argument("--num-samples", type=int, help="how many dataset samples to run inference on")
-    predict_parser.add_argument("--pattern", help="ZJU-Leaper pattern/group filter")
+    predict_parser.add_argument(
+        "--pattern",
+        help="ZJU-Leaper pattern/group filter: one of patternN, N, groupN, or a texture name",
+    )
     predict_parser.add_argument("--category", help="MVTec-AD category filter")
     predict_parser.add_argument("--seed", type=int, default=0, help="subsampling RNG seed")
     predict_parser.add_argument(
@@ -274,7 +280,10 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--dataset-root", help="dataset root path; falls back to data/<Dataset> if omitted")
     evaluate_parser.add_argument("--split", default="test", choices=("train", "test"), help="dataset split to draw from")
     evaluate_parser.add_argument("--num-samples", type=int, help="how many dataset samples to evaluate on")
-    evaluate_parser.add_argument("--pattern", help="ZJU-Leaper pattern/group filter")
+    evaluate_parser.add_argument(
+        "--pattern",
+        help="ZJU-Leaper pattern/group filter: one of patternN, N, groupN, or a texture name",
+    )
     evaluate_parser.add_argument("--category", help="MVTec-AD category filter")
     evaluate_parser.add_argument("--seed", type=int, default=0, help="subsampling RNG seed")
     evaluate_parser.add_argument(
@@ -293,9 +302,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--cross-domain-patterns",
         help=(
             "ZJU-Leaper pattern-level cross-domain sweep: comma-separated held-out patterns to "
-            "evaluate the same weights against (e.g. '5,6,7,8'), after scoring the source "
-            "patterns given by --pattern. Reports each pattern's relative accuracy drop plus a "
-            "top-k mean with a bootstrap CI over the patterns"
+            "evaluate the same weights against (e.g. '5,6,7,8' or 'pattern5,pattern6'), after "
+            "scoring the source pattern given by --pattern. Reports each pattern's relative "
+            "accuracy drop plus a top-k mean with a bootstrap CI over the patterns. A pattern "
+            "that cannot be scored here is reported as skipped, not as a zero drop"
         ),
     )
     evaluate_parser.add_argument(
@@ -551,6 +561,9 @@ def _parse_set_overrides(raw_items: list[str]) -> dict[str, Any]:
 
 
 def _run_train(args: argparse.Namespace) -> Any:
+    # '5' and 'pattern5' both name pattern 5, on every command that takes a
+    # pattern — see `datasets/zju_leaper.coerce_pattern`.
+    from fabric_defect_hub.datasets.zju_leaper import coerce_pattern
     from fabric_defect_hub.training import DatasetOverrides, find_model_configs, run_train
 
     if args.list:
@@ -571,7 +584,7 @@ def _run_train(args: argparse.Namespace) -> Any:
         val_num_samples=args.val_num_samples,
         use_defect=args.use_defect,
         defect_ratio=args.defect_ratio,
-        pattern=args.pattern,
+        pattern=coerce_pattern(args.pattern),
         category=args.category,
         seed=args.seed,
     )
@@ -716,6 +729,9 @@ class _Tee:
 
 
 def _run_predict(args: argparse.Namespace) -> Any:
+    # '5' and 'pattern5' both name pattern 5 — see
+    # `datasets/zju_leaper.coerce_pattern`.
+    from fabric_defect_hub.datasets.zju_leaper import coerce_pattern
     from fabric_defect_hub.inference.runner import PredictInput, run_predict
 
     source = PredictInput(
@@ -724,7 +740,7 @@ def _run_predict(args: argparse.Namespace) -> Any:
         dataset_root=args.dataset_root,
         split=args.split,
         num_samples=args.num_samples,
-        pattern=args.pattern,
+        pattern=coerce_pattern(args.pattern),
         category=args.category,
         seed=args.seed,
     )
@@ -756,6 +772,9 @@ def _run_predict(args: argparse.Namespace) -> Any:
 
 
 def _run_evaluate(args: argparse.Namespace) -> Any:
+    # '5' and 'pattern5' both name pattern 5 here too, so the flag behaves the
+    # same with and without a cross-domain sweep on the same command.
+    from fabric_defect_hub.datasets.zju_leaper import coerce_pattern
     from fabric_defect_hub.inference.runner import PredictInput, run_evaluate
 
     source = PredictInput(
@@ -763,7 +782,7 @@ def _run_evaluate(args: argparse.Namespace) -> Any:
         dataset_root=args.dataset_root,
         split=args.split,
         num_samples=args.num_samples,
-        pattern=args.pattern,
+        pattern=coerce_pattern(args.pattern),
         category=args.category,
         seed=args.seed,
     )
@@ -805,13 +824,20 @@ def _run_cross_domain_sweep(args: argparse.Namespace, source_run: Any, source: A
 
     from dataclasses import replace
 
+    from fabric_defect_hub.datasets.zju_leaper import coerce_pattern
     from fabric_defect_hub.evaluation.cross_domain import (
         pattern_sweep_degradation,
         resolve_headline_metric,
     )
     from fabric_defect_hub.inference.runner import run_evaluate
 
-    patterns = [p.strip() for p in args.cross_domain_patterns.split(",") if p.strip()]
+    # '5' and 'pattern5' both name pattern 5. The source selection needs the
+    # same treatment as the held-out ones: `--pattern 5` reaching the adapter
+    # as the string "5" is looked up as a texture name and rejected. Only a
+    # string is converted, so a `None` selection stays "the whole benchmark".
+    patterns = [coerce_pattern(p.strip()) for p in args.cross_domain_patterns.split(",") if p.strip()]
+    if isinstance(source.pattern, str):
+        source = replace(source, pattern=coerce_pattern(source.pattern))
     task = args.task or source_run.metrics.get("task") or _sweep_task(source_run.metrics)
     metric_key = resolve_headline_metric(task, source_run.metrics, args.cross_domain_metric)
 

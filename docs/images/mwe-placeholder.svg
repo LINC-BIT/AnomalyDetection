@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
-  <rect width="1200" height="675" fill="#eef2f7"/>
-  <rect x="80" y="80" width="1040" height="515" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="4"/>
-  <text x="600" y="315" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#475569">Screenshot placeholder</text>
-  <text x="600" y="365" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#64748b">Replace with the corresponding AnomalyDetection UI screenshot.</text>
-</svg>
