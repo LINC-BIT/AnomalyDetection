@@ -1,8 +1,5 @@
 <h1 align="center">AnomalyDetection</h1>
 
-> **TODO — work in progress.** This document is not finished: some reference values (measured
-> runtimes, weight checksums, recorded-demo revisions) are still outstanding.
-
 ---
 
 ## Outline
