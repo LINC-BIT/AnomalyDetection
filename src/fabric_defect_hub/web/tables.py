@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from fabric_defect_hub.metrics_taxonomy import label_of
+
 # The two top-level sections, in display order, with the headings a page
 # shows above them. The names come from the taxonomy; only the wording is
 # this module's business.
@@ -38,6 +40,33 @@ TABLE_TITLES: dict[str, str] = {
     "memory": "Memory",
     "communication": "Communication",
 }
+
+# Display headings for the columns `reporting.flatten_run_log_rows` returns.
+# The run log stores these keys, but the page must not show a raw
+# `timestamp_utc`/`image_auroc` beside a benchmark table that calls the same
+# metric "Image AUROC".
+RUN_LOG_COLUMNS: dict[str, str] = {
+    "timestamp_utc": "Timestamp (UTC)",
+    "model": "Model",
+    "backend": "Backend",
+    "task": "Task type",
+    "dataset": "Dataset",
+    "device": "Device",
+}
+
+
+def run_log_headers(columns: list[str]) -> list[str]:
+    """`flatten_run_log_rows`' columns as display headings — the run-metadata
+    columns from `RUN_LOG_COLUMNS`, every metric from the taxonomy."""
+
+    return [RUN_LOG_COLUMNS.get(column, label_of(column)) for column in columns]
+
+
+def metric_choices(columns: list[str]) -> list[tuple[str, str]]:
+    """`(label, key)` pairs for the run-history metric dropdown, so the menu
+    reads "Image AUROC" while the selection keeps carrying `image_auroc`."""
+
+    return [(label_of(column), column) for column in columns]
 
 
 def table_title(name: str) -> str:

@@ -310,7 +310,7 @@ def test_prediction_tags_render_defect_label_and_confidence_for_detection_and_an
     assert "25.7%" in detection
     assert "Anomalous" in anomaly
     assert "70.1%" in anomaly
-    assert "Heatmap available" in anomaly
+    assert "Heat map available" in anomaly
 
 
 def test_prediction_tags_separate_a_missing_heatmap_from_a_model_that_has_none():
@@ -327,10 +327,10 @@ def test_prediction_tags_separate_a_missing_heatmap_from_a_model_that_has_none()
     unknown = render_prediction_tags({**base, "has_anomaly_map": False})
 
     assert "Image-level score only" in unsupported
-    assert "Heatmap not available" in not_produced
+    assert "Heat map not available" in not_produced
     # No capabilities passed -> the older, non-committal wording, so a caller
     # that doesn't know cannot accidentally assert the stronger claim.
-    assert "Heatmap not available" in unknown
+    assert "Heat map not available" in unknown
 
 
 def test_prediction_summary_reports_pixel_map_support_from_capabilities():
@@ -345,3 +345,65 @@ def test_prediction_summary_reports_pixel_map_support_from_capabilities():
     assert prediction_summary(prediction, image_level_only)["pixel_map_supported"] is False
     assert prediction_summary(prediction, pixel_level)["pixel_map_supported"] is True
     assert prediction_summary(prediction)["pixel_map_supported"] is None
+
+
+def _reset_available_models(monkeypatch):
+    """`available_model_labels` freezes on first call, so a test that changes
+    which slots are staged has to clear that memo first."""
+
+    monkeypatch.setattr(workspace, "_AVAILABLE_MODEL_LABELS", None)
+
+
+def test_available_models_are_exactly_the_staged_slots(monkeypatch):
+    _reset_available_models(monkeypatch)
+    staged = [label for label in MODEL_CATALOG if workspace.model_is_available(label)]
+
+    labels = workspace.available_model_labels()
+
+    if staged:
+        assert labels == staged
+    else:
+        # README 5.2's "Checkpoint missing — expected `<path>`" panel needs a
+        # selectable entry, so an empty machine keeps the whole catalog.
+        assert labels == list(MODEL_CATALOG)
+
+
+def test_available_models_are_frozen_for_the_process(monkeypatch):
+    """Every selector reads one answer, and README 4.1.1 already makes a
+    restart the way to pick up a change to what is staged."""
+
+    _reset_available_models(monkeypatch)
+    first = workspace.available_model_labels()
+    monkeypatch.setattr(workspace, "model_is_available", lambda label: False)
+
+    assert workspace.available_model_labels() == first
+
+
+def test_available_models_keep_the_manifest_order(monkeypatch):
+    _reset_available_models(monkeypatch)
+
+    labels = workspace.available_model_labels()
+
+    assert labels == [label for label in MODEL_CATALOG if label in set(labels)]
+
+
+def test_available_models_fall_back_to_the_catalog_when_nothing_is_staged(monkeypatch):
+    """An empty dropdown would hide README 5.2's "Checkpoint missing —
+    expected `<path>`" panel, the one place that says what to download."""
+
+    _reset_available_models(monkeypatch)
+    monkeypatch.setattr(workspace, "model_is_available", lambda label: False)
+
+    assert workspace.available_model_labels() == list(MODEL_CATALOG)
+
+
+def test_benchmark_model_list_drops_slots_with_no_staged_weight(monkeypatch):
+    from fabric_defect_hub.application import benchmark as web_benchmark
+
+    _reset_available_models(monkeypatch)
+    monkeypatch.setitem(
+        MODEL_CATALOG, "Fake Staged Model", dict(MODEL_CATALOG["YOLOv8n · ZJU-Leaper"])
+    )
+    monkeypatch.setattr(workspace, "_AVAILABLE_MODEL_LABELS", ["Fake Staged Model"])
+
+    assert web_benchmark.compatible_models("ZJU-Leaper") == ["Fake Staged Model"]

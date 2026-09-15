@@ -47,6 +47,52 @@ MODEL_CATALOG = {
     for model in CANONICAL_MODELS
 }
 
+# Frozen on the first `available_model_labels()` call. See that function for
+# why availability is decided once per process rather than per widget.
+_AVAILABLE_MODEL_LABELS: list[str] | None = None
+
+
+def model_is_available(model_label: str) -> bool:
+    """Whether this catalog entry's published weight is staged on this
+    machine.
+
+    A published slot is a path (README 2.2.7); the file at it is what
+    `adh train --publish` writes or `tools/download_weights.py` downloads
+    (README 2.2.6). No file means the model was never trained or fetched
+    here, so it cannot be run.
+    """
+
+    return Path(MODEL_CATALOG[model_label]["checkpoint"]).is_file()
+
+
+def available_model_labels() -> list[str]:
+    """The catalog labels a model selector may offer, in manifest order.
+
+    Both selectors read this — the Single Image "Model" dropdown and the
+    Benchmark "Models to benchmark" list — so an untrained slot is never
+    offered and then refused. The general-domain training slots
+    (`PatchCore · General`, ...) are the everyday example: the manifest
+    registers them so `adh train` has a destination, but until a run
+    publishes into that slot there is nothing to load.
+
+    Two deliberate exceptions:
+
+    * If *nothing* is staged the full catalog is returned. An empty dropdown
+      would hide the "Checkpoint missing — expected `<path>`" panel README
+      5.2 documents, which is the one place that says what to download.
+    * The answer is frozen on first call, so every selector on the page
+      agrees for the life of the process. README 4.1.1 already makes a
+      restart the way to pick a manifest change up, and a newly published
+      weight is the same kind of change.
+    """
+
+    global _AVAILABLE_MODEL_LABELS
+    if _AVAILABLE_MODEL_LABELS is None:
+        staged = [label for label in MODEL_CATALOG if model_is_available(label)]
+        _AVAILABLE_MODEL_LABELS = staged or list(MODEL_CATALOG)
+    return list(_AVAILABLE_MODEL_LABELS)
+
+
 # Display label -> the *presentation* facts about a registered dataset, and
 # nothing else.
 #
@@ -157,6 +203,15 @@ FEW_SHOT_DEFECT_RATIO = 0.3
 # *value* is also compared elsewhere in this module (`shot_mode == SHOT_FULL`,
 # `image_scope == DEFECT_ONLY`, ...). Only the display half is localized —
 # see `i18n.py`'s module docstring for why the value must stay stable.
+def task_choices(lang: str = DEFAULT_LANGUAGE) -> list[tuple[str, str]]:
+    """The "Task type" dropdown's `(display_label, value)` pairs. README
+    4.1.2 names the two entries (`Anomaly detection` / `Defect detection`)
+    and `task_text` reports the same pair in the model panel, so the two
+    never drift into three names for two things."""
+
+    return [(tr(lang, "choice_task_defect"), "defect"), (tr(lang, "choice_task_anomaly"), "anomaly")]
+
+
 def split_choices(lang: str = DEFAULT_LANGUAGE) -> list[tuple[str, str]]:
     return [(tr(lang, "split_test"), "test"), (tr(lang, "split_train"), "train")]
 
@@ -173,26 +228,28 @@ def shot_mode_choices(lang: str = DEFAULT_LANGUAGE) -> list[tuple[str, str]]:
     return [(tr(lang, "choice_full_shot"), SHOT_FULL), (tr(lang, "choice_few_shot"), SHOT_FEW)]
 
 
-_TASK_KEYS = {
-    "detection": "task_detection",
-    "segmentation": "task_segmentation",
-    "instance_segmentation": "task_instance_segmentation",
-    "anomaly": "task_anomaly",
-}
+def task_text(lang: str, task: str) -> str:
+    """The task-type name a user sees, using the same two labels as the
+    "Task type" dropdown (README 4.1.2: `Anomaly detection` / `Defect
+    detection`) rather than the internal `anomaly`/`segmentation` slug.
 
+    Every supervised task the manifest declares — detection, segmentation and
+    instance segmentation — is one "Defect detection" entry in README 3.1's
+    Task Type column, so the internal slugs must not leak into the panel as a
+    third name for the same thing.
+    """
 
-def _task_text(lang: str, task: str) -> str:
-    return tr(lang, _TASK_KEYS.get(task, "task_detection"))
+    return tr(lang, "choice_task_anomaly" if task == "anomaly" else "choice_task_defect")
 
 
 def _scope_text(lang: str, image_scope: str) -> str:
     mapping = {ALL_IMAGES: "choice_all_images", DEFECT_ONLY: "choice_defect_only", NORMAL_ONLY: "choice_normal_only"}
-    return tr(lang, mapping.get(image_scope, "choice_all_images")).lower()
+    return tr(lang, mapping.get(image_scope, "choice_all_images"))
 
 
 def shot_text(lang: str, shot_mode: str) -> str:
     mapping = {SHOT_FULL: "choice_full_shot", SHOT_FEW: "choice_few_shot"}
-    return tr(lang, mapping.get(shot_mode, "choice_full_shot")).lower()
+    return tr(lang, mapping.get(shot_mode, "choice_full_shot"))
 
 
 def dataset_tasks(dataset_name: str) -> tuple[str, ...]:
@@ -408,13 +465,18 @@ def model_status(model_label: str, lang: str = DEFAULT_LANGUAGE) -> str:
     path = Path(spec["checkpoint"])
     if not path.is_file():
         return tr(lang, "model_status_missing", path=path)
-    training_split = f" ({spec['training_split'].replace('_', ' ')})" if spec["training_split"] else ""
+    # `training_split` is a manifest value (README 6.2: `training_split:
+    # normal_only`), so it is shown verbatim in both languages — the same
+    # rule that leaves dataset and model identifiers untranslated. The panel
+    # used to spell it "normal only", a third form that matched neither the
+    # manifest nor README 3.1's "Normal-only (one-class)".
+    training_split = spec["training_split"] or tr(lang, "value_none")
     return tr(
         lang, "model_status_ready",
-        task=_task_text(lang, spec["task"]),
+        task=task_text(lang, spec["task"]),
         method=spec["method"],
         domain=spec["domain"],
-        trained_on=", ".join(spec["trained_on"]) or "unknown",
+        training_corpus=", ".join(spec["trained_on"]) or tr(lang, "value_none"),
         training_split=training_split,
         filename=path.name,
     )
@@ -444,12 +506,30 @@ def checkpoint_diagnostic(model_label: str, lang: str = DEFAULT_LANGUAGE) -> str
     ))
 
 
+def dataset_declared_root(dataset_label: str) -> str:
+    """The **declared root** README 2.2.7 says a dataset is staged under
+    (`datasets/textile/ZJU-Leaper`, `datasets/general/MVTec AD`).
+
+    The page must name this path rather than the legacy `data/<dir>` probe:
+    the declared root is the one README documents and the one `adh doctor`
+    reports, so a user told to "connect the storage at X" can compare X with
+    the path the CLI names.
+    """
+
+    from fabric_defect_hub.core.dataset_capabilities import all_capabilities
+
+    return all_capabilities()[DATASET_CATALOG[dataset_label]["name"]].default_root
+
+
 def dataset_status(dataset_label: str, lang: str = DEFAULT_LANGUAGE) -> str:
     root = default_dataset_root(dataset_label)
     if root:
         return tr(lang, "dataset_ready", label=dataset_label)
     spec = DATASET_CATALOG[dataset_label]
-    return tr(lang, "dataset_unavailable", label=dataset_label, dir=_dataset_dir(dataset_label), env=spec["env"])
+    return tr(
+        lang, "dataset_unavailable",
+        label=dataset_label, root=dataset_declared_root(dataset_label), env=spec["env"],
+    )
 
 
 def build_gallery_state(samples: list[Sample], count: int, seed: int, dataset_label: str) -> dict[str, Any]:
@@ -473,8 +553,10 @@ def load_random_samples(
 ) -> tuple[dict[str, Any], str | None, str, str]:
     root = default_dataset_root(dataset_label)
     if not root:
+        env = DATASET_CATALOG[dataset_label]["env"]
         raise FileNotFoundError(
-            f"The `{dataset_label}` root could not be resolved from the local `data/` directory or SSD."
+            f"no staged copy of `{dataset_label}` was found at its declared root "
+            f"`{dataset_declared_root(dataset_label)}` (or under `${env}`)"
         )
     spec = DATASET_CATALOG[dataset_label]
     actual_seed = random.SystemRandom().randrange(2**32) if seed is None else int(seed)
@@ -501,7 +583,7 @@ def load_random_samples(
     status = tr(
         lang, "dataset_load_success",
         count=len(state["samples"]), scope=_scope_text(lang, image_scope), shot=shot_text(lang, shot_mode),
-        name=dataset.name, texture=texture, split=split,
+        name=dataset_label, texture=texture, split=split,
     )
     return state, path, position, status
 
@@ -656,7 +738,7 @@ def render_prediction_tags(summary: dict[str, Any], lang: str = DEFAULT_LANGUAGE
     (`summary["labels"]`, e.g. "defect" or a checkpoint's own class name),
     paired with a confidence tag whose background opacity scales with the
     score — darker means more confident, lighter means less. See the app's
-    `CSS` for the `.fdh-tag*` classes this emits into the `Inference result`
+    `CSS` for the `.fdh-tag*` classes this emits into the `Detection result`
     card's `gr.HTML` panel."""
 
     import html as _html

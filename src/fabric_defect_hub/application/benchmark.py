@@ -19,7 +19,9 @@ from fabric_defect_hub.scoring import SCORE_PRESETS, score_rows
 from fabric_defect_hub.application.workspace import (
     DATASET_CATALOG,
     MODEL_CATALOG,
+    available_model_labels,
     shot_text,
+    task_text,
     artifact_for_model,
     dataset_tasks,
     default_dataset_root,
@@ -57,14 +59,23 @@ def score_preset_choices(lang: str = DEFAULT_LANGUAGE) -> list[tuple[str, str]]:
 
 
 def compatible_models(dataset_label: str) -> list[str]:
-    """Models this dataset can supply real ground truth for — i.e. every
-    catalog model whose task the dataset's `tasks` set covers (ZJU-Leaper
-    has boxes *and* masks, so both detection and segmentation models are
-    compatible; RAW-FABRID/MVTec AD have anomaly labels and masks but no
-    boxes, so only anomaly and segmentation models are)."""
+    """Models this dataset can supply real ground truth for *and* that are
+    staged here — i.e. every available catalog model whose task the dataset's
+    `tasks` set covers (ZJU-Leaper has boxes *and* masks, so both detection
+    and segmentation models are compatible; RAW-FABRID/MVTec AD have anomaly
+    labels and masks but no boxes, so only anomaly and segmentation models
+    are).
+
+    The staging half comes from `available_model_labels`, so the benchmark
+    checklist never offers a general-domain training slot nothing has been
+    published into yet — the model would be evaluated against zero weights.
+    """
 
     tasks = dataset_tasks(DATASET_CATALOG[dataset_label]["name"])
-    return [label for label, spec in MODEL_CATALOG.items() if ground_truth_task(spec["task"]) in tasks]
+    return [
+        label for label in available_model_labels()
+        if ground_truth_task(MODEL_CATALOG[label]["task"]) in tasks
+    ]
 
 
 def _detect_device() -> str:
@@ -397,7 +408,10 @@ def run_benchmark(
         model_spec = MODEL_CATALOG[model_label]
         dataset_task = ground_truth_task(model_spec["task"])
         if dataset_task not in supported_tasks:
-            errors.append(tr(lang, "bench_task_mismatch", model=model_label, dataset=dataset_label, task=model_spec["task"]))
+            errors.append(tr(
+                lang, "bench_task_mismatch",
+                model=model_label, dataset=dataset_label, task=task_text(lang, model_spec["task"]),
+            ))
             yield _render(
                 rows, sample_count, shot_mode, errors, lang=lang,
                 technical_weight=technical_weight, overhead_weight=overhead_weight,

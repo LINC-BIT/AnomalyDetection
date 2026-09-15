@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 import os
+import sys
 
 from fabric_defect_hub.i18n import DEFAULT_LANGUAGE, LANGUAGES, tr
 from fabric_defect_hub.inference.session import InferenceSessionManager, format_session_status
 from fabric_defect_hub.reporting import flatten_run_log_rows, latest_run_per_model, read_run_log
 from fabric_defect_hub.metrics_taxonomy import UNIMPLEMENTED
-from fabric_defect_hub.web.tables import empty_sections, render_sections, status_line
+from fabric_defect_hub.web.tables import (
+    RUN_LOG_COLUMNS,
+    empty_sections,
+    metric_choices,
+    render_sections,
+    run_log_headers,
+    status_line,
+)
 from fabric_defect_hub.application.benchmark import (
     DEFAULT_RUN_LOG_PATH,
     compatible_models,
@@ -18,6 +26,7 @@ from fabric_defect_hub.application.benchmark import (
 from fabric_defect_hub.application.workspace import (
     DATASET_CATALOG,
     MODEL_CATALOG,
+    available_model_labels,
     checkpoint_diagnostic,
     current_image,
     dataset_status as dataset_availability_status,
@@ -32,6 +41,7 @@ from fabric_defect_hub.application.workspace import (
     render_prediction_tags,
     shot_mode_choices,
     split_choices,
+    task_choices,
     texture_choices,
     unload_selected_model,
 )
@@ -135,7 +145,8 @@ def _lang_choices() -> list[tuple[str, str]]:
 
 
 def _tables_from_leaderboard(
-    scored: list[dict], columns: list[str], profiling_requested: bool = False
+    scored: list[dict], columns: list[str], profiling_requested: bool = False,
+    lang: str = DEFAULT_LANGUAGE,
 ) -> dict[str, dict]:
     """Regroup benchmark rows into the taxonomy's tables.
 
@@ -172,10 +183,7 @@ def _tables_from_leaderboard(
     if profiling_requested:
         for name in ("compute", "memory"):
             if not tables[name]["rows"]:
-                tables[name]["note"] = (
-                    "Profiling was requested but produced no metrics for these models — "
-                    "see the status message above for the reason it was skipped."
-                )
+                tables[name]["note"] = tr(lang, "bench_profiling_no_metrics")
     return tables
 
 
@@ -183,10 +191,15 @@ def create_app():
     try:
         gr = _import_gradio_for_local_ui()
     except ImportError as exc:
-        raise RuntimeError('Install the UI dependencies first: pip install -e ".[ui]"') from exc
+        # Same command README 2.2.3's "Frontend" row gives.
+        raise RuntimeError('Install the UI dependencies first: python -m pip install -e ".[ui]"') from exc
 
     sessions = InferenceSessionManager()
-    default_model = next(iter(MODEL_CATALOG))
+    # The selectors offer only models staged here (see
+    # `available_model_labels`), so the default selection is a model that can
+    # actually be loaded rather than whichever slot the manifest lists first.
+    selectable_models = available_model_labels()
+    default_model = selectable_models[0]
     default_spec = MODEL_CATALOG[default_model]
     default_task = "anomaly" if default_spec.get("task") == "anomaly" else "defect"
     default_domain = default_spec.get("domain", "general")
@@ -213,14 +226,15 @@ def create_app():
                         with gr.Column(scale=3, elem_classes="fdh-control-card"):
                             model_header = gr.Markdown(tr(lang0, "model_session_header"))
                             task_choice = gr.Dropdown(
-                                choices=[("Defect detection", "defect"), ("Anomaly detection", "anomaly")],
-                                value=default_task, label="Task type",
+                                choices=task_choices(lang0), value=default_task,
+                                label=tr(lang0, "task_type_label"),
                             )
                             domain_choice = gr.Dropdown(
-                                choices=domain_values, value=default_domain, label="Application domain",
+                                choices=domain_values, value=default_domain,
+                                label=tr(lang0, "application_domain_label"),
                             )
                             model_choice = gr.Dropdown(
-                                list(MODEL_CATALOG), value=default_model, label=tr(lang0, "model_dropdown_label")
+                                selectable_models, value=default_model, label=tr(lang0, "model_dropdown_label")
                             )
                             model_state = gr.Markdown(model_status(default_model, lang0), elem_classes="fdh-status")
                             with gr.Row():
@@ -347,22 +361,30 @@ def create_app():
                         outputs=model_state,
                     )
                     def model_choices(task_type, domain):
+                        # Iterates the *available* labels, not the whole
+                        # catalog: an untrained slot in the selected
+                        # task/domain must not be offered here either.
                         return [
-                            label for label, spec in MODEL_CATALOG.items()
-                            if (spec.get("task") == "anomaly") == (task_type == "anomaly")
-                            and spec.get("domain", "general") == domain
+                            label for label in selectable_models
+                            if (MODEL_CATALOG[label].get("task") == "anomaly") == (task_type == "anomaly")
+                            and MODEL_CATALOG[label].get("domain", "general") == domain
                         ]
 
-                    def update_models(task_type, domain):
+                    def update_models(task_type, domain, lang):
                         choices = model_choices(task_type, domain)
                         value = choices[0] if choices else None
-                        return gr.Dropdown(choices=choices, value=value), model_status(value, lang0) if value else "No registered model matches this selection."
+                        return (
+                            gr.Dropdown(choices=choices, value=value),
+                            model_status(value, lang) if value else tr(lang, "model_none_matching"),
+                        )
 
                     task_choice.change(
-                        update_models, inputs=[task_choice, domain_choice], outputs=[model_choice, model_state]
+                        update_models, inputs=[task_choice, domain_choice, lang_state],
+                        outputs=[model_choice, model_state],
                     )
                     domain_choice.change(
-                        update_models, inputs=[task_choice, domain_choice], outputs=[model_choice, model_state]
+                        update_models, inputs=[task_choice, domain_choice, lang_state],
+                        outputs=[model_choice, model_state],
                     )
                     verify_model_button.click(
                         checkpoint_diagnostic,
@@ -547,7 +569,7 @@ def create_app():
                         # report are two views of one result, not two
                         # implementations.
                         grouped = _tables_from_leaderboard(
-                            scored or rows, columns, profiling_requested=include_profiling
+                            scored or rows, columns, profiling_requested=include_profiling, lang=lang
                         )
                         yield (
                             gr.update(value=rows or []),
@@ -607,7 +629,12 @@ def create_app():
                             )
                     history_status = gr.Markdown(tr(lang0, "history_no_runs"), elem_classes="fdh-status")
                     history_table = gr.Dataframe(
-                        label=tr(lang0, "history_table_label"), interactive=False, wrap=True
+                        label=tr(lang0, "history_table_label"), interactive=False, wrap=True,
+                        # An empty table otherwise renders its positional
+                        # placeholders ("1", "2", "3") as headings, which says
+                        # nothing about what the page will show. Name the run
+                        # metadata it always carries instead.
+                        headers=run_log_headers(list(RUN_LOG_COLUMNS)),
                     )
 
                     def history_refresh_handler(path, metric, lang):
@@ -619,18 +646,25 @@ def create_app():
                                 tr(lang, "history_load_error", error=exc),
                             )
                         if not rows:
-                            return gr.Dataframe(value=[]), gr.Dropdown(choices=[]), tr(lang, "history_no_runs")
+                            return (
+                                gr.Dataframe(value=[]), gr.Dropdown(choices=[]),
+                                tr(lang, "history_no_runs"),
+                            )
 
                         columns, table = flatten_run_log_rows(rows)
-                        excluded = {"timestamp_utc", "model", "backend", "task", "dataset", "device"}
-                        metric_choices = [column for column in columns if column not in excluded]
-                        selected_metric = metric if metric in metric_choices else (
-                            metric_choices[0] if metric_choices else None
+                        # The log records metric keys (`image_auroc`); the page
+                        # names them the way the benchmark tables do, so one
+                        # metric has one name across the two tabs.
+                        choices = metric_choices(
+                            [column for column in columns if column not in RUN_LOG_COLUMNS]
+                        )
+                        selected_metric = metric if metric in dict(choices).values() else (
+                            choices[0][1] if choices else None
                         )
                         return (
-                            gr.Dataframe(headers=columns, value=table),
-                            gr.Dropdown(choices=metric_choices, value=selected_metric),
-                            tr(lang, "history_table_label"),
+                            gr.Dataframe(headers=run_log_headers(columns), value=table),
+                            gr.Dropdown(choices=choices, value=selected_metric),
+                            tr(lang, "history_loaded", count=len(rows)),
                         )
 
                     history_refresh_button.click(
@@ -657,6 +691,8 @@ def create_app():
                 gr.Tab(label=tr(lang, "tab_benchmark")),
                 gr.Tab(label=tr(lang, "tab_run_history")),
                 tr(lang, "model_session_header"),
+                gr.Dropdown(choices=task_choices(lang), label=tr(lang, "task_type_label")),
+                gr.Dropdown(label=tr(lang, "application_domain_label")),
                 gr.Dropdown(label=tr(lang, "model_dropdown_label")),
                 model_status(model_label, lang),
                 tr(lang, "btn_load_model"),
@@ -688,6 +724,12 @@ def create_app():
                 gr.CheckboxGroup(label=tr(lang, "benchmark_models_label")),
                 tr(lang, "btn_run_benchmark"),
                 gr.Checkbox(label=tr(lang, "benchmark_profiling_label")),
+                gr.Checkbox(label=tr(lang, "benchmark_resolution_sweep_label")),
+                gr.Dropdown(
+                    choices=[tr(lang, "benchmark_cross_domain_none"), *DATASET_CATALOG],
+                    value=tr(lang, "benchmark_cross_domain_none"),
+                    label=tr(lang, "benchmark_cross_domain_label"),
+                ),
                 gr.Dropdown(choices=score_preset_choices(lang), label=tr(lang, "benchmark_score_preset_label")),
                 gr.Slider(label=tr(lang, "benchmark_custom_weight_label")),
                 tr(lang, "benchmark_placeholder"),
@@ -697,7 +739,7 @@ def create_app():
                 gr.Dropdown(label=tr(lang, "history_metric_label")),
                 tr(lang, "btn_history_refresh"),
                 tr(lang, "history_no_runs"),
-                gr.Dataframe(label=tr(lang, "history_table_label")),
+                gr.Dataframe(label=tr(lang, "history_table_label"), headers=run_log_headers(list(RUN_LOG_COLUMNS))),
             )
 
         lang_choice.change(
@@ -705,14 +747,15 @@ def create_app():
             inputs=[lang_choice, model_choice, dataset_choice, state],
             outputs=[
                 lang_state, nav_html, tab_single, tab_bench, tab_history,
-                model_header, model_choice, model_state,
+                model_header, task_choice, domain_choice, model_choice, model_state,
                 load_model_button, unload_model_button, verify_model_button, detect_button,
                 source_image, position, previous, next_image, result_image,
                 runtime_header, runtime_state, result_summary, inference_status,
                 dataset_header, dataset_choice, texture_choice, split, sample_count, image_scope, shot_mode,
                 load_button, dataset_status,
                 bench_header, bench_dataset, bench_texture, bench_shot_mode, bench_models,
-                bench_run_button, bench_profiling, bench_score_preset, bench_custom_weight,
+                bench_run_button, bench_profiling, bench_resolution_sweep, bench_cross_domain,
+                bench_score_preset, bench_custom_weight,
                 bench_status, bench_results,
                 history_header, history_path, history_metric, history_refresh_button,
                 history_status, history_table,
@@ -762,6 +805,35 @@ def _port_holder(port: int) -> str:
     return f"PID {pid} ({command})" if pid else ""
 
 
+class _LoopbackBanner:
+    """Rewrite the host Gradio prints in its startup banner to the loopback
+    name.
+
+    README 4.1.1 documents the app at `http://127.0.0.1:6008` *and* as
+    "listening on all interfaces", which is why `launch` binds `0.0.0.0`.
+    Gradio prints whichever address it bound and offers no separate display
+    host, so the one line a user copies into a browser would name the
+    wildcard — an address no browser can open. Only that URL is rewritten on
+    the way to the terminal; the socket the server binds is untouched.
+
+    A plain `write` filter rather than `quiet=True` plus our own banner:
+    everything else Gradio prints (theme build progress, warnings, share
+    errors) stays visible and unchanged.
+    """
+
+    _WILDCARD = "://0.0.0.0:"
+    _LOOPBACK = "://localhost:"
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def write(self, text: str) -> int:
+        return self._stream.write(text.replace(self._WILDCARD, self._LOOPBACK))
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+
 def launch(**kwargs):
     import os
 
@@ -789,7 +861,11 @@ def launch(**kwargs):
         kwargs.setdefault("theme", gr.themes.Base(primary_hue="orange", neutral_hue="slate"))
     except ImportError:
         pass
+    # `launch()` blocks until the server stops, so the filter has to stay
+    # installed for the whole call; the banner is printed part-way through it.
+    stdout = sys.stdout
     try:
+        sys.stdout = _LoopbackBanner(stdout)
         return create_app().launch(**kwargs)
     except OSError as exc:
         # Without this, a leftover `adh-ui` (a backgrounded run, or one
@@ -802,7 +878,9 @@ def launch(**kwargs):
             f"adh-ui: port {port} is already in use"
             + (f" by {holder}" if holder else "")
             + " — an earlier adh-ui is probably still running.\n"
-            f"  Reuse it:   open http://127.0.0.1:{port} in the browser\n"
+            f"  Reuse it:   open http://localhost:{port} in the browser\n"
             + (f"  Or stop it: kill {holder.split()[1]}\n" if holder else "")
             + f"  Or move:    GRADIO_SERVER_PORT=7860 adh-ui"
         ) from exc
+    finally:
+        sys.stdout = stdout

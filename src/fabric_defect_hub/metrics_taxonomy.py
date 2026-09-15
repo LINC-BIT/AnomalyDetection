@@ -50,13 +50,14 @@ TABLES: tuple[str, ...] = (*TECHNICAL_TABLES, *OVERHEAD_TABLES)
 EMPTY_HINTS: dict[str, str] = {
     "image_level": (
         "No selected model reports image-level scores. These come from the anomaly "
-        "backends (PatchCore, PaDiM, RD4AD, STFPM, GANomaly, Dinomaly, MambaAD, MoECLIP); "
-        "detection models such as YOLO and Faster R-CNN are scored at instance level instead."
+        "backends (PatchCore, PaDiM, Reverse Distillation, STFPM, GANomaly, Dinomaly, "
+        "MambaAD, MoECLIP); detection models such as YOLO and Faster R-CNN are scored at "
+        "instance level instead."
     ),
     "pixel_level": (
         "No selected model reports pixel-level scores. Needs a model that outputs an "
         "anomaly map or a mask, and — for the anomaly backends — somewhere to persist "
-        "those maps (`output_dir` / `--anomaly-map-dir`), without which only image-level "
+        "those maps (`output_dir` / `--output-dir`), without which only image-level "
         "metrics can be computed."
     ),
     "instance_level": (
@@ -65,7 +66,7 @@ EMPTY_HINTS: dict[str, str] = {
     ),
     "cross_domain": (
         "Not measured. Pick a held-out dataset in the cross-domain selector "
-        "(or pass `cross_domain_patterns=` to `fdh.measure`) — it re-evaluates the same "
+        "(or pass `--cross-domain-patterns` to `adh evaluate`) — it re-evaluates the same "
         "weights on fabrics the model was not trained on."
     ),
     "compute": (
@@ -203,6 +204,34 @@ METRIC_SPECS: tuple[MetricSpec, ...] = (
 )
 
 _BY_KEY: dict[str, MetricSpec] = {spec.key: spec for spec in METRIC_SPECS}
+
+# The blended rankings carry no `MetricSpec` — they are derived from the
+# measured metrics rather than measured themselves (see `BOOKKEEPING_KEYS`),
+# so they need display names of their own. Kept here, beside the specs, so
+# that a page or a log table never has to show the raw `composite_score` key
+# as a column heading next to "Image AUROC".
+SUMMARY_LABELS: dict[str, str] = {
+    "composite_score": "Composite score",
+    "technical_score": "Technical score",
+    "overhead_score": "Overhead score",
+}
+
+
+def label_of(key: str) -> str:
+    """The display label for metric `key`.
+
+    This is the one name a metric has on any page: the benchmark tables, the
+    leaderboard and the run-history table all read it from here, so
+    `image_auroc` is "Image AUROC" everywhere instead of a heading on one
+    table and a raw key on another. An unknown key is returned unchanged —
+    a visible `some_new_metric` is a bug worth seeing, not hiding.
+    """
+
+    spec = _BY_KEY.get(key)
+    if spec is not None:
+        return spec.label
+    return SUMMARY_LABELS.get(key, key)
+
 
 # Keys that describe the run rather than measure the model. Excluded from
 # every table so a "measured nothing" row cannot look populated.

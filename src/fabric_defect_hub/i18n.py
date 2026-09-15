@@ -2,7 +2,7 @@
 
 Every user-facing string that isn't a stable data value is looked up here
 by key via `tr(lang, key, **kwargs)`. Dataset/model names (e.g. "ZJU-Leaper",
-"YOLOv8n · Fabric trained") are deliberately left untranslated in both
+"YOLOv8n · ZJU-Leaper") are deliberately left untranslated in both
 languages — that's standard practice for ML tooling and, more importantly,
 they're also used as literal dict keys throughout `single_image.py`/
 `benchmark.py` (`MODEL_CATALOG[label]`, `DATASET_CATALOG[label]`), so
@@ -15,6 +15,35 @@ lookup keys (`SHOT_FULL`, `ALL_IMAGES`, ...) are localized via Gradio's
 itself — see `single_image.py`'s `*_choices()` helpers — so the underlying
 value never changes and every `if shot_mode == SHOT_FULL` comparison
 elsewhere keeps working regardless of the selected UI language.
+
+--------------------------------------------------------------------------
+Glossary: one concept, one name
+--------------------------------------------------------------------------
+README.md is the vocabulary of this project, and the front end speaks it.
+Section 4.1 names the controls a reader is told to click, section 1 defines
+what a *benchmark* is, and section 3.3 names the metric tables. The strings
+below must not invent a second name for anything README already names:
+
+* ``benchmark``  — scoring one or more models, on one dataset, under one
+  configuration (README section 1). The tab, the run button ("Run
+  benchmark") and the progress lines ("Scored 2/5") all use this one verb,
+  so "test"/"evaluate" never appear for the same action here.
+* ``technical`` / ``overhead`` — the two metric parts (README section 3.3),
+  used by the section headings, the score presets and the weight slider.
+* ``heat map`` (two words) — the pixel-level output a model renders;
+  README writes it that way in all 13 occurrences.
+* ``anomaly score`` / ``image-level score`` — the image-level output.
+* ``Task type`` with values ``Anomaly detection`` / ``Defect detection``
+  (README section 4.1.2) — the model-status line reports the same pair.
+* ``Application domain`` (README section 4.1.2) — never just "domain".
+* ``training corpus`` / ``training split`` (README section 4.1.2) — the two
+  facts the model panel shows about a weight.
+* ``detection`` — the single-image tab's action ("Single Image Detection",
+  "Run detection", "Detection result"), so the tab never mixes in
+  "inference" as a label; README uses "inference" only for the *process*.
+
+When a string below names a control that README also names, quote README
+verbatim rather than paraphrasing it.
 """
 
 from __future__ import annotations
@@ -24,11 +53,20 @@ DEFAULT_LANGUAGE = "en"
 
 _STRINGS: dict[str, dict[str, str]] = {
     "en": {
-        "nav_links": "Workspace · Datasets · Models · Results",
+        # -- Shell ---------------------------------------------------------
+        "nav_links": "Models · Datasets · Metrics · Workflows",
         "tab_single_image": "Single Image Detection",
         "tab_benchmark": "Benchmark",
-        "model_session_header": "### Model session",
-        "model_dropdown_label": "Local trained model",
+        "tab_run_history": "Run History",
+
+        # -- Model setup (README 4.1.2, Phase 1) ---------------------------
+        "model_session_header": "### Model setup",
+        "task_type_label": "Task type",
+        "choice_task_anomaly": "Anomaly detection",
+        "choice_task_defect": "Defect detection",
+        "application_domain_label": "Application domain",
+        "model_dropdown_label": "Model",
+        "model_none_matching": "No staged model matches this selection.",
         "btn_load_model": "Load model",
         "btn_unload_model": "Unload model",
         "btn_inspect_checkpoint": "Inspect checkpoint",
@@ -37,13 +75,10 @@ _STRINGS: dict[str, dict[str, str]] = {
         "model_status_missing": "🟠 **Checkpoint missing** — expected `{path}`.",
         "model_status_ready": (
             "🟢 **Ready** — {task}\n\n"
-            "**Method:** {method}  \n**Domain:** {domain}  \n"
-            "**Trained on:** {trained_on}{training_split}  \n**Weight:** `{filename}`"
+            "**Method:** {method}  \n**Application domain:** {domain}  \n"
+            "**Training corpus:** {training_corpus}  \n**Training split:** {training_split}  \n"
+            "**Weight:** `{filename}`"
         ),
-        "task_detection": "detection",
-        "task_segmentation": "segmentation",
-        "task_instance_segmentation": "instance segmentation",
-        "task_anomaly": "anomaly",
         "checkpoint_diag_missing": "🟠 **Checkpoint missing** — `{path}` was not found.",
         "checkpoint_diag_trusted_header": "🟢 **Trusted checkpoint diagnostic**",
         "checkpoint_diag_sha": "SHA-256: `{sha}`",
@@ -60,31 +95,34 @@ _STRINGS: dict[str, dict[str, str]] = {
         "runtime_load_time": "**Load time:** `{ms:.1f} ms`",
         "value_none": "none",
         "value_unavailable": "unavailable",
+
+        # -- Single-image result (README 4.1.2, Phase 3) -------------------
         "image_selected_label": "Selected dataset image",
-        "image_result_label": "Inference result",
+        "image_result_label": "Detection result",
         "caption_no_image": "No image loaded yet.",
         "btn_previous": "← Previous",
         "btn_next": "Next →",
-        "prediction_header": "Prediction result",
-        "prediction_none": "No prediction available yet.",
+        "prediction_none": "No detection result yet.",
         "prediction_no_defect": "No defect detected",
         "prediction_regions": "Detected {count} defect region(s)",
         "tag_confidence": "confidence",
         "tag_anomaly_score": "anomaly score",
-        "tag_heatmap_available": "Heatmap available",
-        "tag_heatmap_unavailable": "Heatmap not available",
+        "tag_heatmap_available": "Heat map available",
+        "tag_heatmap_unavailable": "Heat map not available",
         # Distinct from "not available": this model produces an image-level
         # score only and has no pixel-level output to render at all.
         "tag_heatmap_unsupported": "Image-level score only",
         "tag_normal": "Normal",
         "tag_anomalous": "Anomalous",
         "inference_hint_start": "Select an image and a ready model to begin.",
-        "inference_hint_ready": "Image ready. Choose a model to run detection.",
+        "inference_hint_ready": "Image ready. Choose a model and run detection.",
         "inference_hint_changed": "Image changed. Run detection again for this image.",
         "inference_need_dataset": "🟠 Load a dataset and select an image first.",
-        "inference_failed": "🔴 **Inference failed** — {error_type}: {error}",
-        "inference_complete": "🟢 **Inference complete**",
-        "dataset_sampler_header": "### Dataset sampler",
+        "inference_failed": "🔴 **Detection failed** — {error_type}: {error}",
+        "inference_complete": "🟢 **Detection complete**",
+
+        # -- Dataset & sample selection (README 4.1.2, Phase 2) ------------
+        "dataset_sampler_header": "### Dataset & sample selection",
         "dataset_dropdown_label": "Dataset",
         "texture_dropdown_label": "Texture / pattern",
         "split_label": "Split",
@@ -100,20 +138,22 @@ _STRINGS: dict[str, dict[str, str]] = {
         "choice_few_shot": "Few-shot",
         "btn_load_random_images": "Load random images",
         "dataset_ready": "🟢 **Ready** — using the registered `{label}` dataset.",
-        "dataset_unavailable": "🟠 **Dataset unavailable** — connect the storage containing `{label}` (expected at `data/{dir}`, typically a symlink onto external storage, or set `${env}`), then restart the app.",
+        "dataset_unavailable": "🟠 **Dataset unavailable** — connect the storage containing `{label}` (declared root `{root}`, or set `${env}`), then restart the app.",
         "dataset_load_error": "🔴 **Dataset unavailable** — {error}",
-        "dataset_load_success": "🟢 Loaded **{count}** random `{scope}` ({shot}) from `{name}` / `{texture}` / `{split}`.",
+        "dataset_load_success": "🟢 Loaded **{count}** images — {scope}, {shot} — from `{name}` / `{texture}` / `{split}`.",
         "move_need_dataset": "Load a dataset before browsing images.",
         "state_defect": "defect",
         "state_normal": "normal",
+
+        # -- Benchmark (README 4.1.3) --------------------------------------
         "benchmark_header": (
-            "### Dataset benchmark workspace\n"
-            "Runs the test split end to end (no heatmaps or boxes) and reports the "
-            "standard metrics for the task — image AUROC/F1 for anomaly models, "
-            "mAP/precision/recall for detection models, mIoU/Dice/pixel-F1 for "
-            "segmentation models. Every selected model is mounted, tested, and "
-            "unmounted before the next one loads, and all of them see the exact "
-            "same test-split sample."
+            "### Benchmark workspace\n"
+            "A benchmark scores one or more models, on one dataset, under one "
+            "configuration, and reports the metrics of section 3.3 — image "
+            "AUROC/F1 for anomaly models, mAP/precision/recall for detection "
+            "models, mIoU/Dice/pixel-F1 for segmentation models. Every selected "
+            "model is mounted, scored, and unmounted before the next one loads, "
+            "and all of them see the exact same test-split sample."
         ),
         "benchmark_dataset_label": "Dataset",
         "benchmark_texture_label": "Texture / pattern",
@@ -124,51 +164,55 @@ _STRINGS: dict[str, dict[str, str]] = {
         "leaderboard_label": "Leaderboard",
         "bench_select_model": "🟠 Select at least one model.",
         "bench_dataset_unavailable": "🔴 **Dataset unavailable** — connect `{label}` first.",
-        "bench_starting": "🔵 Starting benchmark — 0/{total} models tested.",
+        "bench_starting": "🔵 Starting benchmark — 0/{total} models scored.",
         "bench_task_mismatch": "{model}: {dataset} has no ground truth for its task ({task}).",
-        "bench_progress": "🔵 Tested {index}/{total} — last: {model}.",
-        "bench_done": "🟢 Evaluated {count} model(s) on {samples} samples ({shot}).",
+        "bench_progress": "🔵 Scored {index}/{total} — last: {model}.",
+        "bench_done": "🟢 Scored {count} model(s) on {samples} samples ({shot}).",
         "bench_no_results": "🔴 No results produced.",
-        "benchmark_profiling_label": "Include performance profiling (FPS / latency / memory)",
-        "benchmark_resolution_sweep_label": "Include resolution-sensitivity sweep (throughput decay slope)",
+        "bench_profiling_no_metrics": (
+            "Profiling was requested but produced no metrics for these models — "
+            "see the status message above for the reason it was skipped."
+        ),
+        "benchmark_profiling_label": "Include profiling (FPS / latency / memory)",
+        "benchmark_resolution_sweep_label": "Include resolution sweep (throughput decay slope)",
         "benchmark_cross_domain_label": "Cross-domain degradation target dataset (optional)",
         "benchmark_cross_domain_none": "None",
         "benchmark_score_preset_label": "Score preset",
-        "benchmark_custom_weight_label": "Technical vs. overhead weight (higher = favor accuracy)",
-        "choice_score_accuracy_first": "Accuracy-first",
+        "benchmark_custom_weight_label": "Technical vs. overhead weight (higher = favor technical metrics)",
+        "choice_score_accuracy_first": "Technical-first",
         "choice_score_balanced": "Balanced",
-        "choice_score_efficiency_first": "Efficiency-first",
+        "choice_score_efficiency_first": "Overhead-first",
         "choice_score_custom": "Custom",
-        "chart_metric_label": "Bar chart metric",
-        "chart_bar_label": "Per-model comparison",
-        "chart_radar_label": "Multi-metric profile",
-        "radar_axes_label": "Radar axes (metrics)",
-        "radar_models_label": "Radar models (max {count})",
-        "radar_chart_label": "Normalized multi-metric radar chart",
-        "radar_area": "area",
-        "radar_no_results": "Run a benchmark to see the radar chart.",
-        "radar_needs_axes": "Select at least {count} metrics to draw a radar chart.",
-        "radar_select_model": "Select at least one model to draw a radar chart.",
-        "tab_run_history": "Run History",
+
+        # -- Run history (README 4.1.4) ------------------------------------
         "history_header": (
-            "### Run history\n"
+            "### Benchmark run history\n"
             "Every completed benchmark run (from this UI or `adh benchmark`) is "
             "appended as one line to a shared JSONL log — this reads it back."
         ),
         "history_path_label": "Run log path",
         "btn_history_refresh": "Refresh",
-        "history_metric_label": "Metric to chart",
+        "history_metric_label": "Metric to Chart",
         "history_no_runs": "No runs found at this path yet.",
         "history_load_error": "🔴 Could not read run log — {error}",
-        "history_table_label": "Runs",
-        "history_chart_label": "Metric by model (most recent run each)",
+        "history_table_label": "Benchmark runs",
+        "history_loaded": "🟢 Loaded **{count}** benchmark run(s).",
     },
     "zh": {
-        "nav_links": "工作台 · 数据集 · 模型 · 结果",
+        # -- Shell ---------------------------------------------------------
+        "nav_links": "模型 · 数据集 · 指标 · 工作流",
         "tab_single_image": "单图检测",
         "tab_benchmark": "基准测试",
-        "model_session_header": "### 模型会话",
-        "model_dropdown_label": "本地训练模型",
+        "tab_run_history": "运行历史",
+
+        # -- Model setup (README 4.1.2, Phase 1) ---------------------------
+        "model_session_header": "### 模型设置",
+        "task_type_label": "任务类型",
+        "choice_task_anomaly": "异常检测",
+        "choice_task_defect": "缺陷检测",
+        "application_domain_label": "应用领域",
+        "model_dropdown_label": "模型",
+        "model_none_matching": "没有符合当前筛选条件且已就绪的模型。",
         "btn_load_model": "加载模型",
         "btn_unload_model": "卸载模型",
         "btn_inspect_checkpoint": "检查权重文件",
@@ -177,13 +221,9 @@ _STRINGS: dict[str, dict[str, str]] = {
         "model_status_missing": "🟠 **权重文件缺失** — 期望路径 `{path}`。",
         "model_status_ready": (
             "🟢 **就绪** — {task}\n\n"
-            "**方法：** {method}  \n**领域：** {domain}  \n"
-            "**训练数据：** {trained_on}{training_split}  \n**权重：** `{filename}`"
+            "**方法：** {method}  \n**应用领域：** {domain}  \n"
+            "**训练语料：** {training_corpus}  \n**训练划分：** {training_split}  \n**权重：** `{filename}`"
         ),
-        "task_detection": "检测",
-        "task_segmentation": "分割",
-        "task_instance_segmentation": "实例分割",
-        "task_anomaly": "异常检测",
         "checkpoint_diag_missing": "🟠 **权重文件缺失** — 未找到 `{path}`。",
         "checkpoint_diag_trusted_header": "🟢 **可信权重诊断信息**",
         "checkpoint_diag_sha": "SHA-256：`{sha}`",
@@ -200,12 +240,13 @@ _STRINGS: dict[str, dict[str, str]] = {
         "runtime_load_time": "**加载耗时：** `{ms:.1f} 毫秒`",
         "value_none": "无",
         "value_unavailable": "不可用",
+
+        # -- Single-image result (README 4.1.2, Phase 3) -------------------
         "image_selected_label": "已选数据集图像",
         "image_result_label": "检测结果",
         "caption_no_image": "尚未加载图像。",
         "btn_previous": "← 上一张",
         "btn_next": "下一张 →",
-        "prediction_header": "检测结果",
         "prediction_none": "暂无检测结果。",
         "prediction_no_defect": "未检测到缺陷",
         "prediction_regions": "检测到 {count} 处缺陷",
@@ -222,7 +263,9 @@ _STRINGS: dict[str, dict[str, str]] = {
         "inference_need_dataset": "🟠 请先加载数据集并选择图像。",
         "inference_failed": "🔴 **检测失败** — {error_type}：{error}",
         "inference_complete": "🟢 **检测完成**",
-        "dataset_sampler_header": "### 数据集采样",
+
+        # -- Dataset & sample selection (README 4.1.2, Phase 2) ------------
+        "dataset_sampler_header": "### 数据集与样本选择",
         "dataset_dropdown_label": "数据集",
         "texture_dropdown_label": "纹理 / 图案",
         "split_label": "数据划分",
@@ -238,56 +281,51 @@ _STRINGS: dict[str, dict[str, str]] = {
         "choice_few_shot": "少样本",
         "btn_load_random_images": "加载随机图像",
         "dataset_ready": "🟢 **就绪** — 正在使用已注册的 `{label}` 数据集。",
-        "dataset_unavailable": "🟠 **数据集不可用** — 请连接包含 `{label}` 的存储（期望位置 `data/{dir}`，通常是指向外部存储的软链接，或设置环境变量 `${env}`），然后重启应用。",
+        "dataset_unavailable": "🟠 **数据集不可用** — 请连接包含 `{label}` 的存储（声明的根目录为 `{root}`，或设置环境变量 `${env}`），然后重启应用。",
         "dataset_load_error": "🔴 **数据集不可用** — {error}",
-        "dataset_load_success": "🟢 已加载 **{count}** 张随机`{scope}`图像（{shot}），来自 `{name}` / `{texture}` / `{split}`。",
+        "dataset_load_success": "🟢 已加载 **{count}** 张图像 — {scope}，{shot} — 来自 `{name}` / `{texture}` / `{split}`。",
         "move_need_dataset": "请先加载数据集，再浏览图像。",
         "state_defect": "缺陷",
         "state_normal": "正常",
+
+        # -- Benchmark (README 4.1.3) --------------------------------------
         "benchmark_header": (
-            "### 数据集基准测试工作台\n"
-            "端到端跑一遍测试集（不生成热力图或检测框），并输出对应任务的标准指标——"
-            "异常检测模型给出图像级 AUROC/F1，检测模型给出 mAP/精确率/召回率，"
-            "分割模型给出 mIoU/Dice/像素级 F1。每个被选中的模型都会依次挂载、测试、"
-            "卸载后再加载下一个，且全部模型使用完全相同的测试集样本。"
+            "### 基准测试工作台\n"
+            "一次基准测试在同一个数据集、同一套配置下为一个或多个模型评分，"
+            "并输出 3.3 节的各项指标——异常检测模型给出图像级 AUROC/F1，"
+            "检测模型给出 mAP/精确率/召回率，分割模型给出 mIoU/Dice/像素级 F1。"
+            "每个被选中的模型都会依次挂载、评分、卸载后再加载下一个，"
+            "且全部模型使用完全相同的测试集样本。"
         ),
         "benchmark_dataset_label": "数据集",
         "benchmark_texture_label": "纹理 / 图案",
         "benchmark_shot_label": "采样档位（测试集）",
-        "benchmark_models_label": "待测试模型",
+        "benchmark_models_label": "待评分模型",
         "btn_run_benchmark": "运行基准测试",
         "benchmark_placeholder": "请选择数据集、采样档位以及至少一个模型。",
         "leaderboard_label": "排行榜",
         "bench_select_model": "🟠 请至少选择一个模型。",
         "bench_dataset_unavailable": "🔴 **数据集不可用** — 请先连接 `{label}`。",
-        "bench_starting": "🔵 开始基准测试 — 已完成 0/{total} 个模型。",
+        "bench_starting": "🔵 开始基准测试 — 已评分 0/{total} 个模型。",
         "bench_task_mismatch": "{model}：{dataset} 没有该任务（{task}）所需的真实标注。",
-        "bench_progress": "🔵 已测试 {index}/{total} — 最近完成：{model}。",
-        "bench_done": "🟢 已在 {samples} 个样本（{shot}）上评测 {count} 个模型。",
+        "bench_progress": "🔵 已评分 {index}/{total} — 最近完成：{model}。",
+        "bench_done": "🟢 已在 {samples} 个样本（{shot}）上评分 {count} 个模型。",
         "bench_no_results": "🔴 未产生任何结果。",
-        "benchmark_profiling_label": "启用性能画像（FPS / 延迟 / 显存）",
-        "benchmark_resolution_sweep_label": "启用分辨率敏感度扫描（吞吐量衰减斜率）",
+        "bench_profiling_no_metrics": "已请求性能剖析，但这些模型没有产生任何指标 — 跳过原因见上方状态信息。",
+        "benchmark_profiling_label": "启用性能剖析（FPS / 延迟 / 显存）",
+        "benchmark_resolution_sweep_label": "启用分辨率扫描（吞吐量衰减斜率）",
         "benchmark_cross_domain_label": "跨域退化率目标数据集（可选）",
         "benchmark_cross_domain_none": "不启用",
         "benchmark_score_preset_label": "评分预设",
-        "benchmark_custom_weight_label": "技术 vs 开销权重（越高越偏重精度）",
-        "choice_score_accuracy_first": "精度优先",
+        "benchmark_custom_weight_label": "技术 vs 开销权重（越高越偏重技术指标）",
+        "choice_score_accuracy_first": "技术优先",
         "choice_score_balanced": "均衡",
-        "choice_score_efficiency_first": "效率优先",
+        "choice_score_efficiency_first": "开销优先",
         "choice_score_custom": "自定义",
-        "chart_metric_label": "柱状图指标",
-        "chart_bar_label": "各模型对比",
-        "chart_radar_label": "多指标画像",
-        "radar_axes_label": "雷达轴（指标）",
-        "radar_models_label": "雷达图模型（最多 {count} 个）",
-        "radar_chart_label": "归一化多指标雷达图",
-        "radar_area": "面积",
-        "radar_no_results": "请先运行一次基准测试以生成雷达图。",
-        "radar_needs_axes": "请至少选择 {count} 个指标才能绘制雷达图。",
-        "radar_select_model": "请至少选择一个模型才能绘制雷达图。",
-        "tab_run_history": "运行历史",
+
+        # -- Run history (README 4.1.4) ------------------------------------
         "history_header": (
-            "### 运行历史\n"
+            "### 基准测试运行历史\n"
             "每一次完成的基准测试（无论来自本界面还是 `adh benchmark`）都会作为一行"
             "追加到共享的 JSONL 日志中——这里将其读取回来展示。"
         ),
@@ -296,8 +334,8 @@ _STRINGS: dict[str, dict[str, str]] = {
         "history_metric_label": "图表指标",
         "history_no_runs": "该路径下暂无运行记录。",
         "history_load_error": "🔴 无法读取运行日志 — {error}",
-        "history_table_label": "运行记录",
-        "history_chart_label": "各模型指标对比（每个模型取最近一次运行）",
+        "history_table_label": "基准测试运行记录",
+        "history_loaded": "🟢 已加载 **{count}** 条基准测试运行记录。",
     },
 }
 
