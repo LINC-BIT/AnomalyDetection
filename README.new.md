@@ -29,13 +29,12 @@
     - [3.3.6  Overhead Metrics: Memory](#336--overhead-metrics-memory)
 - [4. Workflows](#4-workflows)
   - [4.1 Web front-end](#41-web-front-end)
-    - [4.1.1 Launch](#411-launch)
-    - [4.1.2 Model session](#412-model-session)
-    - [4.1.3 Benchmark](#413-benchmark)
-    - [4.1.4 Run history](#414-run-history)
-    - [4.1.5 Recorded demonstrations](#415-recorded-demonstrations)
-  - [4.2 Command line](#42-command-line)
-    - [4.2.1 Model configuration resolution](#421-model-configuration-resolution)
+    - [4.1.1 Start the web front-end](#411-start-the-web-front-end)
+    - [4.1.2 Image Anomaly Detection](#412-image-anomaly-detection)
+    - [4.1.3 Benchmarking](#413-benchmarking)
+    - [4.1.4 Read benchmark run history](#414-read-benchmark-run-history)
+  - [4.2 The backend command line interface](#42-the-backend-command-line-interface)
+    - [4.2.1 Model Configuration](#421-model-configuration)
     - [4.2.2 Training](#422-training)
     - [4.2.3 Inference](#423-inference)
     - [4.2.4 Evaluation](#424-evaluation)
@@ -505,77 +504,124 @@ What running it costs in time, work and power.
 
 <p align="center"><img src="docs/images/structure.png" alt="System architecture" width="80%"></p>
 
-The web front-end and the command line run on the same application services and the same backend contracts (`ModelAdapter`, `DataConverter`, `ModelWrapper`, `RuntimeSupport`)
+The platform consists of a **web front-end** and a **backend**:
+
+* **Web front-end:** provides visual anomaly detection demos and a benchmarking platform for evaluating and comparing different models.
+* **Backend:** provides model training, inference, dataset management, and model integration services.
+
 
 ### 4.1 Web front-end
 
-Three tabs: **Single Image Detection**, **Benchmark**, and **Run History**. The language switch toggles English and Chinese.
+The web front-end provides a unified interface for model demonstration and evaluation. The homepage is shown below:
 
-#### 4.1.1 Launch
+<p align="center"><img src="docs/images/img7.png" alt="Web front-end homepage" width="80%"></p>
+
+The homepage contains three tabs: **Single Image Detection**, **Benchmark**, and **Run History**.
+
+#### 4.1.1 Start the web front-end
 
 ```bash
+cd <AnomalyDetection directory>
 conda activate anomalib_env
 adh-ui
 ```
 
-Default URL `http://127.0.0.1:6008`, listening on all interfaces; `GRADIO_SERVER_PORT=7860 adh-ui` uses another port. If the port is taken, `adh-ui` names the holding process. A missing checkpoint is never downloaded implicitly: the expected path is shown instead.
+Default URL `http://127.0.0.1:6008`, listening on all interfaces; please open the web browser to this address.
 
-#### 4.1.2 Model session
+if the default port has been occupied, please set a different port using the `GRADIO_SERVER_PORT` environment variable, for example:
 
-Select **Task type** (`Defect detection` or `Anomaly detection`), then **Application domain** (`textile` or `general`), then **Model** (`Local trained model`); the panel states the method, training corpus, training split, published-slot status, and prediction fields. Select **Load model** before inference.
+```bash
+GRADIO_SERVER_PORT=7860 adh-ui
+```
 
-Input is either an uploaded image or a dataset slice: `Dataset`, `Texture / pattern`, `Split`, `Image selection`, **Random images** (4–12), and **Sample regime** — the few-shot control:
+#### 4.1.2 Image Anomaly Detection
 
-<table align="center">
+I've cleaned up and structured the instructions so they flow logically from setup to execution without the confusion at the end:
+
+To complete **Image Anomaly Detection**, follow these step-by-step instructions after the webpage loads:
+
+**Phase 1: Model Setup**
+
+* **Task type:** Select `Anomaly detection` (or `Defect detection` if required).
+* **Application domain:** Select `general` (or `textile`).
+* **Model:** Select a model from the available options, for example:
+`WinCLIP · LAION-400M zero-shot`.
+* **Load Model:** Click **Load model** before proceeding to inference.
+
+> *Once loaded, the panel will display the **method**, **training corpus**, **training split**, and **prediction fields**.*
+
+**Phase 2: Dataset & Sample Selection**
+
+* **Data Source:** Choose your input using the following parameter options:
+* **Dataset:** Select one available dataset, for example: `ZJU-Leaper`.
+* **Texture / pattern:** Select `All textures` (or a specific pattern).
+* **Split:** Select `test`.
+* **Sample regime:** Choose your few-shot control based on the table below:
+
+<table align="center" style="margin-left: auto; margin-right: auto; text-align: center;">
   <thead>
     <tr>
-      <th>Regime</th>
-      <th>What it loads</th>
+      <th style="text-align: center;">Regime</th>
+      <th style="text-align: center;">What it loads</th>
     </tr>
   </thead>
   <tbody>
-    <tr><td>Full-shot</td><td>the whole selected slice</td></tr>
-    <tr><td>Few-shot</td><td>a small number of random images from that slice</td></tr>
-  </tbody>
-</table>
-
-**Load random images** draws the slice; **Run detection** returns a gallery with a per-image anomaly score, plus a heat map when the model reports one. One pass through the tab:
-
-1. `Anomaly detection`, application domain `general`.
-2. Model `WinCLIP · LAION-400M zero-shot`, or any identifier whose `adh inventory` `weight_status` is `file` or `symlink`.
-3. **Load model**.
-4. Dataset `ZJU-Leaper`, any pattern or `All textures`, split `test`, `Full-shot`, then **Load random images**.
-5. **Run detection**.
-
-#### 4.1.3 Benchmark
-
-**Benchmark** scores one or more identifiers on one dataset: `Dataset`, `Texture / pattern`, `Sample regime`, the models, optionally **Include profiling** or **Include resolution sweep**, and optionally a **Cross-domain degradation target dataset**, then **Run benchmark**.
-
-Results are grouped as in Section 3.3; a metric that cannot be computed is `unavailable`, never zero. Each run appends to `runs/leaderboard_log.jsonl`, and maps go under `artifacts/runtime/anomaly_maps/benchmark/`.
-
-#### 4.1.4 Run history
-
-**Run history** reads a saved run log: enter the path, select **Refresh**, and optionally the metric to chart. It shows a `Runs` table (timestamp, model, dataset, metric values, report path) and a metric-by-model chart using each model's most recent run. Finished work can also be reviewed through the recorded demonstrations below.
-
-#### 4.1.5 Recorded demonstrations
-
-<table align="center">
-  <thead>
     <tr>
-      <th>Demonstration</th>
-      <th>Recording</th>
-      <th>Contents</th>
+      <td style="text-align: center;"><b>Full-shot</b></td>
+      <td style="text-align: center;">The whole selected slice</td>
     </tr>
-  </thead>
-  <tbody>
-    <tr><td>Web front-end demonstration</td><td><a href="docs/videos/detection.mp4">detection.mp4</a></td><td>Task selection, application-domain selection, model selection, dataset selection, image loading, and detection output.</td></tr>
-    <tr><td>Benchmark demonstration</td><td><a href="docs/videos/benchmark.mp4">benchmark.mp4</a></td><td>Benchmark execution and run-history reading.</td></tr>
+    <tr>
+      <td style="text-align: center;"><b>Few-shot</b></td>
+      <td style="text-align: center;">A small number of random images from that slice</td>
+    </tr>
   </tbody>
 </table>
 
-### 4.2 Command line
+**Phase 3: Run Detection**
 
-#### 4.2.1 Model configuration resolution
+- **Load Images:** Click **Load random images** to populate the display (draws 4–12 random images from the selected slice).
+- **Run Detection:** Click **Run detection** to execute inference.
+
+
+**Expected Output**
+
+Upon completion, the system returns an image gallery featuring:
+
+* A calculated **per-image anomaly score**.
+* A visual **heat map** (if supported by the selected model).
+
+#### 4.1.3 Benchmarking
+
+This module is used to evaluate and compare the performance of different models on anomaly detection tasks. The user interface is shown below:
+
+<p align="center"><img src="docs/images/img8.png" alt="Web front-end homepage" width="80%"></p>
+
+Please follow the steps below to perform benchmarking:
+
+-  **Configure Dataset and Sampling Parameters:** Select the **Dataset**, **Texture / pattern**, and **Sample regime (test split)** you wish to test.
+- **Select Models and Metrics:** Check the model(s) to be evaluated and select your desired evaluation metrics.
+- **Configure Advanced Options (Optional):** Check **Include profiling**, **Include resolution sweep**, or select a **Cross-domain degradation target dataset** as needed.
+- **Run Benchmark:** Once all settings are configured, click **Run benchmark** and wait for the system to generate results.
+
+Check the Results:
+
+* Results are grouped as detailed in [Supported Metrics](#supported-metrics). Any metric that cannot be computed is flagged as `unavailable`.
+* Every benchmark run appends a record to `runs/leaderboard_log.jsonl`, and generated anomaly maps are saved to `artifacts/runtime/anomaly_maps/benchmark/`.
+
+#### 4.1.4 Read benchmark run history
+
+This page displays the history of benchmark runs, allowing users to review past performance and results:
+
+<p align="center"><img src="docs/images/img9.png" alt="Web front-end homepage" width="80%"></p>
+
+If prior benchmark run logs are available, you can load and visualize historical performance records using the following steps:
+
+- **Select Metric:** Choose your target evaluation metric from the **Metric to Chart** dropdown menu.
+- **Refresh Visualization:** Click **Refresh** to render the historical chart and performance records.
+
+### 4.2 The backend command line interface
+
+#### 4.2.1 Model Configuration
 
 `train`, `predict`, and `evaluate` resolve their first positional argument three ways:
 
