@@ -1,6 +1,5 @@
 <h1 align="center">AnomalyDetection</h1>
 
----
 
 ## Outline
 
@@ -980,10 +979,10 @@ Click **Load model** and wait for the panel to turn green:
 
 <p align="center"><img src="docs/images/img4.png" alt="Load the model" width="80%"></p>
 
-Loading reads the weight named in the panel's **Weight** field from the corresponding domain's published directory, so that file has to be present before this step:
+Loading checkpoint from the corresponding domain's published directory, so that file has to be present before this step:
 
 - either download it in [2.2.6 Download Checkpoints](#226-download-checkpoints);
-- or let a training run produce it.
+- or run a training to produce a new checkpoint.
 
 If it is missing, the panel says **Checkpoint missing** and names the exact expected path instead of loading anything. Place the file there, or pick a different model whose weight is present.
 
@@ -1007,7 +1006,7 @@ The corresponding anomaly heat map of the image will be displayed on the right s
 
 Extension follows registration rather than modification: the command line, the web front-end, the evaluator and the profiler resolve every component through the same registries and capability declarations, so a new dataset, model backend, or application domain is introduced without a change to any consumer.
 
-The two worked examples below use placeholder names (`example-fabric`, `mybackend`, `MyMethod`); their file paths and identifiers do not exist in this checkout until the declarations shown are added.
+The two worked examples below are intentionally concrete. The dataset example uses a small, single-category slice of the Hugging Face copy of MVTec AD, so it also documents the path to take when a useful dataset is not one of the built-in downloaders. The model example shows how to add a YOLO 26 variant while keeping the existing Ultralytics integration.
 
 <table align="center">
   <thead>
@@ -1024,62 +1023,182 @@ The two worked examples below use placeholder names (`example-fabric`, `mybacken
   </tbody>
 </table>
 
-### 6.1 Example: add a dataset
+### 6.1 Example: add a dataset from Hugging Face
 
-For a fabric dataset laid out as one normal folder plus one folder per defect type, the adapter reduces to the following, since the flat-folder base already synthesizes a leak-free train/test split:
+We provide a small Hugging Face example: the `bottle` category from [`anomalib/mvtec-ad`](https://huggingface.co/datasets/anomalib/mvtec-ad). From the repository root, run the following commands to download and stage it under `datasets/general/HF Bottle AD`:
+
+```bash
+pip install -U huggingface_hub
+python - <<'PY'
+from pathlib import Path
+from huggingface_hub import snapshot_download
+
+root = Path("datasets/general/HF Bottle AD")
+snapshot_download(
+    repo_id="anomalib/mvtec-ad",
+    repo_type="dataset",
+    local_dir=root,
+    allow_patterns=["bottle/**"],
+    ignore_patterns=["**/*.json", "**/*.md"],
+)
+print(f"Downloaded to {root.resolve()}")
+PY
+
+# MVTec AD is published as train/good and test/<defect>. Normalize the
+# selected category to this project's flat-folder adapter contract.
+python - <<'PY'
+from pathlib import Path
+import shutil
+
+root = Path("datasets/general/HF Bottle AD")
+source = root / "bottle"
+for split in ("train", "test"):
+    for src in (source / split).iterdir():
+        if not src.is_dir():
+            continue
+        name = "good" if src.name == "good" else src.name
+        dst = root / name
+        dst.mkdir(exist_ok=True)
+        for image in src.iterdir():
+            shutil.copy2(image, dst / image.name)
+shutil.rmtree(source)
+PY
+```
+
+After normalization, the adapter expects:
+
+```text
+datasets/general/HF Bottle AD/
+├── good/                 # normal images used for one-class training
+├── crack/                # defect type, test only
+└── contamination/       # another defect type, test only
+```
+
+Create `src/fabric_defect_hub/datasets/hf_bottle_ad.py`:
 
 ```python
-# src/fabric_defect_hub/datasets/example_fabric.py
+# src/fabric_defect_hub/datasets/hf_bottle_ad.py
 from fabric_defect_hub.core.registry import register_dataset
 from fabric_defect_hub.datasets.flat_folder import FlatFolderAnomalyDataset
 
 
-@register_dataset("example-fabric")
-class ExampleFabricDataset(FlatFolderAnomalyDataset):
+@register_dataset("hf-bottle-ad")
+class HFBottleADDataset(FlatFolderAnomalyDataset):
     """`good/` (normal) plus one folder per defect type."""
 
-    name = "example-fabric"
+    name = "hf-bottle-ad"
     NORMAL_DIRNAME = "good"
 ```
 
-Three declarations complete the registration: the package import that registers the class, the capability declaration that states its permitted uses, and the presentation row read by the web front-end.
+Edit `src/fabric_defect_hub/datasets/__init__.py` and add this import:
 
 ```python
-# src/fabric_defect_hub/datasets/__init__.py
-from fabric_defect_hub.datasets.example_fabric import ExampleFabricDataset
+from fabric_defect_hub.datasets.hf_bottle_ad import HFBottleADDataset
 ```
 
 ```python
-# src/fabric_defect_hub/core/dataset_capabilities.py
+# Add this declaration to src/fabric_defect_hub/core/dataset_capabilities.py.
+# Keep it with the other register_capabilities(...) calls.
 register_capabilities(
-    "example-fabric",
-    default_root="datasets/textile/ExampleFabric",
-    roles={"anomaly_train", "fabric_train_member"},
+    "hf-bottle-ad",
+    default_root="datasets/general/HF Bottle AD",
+    roles={"anomaly_train"},
     tasks=("anomaly",),
-    domain="textile",
+    domain="general",
 )
 ```
 
 ```python
-# src/fabric_defect_hub/application/workspace.py (the front-end's Dataset dropdown)
+# Add this entry to DATASET_CATALOG in src/fabric_defect_hub/application/workspace.py.
 DATASET_CATALOG = {
     ...
-    "Example Fabric": {
-        "name": "example-fabric",
-        "env": "EXAMPLE_FABRIC_ROOT",
+    "HF Bottle AD": {
+        "name": "hf-bottle-ad",
+        "env": "HF_BOTTLE_AD_ROOT",
         "slice_kwarg": None,   # no texture/class subdivision
         "task": "anomaly",
     },
 }
 ```
 
-No further modification is required. `adh doctor` starts offering the dataset, `adh train --dataset example-fabric` passes the trainable-dataset check because the declaration carries `anomaly_train`, the front-end lists it, and — because it declares `fabric_train_member` — the `fabric-train` composite includes it automatically, since that adapter derives its members from this registry rather than from a hard-coded list.
+Create `configs/datasets/hf_bottle_patchcore.yaml`:
 
-Contract tests cover the same cases as every other adapter: normal, anomalous, missing, and malformed input, plus a dataset whose root is not staged.
+```yaml
+model:
+  name: PatchCore
+data:
+  dataset: hf-bottle-ad
+  dataset_root: datasets/general/HF Bottle AD
+  train_selection: {split: train, use_defect: false, task: anomaly, seed: 0}
+  test_selection: {split: test, use_defect: true, defect_ratio: 0.5, task: anomaly, seed: 0}
+train:
+  enabled: true
+  extra: {coreset_sampling_ratio: 0.1}
+  epochs: 1
+val: {enabled: true, output_dir: artifacts/anomaly_maps/hf-bottle-ad}
+checkpoint:
+  name: patchcore_hf_bottle_ad
+  registry_dir: general/artifacts/models
+```
 
-### 6.2 Example: add a model backend
+From the repository root, verify the registration and run the example:
 
-A model enters through the same lifecycle whatever its source — an Anomalib class, a torchvision factory, an Ultralytics variant, a vendored component checkout, or a native implementation. The adapter is the only place that knows the upstream API:
+```bash
+adh doctor
+adh train configs/datasets/hf_bottle_patchcore.yaml --dataset hf-bottle-ad --mode test --no-publish
+```
+
+This general-domain example is intentionally excluded from `fabric-train`.
+
+### 6.2 Example: add a YOLO 26 model
+
+We provide a YOLO 26 example as an Ultralytics **variant**. Edit `src/fabric_defect_hub/models/ultralytics/presets.py` (use the filename supported by your Ultralytics version):
+
+```python
+MODEL_VARIANTS["yolo26n"] = {"checkpoint": "yolo26n.pt", "architecture": "yolo26n.yaml"}
+VARIANT_ALIASES["yolo26n"] = "yolo26n"
+```
+
+Create `configs/models/ultralytics_yolo26_example.yaml`:
+
+```yaml
+model:
+  variant: yolo26n
+  pretrained: true
+  task: detect
+data:
+  dataset: zju-leaper
+  train_selection: {split: train, task: detection}
+  val_selection: {split: test, task: detection}
+train:
+  enabled: true
+  epochs: 1
+  imgsz: 640
+  batch: 2
+val: {enabled: true}
+checkpoint:
+  name: yolo26n_zju_leaper
+  registry_dir: textile/artifacts/models
+```
+
+Add one row to the model list in `configs/registry/models.yaml`:
+
+```yaml
+  - {id: yolo26n, backend: ultralytics, variant: yolo26n, task: detection,
+     config: ultralytics_yolo26_example.yaml, label: "YOLO26n · ZJU-Leaper",
+     method: YOLO26, trained_on: [zju-leaper], training_split: train,
+     domain: textile, source: local_trained_artifact}
+```
+
+From the repository root, verify with:
+
+```bash
+adh models --backend ultralytics
+adh train yolo26n --dataset zju-leaper --mode test --no-publish
+adh inventory
+```
+
+Only if YOLO 26 is not compatible with the existing Ultralytics API should it become a separate backend. In that case the adapter enters through the same lifecycle:
 
 ```python
 # src/fabric_defect_hub/models/mybackend/adapter.py
