@@ -347,6 +347,46 @@ def test_prediction_summary_reports_pixel_map_support_from_capabilities():
     assert prediction_summary(prediction)["pixel_map_supported"] is None
 
 
+def test_prediction_tags_report_a_masked_defect_that_has_no_boxes():
+    """UNet++/DeepLabV3+ answer with a pixel map and no boxes at all, so the
+    panel's box count was zero and it printed "No defect detected" directly
+    over a result image it had just painted a defect onto.
+    """
+
+    from fabric_defect_hub.web.single_image import prediction_summary
+
+    prediction = Prediction(sample_id="x", masks=[[[0, 0], [1, 1]], [[1, 1], [1, 1]]])
+    summary = prediction_summary(prediction)
+    assert summary["detections"] == 0
+    assert summary["has_masks"] is True
+    assert summary["mask_pixels"] == 6
+    assert summary["mask_coverage"] == 0.75
+
+    rendered = render_prediction_tags(summary)
+    assert "No defect detected" not in rendered
+    assert "Detected defect region(s)" in rendered
+    assert "defect area 75.0%" in rendered
+
+
+def test_prediction_tags_still_say_no_defect_when_the_mask_is_empty():
+    from fabric_defect_hub.web.single_image import prediction_summary
+
+    summary = prediction_summary(Prediction(sample_id="x", masks=[[[0, 0], [0, 0]]]))
+    assert summary["mask_pixels"] == 0
+    assert summary["mask_coverage"] == 0.0
+    assert "No defect detected" in render_prediction_tags(summary)
+
+
+def test_prediction_summary_counts_no_mask_as_no_area():
+    from fabric_defect_hub.web.single_image import prediction_summary
+
+    summary = prediction_summary(Prediction(sample_id="x", boxes=[[0, 0, 1, 1]], labels=["defect"], scores=[0.9]))
+    assert summary["detections"] == 1
+    assert summary["mask_pixels"] == 0
+    assert summary["mask_coverage"] == 0.0
+    assert "Detected 1 defect region(s)" in render_prediction_tags(summary)
+
+
 def _reset_available_models(monkeypatch):
     """`available_model_labels` freezes on first call, so a test that changes
     which slots are staged has to clear that memo first."""

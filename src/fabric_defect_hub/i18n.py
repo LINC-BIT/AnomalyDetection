@@ -105,6 +105,11 @@ _STRINGS: dict[str, dict[str, str]] = {
         "prediction_none": "No detection result yet.",
         "prediction_no_defect": "No defect detected",
         "prediction_regions": "Detected {count} defect region(s)",
+        # A segmentation model reports a pixel map, not boxes: this is the
+        # panel's verdict for it, with `tag_defect_area` carrying the only
+        # number such a model can give.
+        "prediction_defect_found": "Detected defect region(s)",
+        "tag_defect_area": "defect area {pct}%",
         "tag_confidence": "confidence",
         "tag_anomaly_score": "anomaly score",
         "tag_heatmap_available": "Heat map available",
@@ -250,6 +255,8 @@ _STRINGS: dict[str, dict[str, str]] = {
         "prediction_none": "暂无检测结果。",
         "prediction_no_defect": "未检测到缺陷",
         "prediction_regions": "检测到 {count} 处缺陷",
+        "prediction_defect_found": "检测到缺陷区域",
+        "tag_defect_area": "缺陷面积 {pct}%",
         "tag_confidence": "置信度",
         "tag_anomaly_score": "异常分数",
         "tag_heatmap_available": "热力图可用",

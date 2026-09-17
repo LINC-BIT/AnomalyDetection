@@ -708,6 +708,31 @@ def _model_slug(model_label: str) -> str:
     return "".join(character.lower() if character.isalnum() else "-" for character in model_label).strip("-")
 
 
+def _mask_pixel_counts(masks: Any) -> tuple[int, int]:
+    """(marked pixels, total pixels) across a prediction's masks.
+
+    A segmentation backend answers with a pixel map and no boxes at all (see
+    `models/torchvision/adapter.py::predict`), so the result panel cannot count
+    defects the way it counts detections — there is nothing to count but the
+    area the model marked. numpy comes with the UI extra; the plain-list
+    fallback keeps a caller without it working rather than taking the panel
+    down.
+    """
+
+    if not masks:
+        return 0, 0
+    try:
+        import numpy as np
+    except ImportError:  # pragma: no cover - numpy ships with the ui extra
+        cells = [cell for mask in masks for row in mask for cell in row]
+        return sum(1 for cell in cells if cell), len(cells)
+    arrays = [np.asarray(mask) for mask in masks]
+    return (
+        int(sum(int(np.count_nonzero(array)) for array in arrays)),
+        int(sum(array.size for array in arrays)),
+    )
+
+
 def prediction_summary(prediction: Prediction, capabilities: Any = None) -> dict[str, Any]:
     """Flatten a `Prediction` for the result panel.
 
@@ -717,8 +742,13 @@ def prediction_summary(prediction: Prediction, capabilities: Any = None) -> dict
     that structurally cannot — GANomaly scores the distance between two
     latent vectors, so there is no map to render, ever. `None` keeps the
     older, non-committal wording for callers that don't know.
+
+    `mask_pixels`/`mask_coverage` describe a pixel-map prediction the same way
+    `detections`/`scores` describe a box prediction, because the panel cannot
+    ask a segmentation model for boxes it never produces.
     """
 
+    marked_pixels, total_pixels = _mask_pixel_counts(prediction.masks)
     return {
         "sample_id": prediction.sample_id,
         "task": "anomaly" if prediction.anomaly_score is not None else "detection",
@@ -727,6 +757,8 @@ def prediction_summary(prediction: Prediction, capabilities: Any = None) -> dict
         "scores": [round(score, 4) for score in prediction.scores or []],
         "anomaly_score": prediction.anomaly_score,
         "has_masks": bool(prediction.masks),
+        "mask_pixels": marked_pixels,
+        "mask_coverage": (marked_pixels / total_pixels) if total_pixels else 0.0,
         "has_anomaly_map": prediction.anomaly_map is not None,
         "pixel_map_supported": None if capabilities is None else capabilities.fills("anomaly_map"),
     }
@@ -766,10 +798,26 @@ def render_prediction_tags(summary: dict[str, Any], lang: str = DEFAULT_LANGUAGE
         return f'<div class="fdh-tags">{"".join(chips)}</div>'
 
     detections = int(summary["detections"])
-    if detections == 0:
+    marked_pixels = int(summary.get("mask_pixels") or 0)
+    if detections == 0 and marked_pixels == 0:
         return (
             '<div class="fdh-tags">'
             f'<span class="fdh-tag fdh-tag-normal">{_html.escape(tr(lang, "prediction_no_defect"))}</span>'
+            "</div>"
+        )
+    if detections == 0:
+        # A segmentation model answers with a pixel map and no boxes, so
+        # counting `boxes` printed "No defect detected" directly over the
+        # defect it had just painted into the result image (UNet++ and
+        # DeepLabV3+ always did). Report what the model actually produced —
+        # how much of the image it marked — rather than a box count it has no
+        # way to produce.
+        coverage = float(summary.get("mask_coverage") or 0.0) * 100
+        return (
+            f'<div class="fdh-tagpanel-header">{_html.escape(tr(lang, "prediction_defect_found"))}</div>'
+            '<div class="fdh-tags">'
+            f'<span class="fdh-tag fdh-tag-label">'
+            f'{_html.escape(tr(lang, "tag_defect_area", pct=f"{coverage:.1f}"))}</span>'
             "</div>"
         )
     header = f'<div class="fdh-tagpanel-header">{_html.escape(tr(lang, "prediction_regions", count=detections))}</div>'
