@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -78,17 +79,35 @@ def compatible_models(dataset_label: str) -> list[str]:
     ]
 
 
-def _detect_device() -> str:
+def _detect_devices(torch_module: Any | None = None) -> list[str]:
+    """Return every usable local accelerator, or one serial fallback device."""
+
     try:
-        import torch
+        torch = torch_module
+        if torch is None:
+            import torch
 
         if torch.cuda.is_available():
-            return "cuda:0"
+            return [f"cuda:{index}" for index in range(torch.cuda.device_count())]
         if torch.backends.mps.is_available():
-            return "mps"
+            return ["mps"]
     except ImportError:
         pass
-    return "cpu"
+    return ["cpu"]
+
+
+def _detect_device() -> str:
+    return _detect_devices()[0]
+
+
+def _activate_device(device: str) -> None:
+    """Select this worker's CUDA device for backends that use torch defaults."""
+
+    if not device.startswith("cuda:"):
+        return
+    import torch
+
+    torch.cuda.set_device(int(device.partition(":")[2]))
 
 
 def _profile_setup(model: Any, device: str):
@@ -347,12 +366,14 @@ def run_benchmark(
     run_log_path: str | None = DEFAULT_RUN_LOG_PATH,
 ) -> Iterator[tuple[list[str], list[list[Any]], str, list[dict[str, Any]]]]:
     """Evaluate every model in `model_labels` against the same dataset
-    sample (test split only — the benchmark tab never trains), one model at
-    a time: mount -> test -> unmount -> next model (`_release_model`).
-    Yields `(columns, rows, status)` after every model so the leaderboard
-    fills in live instead of appearing all at once; `columns` is the
-    superset of metric names produced by any model evaluated so far, so
-    every row stays padded to the same shape.
+    sample (test split only — the benchmark tab never trains). A single
+    device runs models serially as mount -> test -> unmount -> next model
+    (`_release_model`); CUDA hosts run up to one model per detected GPU in
+    parallel, with each worker pinned to its own `cuda:N`. Yields `(columns,
+    rows, status)` after every completed model so the leaderboard fills in
+    live instead of appearing all at once; `columns` is the superset of
+    metric names produced by any model evaluated so far, so every row stays
+    padded to the same shape.
 
     `include_profiling` additionally runs a `PyTorchProfiler` pass per model
     (see `_profile_setup`) so overhead metrics (fps, latency_ms_*,
@@ -396,7 +417,7 @@ def run_benchmark(
     if spec["slice_kwarg"] is not None:
         base_dataset_kwargs[spec["slice_kwarg"]] = slice_value(dataset_label, texture_label)
 
-    device = _detect_device()
+    devices = _detect_devices()
 
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -404,22 +425,21 @@ def run_benchmark(
     total = len(model_labels)
     yield [], [], tr(lang, "bench_starting", total=total), []
 
-    for index, model_label in enumerate(model_labels, start=1):
+    def evaluate_model(
+        index: int, model_label: str, device: str,
+    ) -> tuple[int, str, dict[str, Any] | None, list[str], int | None]:
         model_spec = MODEL_CATALOG[model_label]
         dataset_task = ground_truth_task(model_spec["task"])
         if dataset_task not in supported_tasks:
-            errors.append(tr(
+            return index, model_label, None, [tr(
                 lang, "bench_task_mismatch",
                 model=model_label, dataset=dataset_label, task=task_text(lang, model_spec["task"]),
-            ))
-            yield _render(
-                rows, sample_count, shot_mode, errors, lang=lang,
-                technical_weight=technical_weight, overhead_weight=overhead_weight,
-            )
-            continue
+            )], None
 
         model = None
+        warnings: list[str] = []
         try:
+            _activate_device(device)
             dataset = load_dataset(spec["name"], task=dataset_task, **base_dataset_kwargs)
             model = load_model(model_spec["backend"], model_spec["name"])
             evaluator = evaluator_for_task(dataset_task)
@@ -437,8 +457,7 @@ def run_benchmark(
                 output_dir=str(Path(BENCHMARK_ANOMALY_MAP_ROOT) / _slug(model_label)),
                 run_log_path=run_log_path,
             )
-            if sample_count is None:
-                sample_count = len(dataset.load_samples())
+            count = len(dataset.load_samples())
             row: dict[str, Any] = {
                 "model": model_label,
                 "runtime_s": round(time.perf_counter() - started, 1),
@@ -450,7 +469,7 @@ def run_benchmark(
                     row.update(_profile_model(model, artifact_for_model(model_spec), device, dataset.load_samples()))
                     row["runtime_s"] = round(row["runtime_s"] + time.perf_counter() - profile_started, 1)
                 except Exception as exc:
-                    errors.append(f"{model_label}: profiling skipped ({type(exc).__name__}: {exc})")
+                    warnings.append(f"{model_label}: profiling skipped ({type(exc).__name__}: {exc})")
             # Every opt-in addition below is best-effort: a failure in one
             # (e.g. thop missing for FLOPs, a target dataset erroring mid-
             # probe) only forfeits that addition's columns, never the base
@@ -459,7 +478,7 @@ def run_benchmark(
                 try:
                     row.update(_resolution_sweep(model, artifact_for_model(model_spec), device))
                 except Exception as exc:
-                    errors.append(f"{model_label}: resolution sweep skipped ({type(exc).__name__}: {exc})")
+                    warnings.append(f"{model_label}: resolution sweep skipped ({type(exc).__name__}: {exc})")
             if include_profiling:
                 try:
                     row.update(_flops_and_lmei(
@@ -467,7 +486,7 @@ def run_benchmark(
                         memory_kind=row.get("memory_measurement_kind"),
                     ))
                 except Exception as exc:
-                    errors.append(f"{model_label}: FLOPs/LMEI skipped ({type(exc).__name__}: {exc})")
+                    warnings.append(f"{model_label}: FLOPs/LMEI skipped ({type(exc).__name__}: {exc})")
             if cross_domain_dataset_label:
                 try:
                     metric_key = _PRIMARY_ACCURACY_METRIC.get(dataset_task)
@@ -481,14 +500,37 @@ def run_benchmark(
                         if acc_tgt is not None and acc_src != 0:
                             row["cross_domain_delta_acc_pct"] = cross_domain_degradation(acc_src, acc_tgt)
                 except Exception as exc:
-                    errors.append(f"{model_label}: cross-domain probe skipped ({type(exc).__name__}: {exc})")
-            rows.append(row)
+                    warnings.append(f"{model_label}: cross-domain probe skipped ({type(exc).__name__}: {exc})")
+            return index, model_label, row, warnings, count
         except Exception as exc:
-            errors.append(f"{model_label}: {type(exc).__name__}: {exc}")
+            return index, model_label, None, [f"{model_label}: {type(exc).__name__}: {exc}"], None
         finally:
             if model is not None:
                 _release_model(model)
 
+    scheduled = list(enumerate(model_labels, start=1))
+    if len(devices) == 1:
+        completed = (
+            evaluate_model(index, model_label, devices[0])
+            for index, model_label in scheduled
+        )
+    else:
+        def parallel_completed():
+            with ThreadPoolExecutor(max_workers=len(devices)) as executor:
+                futures = [
+                    executor.submit(evaluate_model, index, model_label, devices[(index - 1) % len(devices)])
+                    for index, model_label in scheduled
+                ]
+                yield from (future.result() for future in as_completed(futures))
+
+        completed = parallel_completed()
+
+    for index, model_label, row, warnings, count in completed:
+        if row is not None:
+            rows.append(row)
+        errors.extend(warnings)
+        if sample_count is None and count is not None:
+            sample_count = count
         status = tr(lang, "bench_progress", index=index, total=total, model=model_label)
         yield _render(rows, sample_count, shot_mode, errors, status, lang, technical_weight, overhead_weight)
 

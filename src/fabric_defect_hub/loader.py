@@ -173,15 +173,21 @@ def run_experiment(
         for s in samples:
             tiles, meta_info = tiler.split_sample(s)
             if meta_info.get("tiled", False):
-                predict_kwargs = {"output_dir": output_dir} if output_dir and model.capabilities().fills("anomaly_map") else {}
+                predict_kwargs = {"config": {"device": runtime.device}}
+                if output_dir and model.capabilities().fills("anomaly_map"):
+                    predict_kwargs["output_dir"] = output_dir
                 tile_preds = model.predict(tiles, active_artifact, **predict_kwargs)
                 stitched_pred = tiler.stitch_predictions(tile_preds, meta_info)
                 predictions.append(stitched_pred)
             else:
-                predict_kwargs = {"output_dir": output_dir} if output_dir and model.capabilities().fills("anomaly_map") else {}
+                predict_kwargs = {"config": {"device": runtime.device}}
+                if output_dir and model.capabilities().fills("anomaly_map"):
+                    predict_kwargs["output_dir"] = output_dir
                 predictions.extend(model.predict([s], active_artifact, **predict_kwargs))
     else:
-        predict_kwargs = {"output_dir": output_dir} if output_dir and model.capabilities().fills("anomaly_map") else {}
+        predict_kwargs = {"config": {"device": runtime.device}}
+        if output_dir and model.capabilities().fills("anomaly_map"):
+            predict_kwargs["output_dir"] = output_dir
         predictions = model.predict(samples, active_artifact, **predict_kwargs)
 
     evaluated_metrics = evaluator.evaluate(samples, predictions) if evaluator is not None else {}
