@@ -192,4 +192,7 @@ markers = [
   # re-couples a layer to a specific backend -- a review call, not a defect.
   # Deselected by default; run on demand with `pytest -m architecture`.
   "architecture: source-level layering audit, not runtime correctness",
+  # Launches the real per-model benchmark worker subprocess instead of the
+  # in-process stand-in the other benchmark tests use.
+  "spawn_worker: exercises the benchmark's subprocess launcher",
 ]

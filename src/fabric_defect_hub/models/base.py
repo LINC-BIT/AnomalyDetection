@@ -85,6 +85,13 @@ class ModelCapabilities:
     # input for it (`profiling.base.ProfileConfig.input_style`). "batched" is
     # the common case, so only the backends that differ say so.
     export_input_style: str = "batched"
+    # `(height, width)` a *live* forward accepts, for probe passes that
+    # synthesize their own input (`application.benchmark._flops_and_lmei`).
+    # Patch-based backbones (Dinomaly's ViTill, MoECLIP's CLIP ViT) refuse or
+    # silently mis-shape anything that is not a whole number of patches, so a
+    # shared 640x640 default cannot be right for every model. `None` means "no
+    # constraint this backend knows about" -- the prober keeps its default.
+    probe_input_size: tuple[int, int] | None = None
 
     def __post_init__(self) -> None:
         for name, values, vocabulary in (
@@ -107,6 +114,18 @@ class ModelCapabilities:
                 f"ModelCapabilities.export_input_style={self.export_input_style!r} is unknown; "
                 f"expected one of {EXPORT_INPUT_STYLES}"
             )
+        if self.probe_input_size is not None:
+            size = self.probe_input_size
+            valid = (
+                isinstance(size, (tuple, list))
+                and len(size) == 2
+                and all(isinstance(value, int) and value > 0 for value in size)
+            )
+            if not valid:
+                raise ValueError(
+                    f"ModelCapabilities.probe_input_size={self.probe_input_size!r} must be a "
+                    f"(height, width) pair of positive ints"
+                )
 
     def supports_task(self, task: str) -> bool:
         return task in self.tasks

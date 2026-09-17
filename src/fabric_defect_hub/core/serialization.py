@@ -15,8 +15,11 @@ dataclasses in the one place ordering/nesting actually matters.
 from __future__ import annotations
 
 import json
+import math
+from collections.abc import Iterable
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
 from fabric_defect_hub.core.types import (
     Annotations,
@@ -47,12 +50,54 @@ def sample_from_dict(data: dict) -> Sample:
     )
 
 
+def json_safe(value: Any) -> Any:
+    """Recursively replace non-finite floats with `null`.
+
+    JSON has no NaN/Infinity literal, and every writer below passes
+    `allow_nan=False` so a non-finite number cannot quietly produce a file other
+    parsers reject. Refusing to write at all is worse than writing `null`
+    though: EfficientAD/STFPM/GANomaly emit NaN anomaly scores on some splits,
+    and the raise aborted those models' whole benchmark evaluation *after* their
+    metrics had been computed — which reads as "the model failed" rather than
+    "this model produced a non-finite score". `null` keeps the file valid, and
+    `evaluation.anomaly.AnomalyEvaluator` still reports the non-finite score on
+    its own.
+    """
+
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [json_safe(item) for item in value]
+    return value
+
+
+def _dump_items(path: Path, items: Iterable[Any]) -> None:
+    """Write a JSON array one item at a time.
+
+    `json.dumps` on a whole list builds the entire document as a single string
+    first. A Full-shot benchmark's `predictions.json` reaches gigabytes, and the
+    string plus the dataclasses it came from could not both fit — which is what
+    "Full-shot runs out of memory" looked like. Streaming holds one item.
+    """
+
+    with path.open("w", encoding="utf-8") as file:
+        file.write("[")
+        first = True
+        for item in items:
+            if not first:
+                file.write(",")
+            first = False
+            file.write("\n")
+            json.dump(json_safe(item), file, indent=2, ensure_ascii=False, allow_nan=False)
+        file.write("\n]\n")
+
+
 def save_samples(samples: list[Sample], path: str | Path) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps([sample_to_dict(s) for s in samples], indent=2, ensure_ascii=False, allow_nan=False)
-    )
+    _dump_items(path, (sample_to_dict(s) for s in samples))
     return path
 
 
@@ -75,9 +120,7 @@ def prediction_from_dict(data: dict) -> Prediction:
 def save_predictions(predictions: list[Prediction], path: str | Path) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps([prediction_to_dict(p) for p in predictions], indent=2, ensure_ascii=False, allow_nan=False)
-    )
+    _dump_items(path, (prediction_to_dict(p) for p in predictions))
     return path
 
 
@@ -113,9 +156,14 @@ def experiment_result_from_dict(data: dict) -> ExperimentResult:
 def save_experiment_result(result: ExperimentResult, path: str | Path) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(experiment_result_to_dict(result), indent=2, ensure_ascii=False, allow_nan=False)
-    )
+    # Deliberately *not* `json_safe`: a result with a non-finite metric is a bug
+    # worth surfacing (`test_save_result_rejects_non_finite_json_metric`), unlike
+    # a model that legitimately scores a sample as NaN (see `json_safe`).
+    with path.open("w", encoding="utf-8") as file:
+        json.dump(
+            experiment_result_to_dict(result), file,
+            indent=2, ensure_ascii=False, allow_nan=False,
+        )
     return path
 
 

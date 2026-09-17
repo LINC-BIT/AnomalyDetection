@@ -2,21 +2,27 @@
 
 from __future__ import annotations
 
-import gc
+import atexit
+import json
 import os
+import signal
 import subprocess
+import sys
+import tempfile
+import threading
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterator
 
+from fabric_defect_hub.core.execution import model_execution, model_tracing
 from fabric_defect_hub.core.registry import get_profiler_cls
 from fabric_defect_hub.core.types import ModelInfo, RuntimeInfo
 from fabric_defect_hub.evaluation import evaluator_for_task, ground_truth_task
 from fabric_defect_hub.evaluation.cross_domain import cross_domain_degradation
 from fabric_defect_hub.i18n import DEFAULT_LANGUAGE, tr
-from fabric_defect_hub.inference.session import clear_accelerator_cache
 from fabric_defect_hub.application import load_dataset, load_model, run_experiment
 from fabric_defect_hub.profiling.base import ProfileConfig
 from fabric_defect_hub.scoring import SCORE_PRESETS, score_rows
@@ -35,6 +41,266 @@ from fabric_defect_hub.application.workspace import (
 
 DEFAULT_RUN_LOG_PATH = "runs/leaderboard_log.jsonl"
 BENCHMARK_ANOMALY_MAP_ROOT = "artifacts/runtime/anomaly_maps/benchmark"
+# Where `_record_benchmark_failure` appends the stacks the status line cannot
+# carry. Beside the per-model anomaly maps, so one run's failures live with the
+# artifacts they belong to (both are gitignored `artifacts/runtime/` output).
+BENCHMARK_FAILURE_LOG = Path(BENCHMARK_ANOMALY_MAP_ROOT) / "failures.log"
+_FAILURE_LOG_LOCK = threading.Lock()
+
+
+def _poisoned_cuda_hint(exc: BaseException | str) -> str:
+    """Extra sentence for the one CUDA failure that is not about this model.
+
+    An illegal memory access leaves the process's CUDA context permanently
+    broken ("Sticky error detected"). Until each model got its own process that
+    meant every model evaluated afterwards failed with the same message no
+    matter how healthy it was — which read as ten broken models instead of one
+    poisoned context. Say so either way, because the symptom still looks the
+    same from the panel.
+    """
+
+    text = str(exc)
+    if "illegal memory access" not in text and "Sticky error" not in text:
+        return ""
+    return (
+        " — this is not this model's fault: an illegal memory access poisoned a CUDA context, "
+        "and the models sharing that process failed with it. Each model now runs in its own "
+        "process, so the rest of the batch is unaffected; re-run to retry this one"
+    )
+
+
+def _append_benchmark_failure(model_label: str, detail: str) -> None:
+    """Append one failure block to `BENCHMARK_FAILURE_LOG`, and say where.
+
+    Best-effort by construction: this runs for a failure whose whole job is to
+    not take the batch down, so a read-only filesystem or a missing directory
+    must not turn a reported model failure into a crashed benchmark. The panel
+    keeps its one-line summary; this is the part that says *which frame* raised.
+    """
+
+    try:
+        with _FAILURE_LOG_LOCK:
+            BENCHMARK_FAILURE_LOG.parent.mkdir(parents=True, exist_ok=True)
+            with BENCHMARK_FAILURE_LOG.open("a", encoding="utf-8") as handle:
+                handle.write(f"\n===== {time.strftime('%Y-%m-%d %H:%M:%S')} {model_label} =====\n")
+                handle.write(detail if detail.endswith("\n") else detail + "\n")
+        last_line = detail.strip().splitlines()[-1] if detail.strip() else "failed"
+        print(
+            f"[benchmark] {model_label}: {last_line[:200]} "
+            f"(full traceback: {BENCHMARK_FAILURE_LOG})",
+            file=sys.stderr, flush=True,
+        )
+    except Exception:
+        return
+
+
+def _record_benchmark_failure(model_label: str, exc: BaseException) -> None:
+    """Log an exception raised in *this* process (see `_append_benchmark_failure`)."""
+
+    _append_benchmark_failure(
+        model_label, "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    )
+
+
+def _record_worker_failure(model_label: str, error: str, traceback_text: str | None) -> None:
+    """Log a failure a worker process reported, with the worker's own stack.
+
+    The worker catches its own exceptions and sends the traceback back, so the
+    log still shows the frame that raised even though the failure happened in
+    another process.
+    """
+
+    _append_benchmark_failure(model_label, traceback_text or f"{error}\n")
+
+
+# How long one model's worker may run before the parent gives up on it. A
+# 350-sample anomalib evaluation is minutes, an export-heavy profiling pass can
+# add more, so the default is generous -- but finite, because a wedged worker
+# holds a GPU the rest of the batch could be using.
+BENCHMARK_WORKER_TIMEOUT_SECONDS = float(os.environ.get("FDH_BENCHMARK_WORKER_TIMEOUT", "3600"))
+_BENCHMARK_WORKER_MODULE = "fabric_defect_hub.application.benchmark_worker"
+
+# Every worker this process has running right now. Kept so a quit (Ctrl+C on the
+# UI, or a normal exit) can kill them: a stranded worker keeps a GPU and a
+# 350-sample evaluation's worth of memory until it finishes on its own.
+_LIVE_WORKERS: set[subprocess.Popen] = set()
+_LIVE_WORKERS_LOCK = threading.Lock()
+
+
+def _child_setup() -> None:  # pragma: no cover - runs in the forked child
+    """Ask the kernel to signal a worker if this process dies.
+
+    `preexec_fn` runs between fork and exec, so it must not allocate or import
+    anything heavy. Linux-only (`prctl`); elsewhere the `atexit` cleanup is the
+    only guard, which is why it is registered unconditionally.
+    """
+
+    try:
+        import ctypes
+        import signal as _signal
+
+        libc = ctypes.CDLL("libc.so.6", use_errno=True)
+        libc.prctl(1, _signal.SIGTERM, 0, 0, 0)  # PR_SET_PDEATHSIG = 1
+    except Exception:
+        return
+
+
+def _spawn_worker(payload: dict[str, Any], results_path: Path, env: dict[str, str]) -> subprocess.Popen:
+    """Start one worker process, and remember it until it exits."""
+
+    process = subprocess.Popen(
+        [sys.executable, "-m", _BENCHMARK_WORKER_MODULE],
+        stdin=subprocess.PIPE, text=True, env=env,
+        preexec_fn=_child_setup if sys.platform.startswith("linux") else None,
+    )
+    with _LIVE_WORKERS_LOCK:
+        _LIVE_WORKERS.add(process)
+    assert process.stdin is not None  # noqa: S101 - guaranteed by stdin=PIPE
+    process.stdin.write(json.dumps({**payload, "results_path": str(results_path)}))
+    process.stdin.close()
+    return process
+
+
+def _terminate_process(process: subprocess.Popen, grace_seconds: float = 3.0) -> None:
+    """SIGTERM a worker, SIGKILL it if it will not go.
+
+    SIGTERM first: a worker between samples dies at once. SIGKILL only for one
+    that ignores it — stuck inside a CUDA call, say — because waiting for that
+    one is exactly the "quitting takes minutes" behaviour this exists to remove.
+    """
+
+    if process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=max(0.0, grace_seconds))
+    except subprocess.TimeoutExpired:
+        process.kill()
+
+
+def terminate_benchmark_workers(grace_seconds: float = 3.0) -> int:
+    """Stop every worker process this one started; return how many it stopped.
+
+    Called from the exit hooks below, and after an interrupted wait — a
+    stranded worker keeps a GPU and a whole evaluation's worth of memory until
+    it finishes on its own.
+    """
+
+    with _LIVE_WORKERS_LOCK:
+        processes = list(_LIVE_WORKERS)
+    for process in processes:
+        _terminate_process(process, grace_seconds)
+        with _LIVE_WORKERS_LOCK:
+            _LIVE_WORKERS.discard(process)
+    return len(processes)
+
+
+_fast_exit_installed = False
+
+
+def install_fast_exit() -> bool:
+    """Make quitting this process quick, and never leave a worker behind.
+
+    The UI's benchmark waits on its workers from thread-pool threads, and
+    uvicorn's graceful shutdown waits for the request that is doing the waiting:
+    without this, Ctrl+C on a running benchmark sat there until the current
+    model finished — minutes, for a 350-sample evaluation. So the first SIGINT
+    (or SIGTERM) kills the workers *before* uvicorn's own handler runs, which
+    lets that request unwind immediately; the second signal still gets
+    uvicorn's force-exit, so a shutdown stuck on anything else is one more
+    Ctrl+C away rather than a `kill -9`.
+
+    uvicorn registers `Server.handle_exit` as its signal handler when it starts,
+    so the wrapper has to be in place before `launch()` runs — which is why the
+    UI launcher calls this first. Returns whether the handler was wrapped.
+    """
+
+    global _fast_exit_installed
+    atexit.register(terminate_benchmark_workers)
+    if _fast_exit_installed:
+        return True
+    try:
+        import uvicorn
+    except ImportError:  # pragma: no cover - the UI extra always brings uvicorn
+        return False
+
+    original = uvicorn.Server.handle_exit
+
+    def handle_exit(self, sig, frame):  # type: ignore[no-untyped-def]
+        stopped = terminate_benchmark_workers()
+        if stopped:
+            print(
+                f"[benchmark] {signal.Signals(sig).name}: stopped {stopped} worker process(es) "
+                f"before shutting down",
+                file=sys.stderr, flush=True,
+            )
+        return original(self, sig, frame)
+
+    uvicorn.Server.handle_exit = handle_exit  # type: ignore[method-assign]
+    _fast_exit_installed = True
+    return True
+
+
+def _run_model_worker(payload: dict[str, Any]) -> dict[str, Any]:
+    """Evaluate one model in its own process, and return its report.
+
+    stdout/stderr are inherited on purpose: the worker's per-image progress
+    lines and the frameworks' warnings have to keep reaching the terminal the
+    UI was launched from. The structured report travels through a file instead,
+    so a chatty backend cannot corrupt it.
+    """
+
+    with tempfile.TemporaryDirectory(prefix="fdh-benchmark-") as tmp:
+        results_path = Path(tmp) / "result.json"
+        env = dict(os.environ)
+        env.setdefault("PYTHONUNBUFFERED", "1")
+        process = _spawn_worker(payload, results_path, env)
+        try:
+            process.wait(timeout=BENCHMARK_WORKER_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            _terminate_process(process)
+            return _worker_report(
+                f"worker timed out after {BENCHMARK_WORKER_TIMEOUT_SECONDS:.0f}s "
+                f"(raise FDH_BENCHMARK_WORKER_TIMEOUT to allow longer runs)"
+            )
+        finally:
+            with _LIVE_WORKERS_LOCK:
+                _LIVE_WORKERS.discard(process)
+            if process.poll() is None:
+                # This call was interrupted (Ctrl+C in the parent) rather than
+                # the worker exiting: do not leave it running with a GPU.
+                terminate_benchmark_workers()
+        if not results_path.is_file():
+            return _worker_report(
+                f"worker exited with code {process.returncode} without writing a report — it was "
+                f"killed before it could catch anything (an out-of-memory kill looks like this, "
+                f"and so does quitting the UI mid-run)"
+            )
+        try:
+            return json.loads(results_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            return _worker_report(f"worker wrote an unreadable report: {exc}")
+
+
+def _worker_report(error: str) -> dict[str, Any]:
+    return {
+        "row": None, "warnings": [], "notes": [], "count": None,
+        "error": error, "traceback": None,
+    }
+
+
+class MetricNotApplicable(RuntimeError):
+    """An optional metric that this model *cannot* produce, not one that failed.
+
+    The benchmark's opt-in columns (resolution slope, cross-domain delta) are
+    best-effort, and a few of the reasons they are missing are properties of the
+    model rather than problems: a fixed-shape export cannot be run at the other
+    resolutions a decay slope needs, and a backend with no profiler-compatible
+    export has nothing to sweep. Raising this instead of a bare `RuntimeError`
+    lets the status line say "not applicable" (ℹ️) where a genuine failure still
+    says "skipped" (⚠️) — the distinction the panel was missing.
+    """
+
 
 # The metric each task's `Evaluator` treats as its headline accuracy number
 # (see `evaluation/{anomaly,detection,segmentation}.py`) -- what
@@ -144,25 +410,6 @@ def _activate_device(device: str) -> None:
     torch.cuda.set_device(int(device.partition(":")[2]))
 
 
-def _preload_benchmark_dependencies(model_labels: list[str]) -> None:
-    """Finish third-party lazy imports before concurrent model workers start.
-
-    Anomalib/Lightning and torchvision contain import cycles that are safe
-    during serial import but can expose partially initialized modules when
-    their first import happens in different benchmark threads.
-    """
-
-    backends = {MODEL_CATALOG[label]["backend"] for label in model_labels}
-    if backends & {"torchvision", "ultralytics", "anomalib"}:
-        import torch
-        import torchvision
-        from torchvision.transforms import InterpolationMode
-    if "anomalib" in backends:
-        from anomalib.data import ImageBatch, PredictDataset
-        from anomalib.engine import Engine
-        from lightning.pytorch import Trainer
-
-
 def _profile_setup(model: Any, device: str):
     """Build the (profiler, config, export_target) triple `run_experiment`
     needs to also measure FPS/latency/memory for this model, mirroring
@@ -183,8 +430,18 @@ def _profile_setup(model: Any, device: str):
     # "no PyTorchProfiler-compatible export target" and silently lost its
     # whole overhead row — anomalib exports ONNX. Same rule as
     # `metric_sweep._profiler_for`, deliberately spelled the same way.
+    #
+    # Order matters, and `torchscript` goes first on purpose:
+    #   * `torch.export` rejects the detection heads ("operators not yet
+    #     supported"), so preferring it cost Faster/Cascade/Mask R-CNN their
+    #     profiling *and* their resolution sweep;
+    #   * it also patches module dispatch process-wide while it traces (see
+    #     `core.execution`), which is a hazard this module would rather not
+    #     depend on at all.
+    # `exported_program` stays as the last resort, for a backend that offers
+    # nothing else.
     engine_for_target = {
-        "exported_program": "pytorch", "torchscript": "pytorch", "onnx": "onnxruntime",
+        "torchscript": "pytorch", "onnx": "onnxruntime", "exported_program": "pytorch",
     }
     export_target = next(
         (target for target in engine_for_target if target in capabilities.export_targets), None
@@ -216,12 +473,17 @@ def _native_profile_model(model: Any, artifact: Any, samples: list[Any], device:
 
     sample = samples[0]
     warmup, measured = 2, 8
-    for _ in range(warmup):
-        model.predict([sample], artifact)
+    # Same reason as `loader.run_experiment`: every forward is a reader of the
+    # tracing guard, so a profiling export in a sibling worker never traces
+    # through one of these calls.
+    with model_execution():
+        for _ in range(warmup):
+            model.predict([sample], artifact)
     latencies: list[float] = []
     for _ in range(measured):
         started = _time.perf_counter()
-        model.predict([sample], artifact)
+        with model_execution():
+            model.predict([sample], artifact)
         latencies.append((_time.perf_counter() - started) * 1000.0)
     mean_ms = statistics.fmean(latencies)
     metrics: dict[str, float] = {
@@ -267,14 +529,32 @@ def _profile_model(model: Any, artifact: Any, device: str, samples: list[Any] | 
     # error surfaced only as a status-line footnote. `config.input_size`
     # shapes the *profiler's* dummy input; the export keeps its defaults,
     # which are what `metric_sweep._try_export` profiles successfully.
-    exported = model.export(artifact, target=export_target)
-    export_path = Path(exported.path)
-    if not export_path.is_file():
-        raise FileNotFoundError(f"exported model does not exist: {export_path}")
+    # A backend can refuse to export a given model (WinCLIP's ONNX export hits
+    # `aten::_native_multi_head_attention`, which the ONNX exporter does not
+    # support at any opset this repo can ask for). Measuring the adapter
+    # directly is strictly better than dropping the row's overhead columns, and
+    # `_native_profile_model` labels itself as `profiling_mode="native"` so the
+    # two kinds of number are never silently mixed.
+    try:
+        # Tracing patches module dispatch process-wide while it runs, so this is
+        # a writer: it must not overlap any forward pass or another export (see
+        # `core.execution`). The profiler pass below is not a trace and stays
+        # parallel.
+        with model_tracing():
+            exported = model.export(artifact, target=export_target)
+        export_path = Path(exported.path)
+        if not export_path.is_file():
+            raise FileNotFoundError(f"exported model does not exist: {export_path}")
+    except Exception:
+        return _native_profile_model(model, artifact, samples or [], device)
     exported_input_size = exported.metadata.get("input_size")
     if exported_input_size is not None:
         config = replace(config, input_size=tuple(exported_input_size))
-    metrics = profiler.profile(exported, config)
+    # The profiler pass runs the exported model on the device, so it is GPU work
+    # like any forward: it must not overlap a sibling worker's trace, which
+    # patches module dispatch process-wide (see `core.execution`).
+    with model_execution():
+        metrics = profiler.profile(exported, config)
     memory_context = getattr(profiler, "last_instrumentation", {}).get("memory", {})
     metrics["memory_measurement_kind"] = memory_context.get("kind", "unknown")
     metrics["memory_measurement_scope"] = memory_context.get("scope", "unknown")
@@ -297,9 +577,12 @@ def _resolution_sweep(model: Any, artifact: Any, device: str) -> dict[str, float
 
     setup = _profile_setup(model, device)
     if setup is None:
-        raise RuntimeError("model has no export format supported by a benchmark profiler")
+        raise MetricNotApplicable(
+            "this backend has no export format a benchmark profiler can drive"
+        )
     profiler, config, export_target = setup
-    exported = model.export(artifact, target=export_target)
+    with model_tracing():
+        exported = model.export(artifact, target=export_target)
     exported_input_size = exported.metadata.get("input_size")
     if exported_input_size is not None:
         config = replace(config, input_size=tuple(exported_input_size))
@@ -308,11 +591,14 @@ def _resolution_sweep(model: Any, artifact: Any, device: str) -> dict[str, float
     # the export cannot run instead of dying on the first one — an
     # Ultralytics TorchScript bakes in its imgsz, so this loop used to raise
     # at the first non-native size and forfeit the whole sweep.
-    metrics = resolution_scaling(profiler, exported, config, sides=RESOLUTION_SWEEP_SIZES)
+    # Runs the export at several sizes on the device -- GPU work, so it is a
+    # reader of the tracing guard like every other forward pass.
+    with model_execution():
+        metrics = resolution_scaling(profiler, exported, config, sides=RESOLUTION_SWEEP_SIZES)
     if not metrics:
-        raise RuntimeError(
-            "fewer than two resolutions were measurable — the export is fixed-shape, "
-            "so a decay slope cannot be fitted for this model"
+        raise MetricNotApplicable(
+            "its export is fixed-shape, so fewer than two resolutions were measurable and a "
+            "decay slope cannot be fitted"
         )
     return metrics
 
@@ -344,10 +630,19 @@ def _flops_and_lmei(
     from fabric_defect_hub.model_statistics import parameter_counts
     from fabric_defect_hub.profiling.flops import compute_model_flops
 
-    flops_g = compute_model_flops(
-        raw_module, input_size=(640, 640),
-        input_style=model.capabilities().export_input_style, device=device,
-    )
+    # Ask the model what it can be probed at instead of assuming 640x640: the
+    # patch-based backbones assert on a side that is not a whole number of
+    # patches (Dinomaly's ViTill) or mis-shape their positional embeddings
+    # (MoECLIP's CLIP ViT), which used to cost every such row its FLOPs/LMEI
+    # columns for a reason that reads like a model defect.
+    capabilities = model.capabilities()
+    probe_size = capabilities.probe_input_size or (640, 640)
+    # thop's hooks run a real forward through the live module on the device.
+    with model_execution():
+        flops_g = compute_model_flops(
+            raw_module, input_size=probe_size,
+            input_style=capabilities.export_input_style, device=device,
+        )
     params_m = parameter_counts(raw_module).get("parameter_count", 0) / 1e6
     metrics = {
         "flops_g": round(flops_g, 4),
@@ -390,24 +685,9 @@ def _cross_domain_probe(
     samples = dataset.load_samples()
     if not samples:
         return None
-    predictions = model.predict(samples, artifact)
+    with model_execution():
+        predictions = model.predict(samples, artifact)
     return evaluator_for_task(dataset_task).evaluate(samples, predictions)
-
-
-def _release_model(model: Any) -> None:
-    """Mirrors `InferenceSessionManager._unload_active` (which the Single
-    Image tab uses): call the adapter's own `unload()` if it has one (only
-    the Ultralytics and Anomalib adapters do), drop our reference, then
-    force a GC pass and clear the CUDA/MPS allocator cache so the next
-    model's `load_model` isn't fighting the previous one's still-cached
-    memory."""
-
-    unload = getattr(model, "unload", None)
-    if callable(unload):
-        unload()
-    del model
-    gc.collect()
-    clear_accelerator_cache()
 
 
 def run_benchmark(
@@ -424,14 +704,21 @@ def run_benchmark(
     run_log_path: str | None = DEFAULT_RUN_LOG_PATH,
 ) -> Iterator[tuple[list[str], list[list[Any]], str, list[dict[str, Any]]]]:
     """Evaluate every model in `model_labels` against the same dataset
-    sample (test split only — the benchmark tab never trains). A single
-    device runs models serially as mount -> test -> unmount -> next model
-    (`_release_model`); CUDA hosts run up to one model per detected GPU in
-    parallel, with each worker pinned to its own `cuda:N`. Yields `(columns,
-    rows, status)` after every completed model so the leaderboard fills in
-    live instead of appearing all at once; `columns` is the superset of
+    sample (test split only — the benchmark tab never trains). Every model is
+    scored by its own worker process (`application.benchmark_worker`), pinned to
+    one of the detected devices; a CUDA host runs up to one model per device in
+    parallel, and a single-device host runs them one after another. Yields
+    `(columns, rows, status)` after every completed model so the leaderboard
+    fills in live instead of appearing all at once; `columns` is the superset of
     metric names produced by any model evaluated so far, so every row stays
-    padded to the same shape.
+    padded to the same shape. `status` names the models still running, because
+    with several models in flight "12/19 scored" cannot say whether the rest are
+    queued, running or stuck.
+
+    Why a process per model: `torch.export` patches module dispatch for the
+    whole process while it traces, and an illegal memory access poisons a
+    process's CUDA context for good — either one used to cost every model that
+    ran afterwards in the shared process, not just the model that hit it.
 
     `include_profiling` additionally runs a `PyTorchProfiler` pass per model
     (see `_profile_setup`) so overhead metrics (fps, latency_ms_*,
@@ -479,102 +766,90 @@ def run_benchmark(
 
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
+    notes: list[str] = []
     sample_count: int | None = None
     total = len(model_labels)
     yield [], [], tr(lang, "bench_starting", total=total), []
 
+    def model_payload(index: int, model_label: str, device: str) -> dict[str, Any]:
+        """Everything the worker process needs to produce this model's row."""
+
+        return {
+            "index": index,
+            "model_label": model_label,
+            "dataset_label": dataset_label,
+            "texture": texture_label,
+            "shot_mode": shot_mode,
+            "device": device,
+            "include_profiling": include_profiling,
+            "include_resolution_sweep": include_resolution_sweep,
+            "cross_domain_dataset_label": cross_domain_dataset_label,
+            "run_log_path": run_log_path,
+            "lang": lang,
+        }
+
+    # Model labels currently on a GPU, by index, for the status line below.
+    running: dict[int, str] = {}
+
     def evaluate_model(
         index: int, model_label: str, device: str,
-    ) -> tuple[int, str, dict[str, Any] | None, list[str], int | None]:
-        model_spec = MODEL_CATALOG[model_label]
-        dataset_task = ground_truth_task(model_spec["task"])
-        if dataset_task not in supported_tasks:
-            return index, model_label, None, [tr(
-                lang, "bench_task_mismatch",
-                model=model_label, dataset=dataset_label, task=task_text(lang, model_spec["task"]),
-            )], None
+    ) -> tuple[int, str, dict[str, Any] | None, list[str], list[str], int | None]:
+        """Score one model in its own process.
 
-        model = None
-        warnings: list[str] = []
+        Isolation is the point (see `application.benchmark_worker`): a worker
+        that dies — tracing corruption, a poisoned CUDA context, an out-of-memory
+        kill — costs its own row and nothing else, instead of every model that
+        would have run after it in a shared process.
+        """
+
+        running[index] = model_label.split(" · ")[0]
         try:
-            _activate_device(device)
-            dataset = load_dataset(spec["name"], task=dataset_task, **base_dataset_kwargs)
-            model = load_model(model_spec["backend"], model_spec["name"])
-            evaluator = evaluator_for_task(dataset_task)
-            started = time.perf_counter()
-            result = run_experiment(
-                experiment_id=f"benchmark-{_slug(model_label)}",
-                dataset=dataset,
-                model=model,
-                model_info=ModelInfo(
-                    name=model_spec["name"], backend=model_spec["backend"], task=model_spec["task"]
-                ),
-                runtime=RuntimeInfo(device=device, engine="python", precision="fp32", input_size=(640, 640)),
-                evaluator=evaluator,
-                artifact=artifact_for_model(model_spec),
-                output_dir=str(Path(BENCHMARK_ANOMALY_MAP_ROOT) / _slug(model_label)),
-                run_log_path=run_log_path,
-            )
-            count = len(dataset.load_samples())
-            row: dict[str, Any] = {
-                "model": model_label,
-                "runtime_s": round(time.perf_counter() - started, 1),
-                **result.metrics,
-            }
-            if include_profiling:
-                try:
-                    profile_started = time.perf_counter()
-                    row.update(_profile_model(model, artifact_for_model(model_spec), device, dataset.load_samples()))
-                    row["runtime_s"] = round(row["runtime_s"] + time.perf_counter() - profile_started, 1)
-                except Exception as exc:
-                    warnings.append(f"{model_label}: profiling skipped ({type(exc).__name__}: {exc})")
-            # Every opt-in addition below is best-effort: a failure in one
-            # (e.g. thop missing for FLOPs, a target dataset erroring mid-
-            # probe) only forfeits that addition's columns, never the base
-            # accuracy/profiling row already computed above.
-            if include_resolution_sweep:
-                try:
-                    row.update(_resolution_sweep(model, artifact_for_model(model_spec), device))
-                except Exception as exc:
-                    warnings.append(f"{model_label}: resolution sweep skipped ({type(exc).__name__}: {exc})")
-            if include_profiling:
-                try:
-                    row.update(_flops_and_lmei(
-                        model, model_spec, device, fps=row.get("fps"), vram_mb=row.get("peak_memory_mb"),
-                        memory_kind=row.get("memory_measurement_kind"),
-                    ))
-                except Exception as exc:
-                    warnings.append(f"{model_label}: FLOPs/LMEI skipped ({type(exc).__name__}: {exc})")
-            if cross_domain_dataset_label:
-                try:
-                    metric_key = _PRIMARY_ACCURACY_METRIC.get(dataset_task)
-                    acc_src = result.metrics.get(metric_key) if metric_key else None
-                    if acc_src is not None:
-                        target_metrics = _cross_domain_probe(
-                            model, artifact_for_model(model_spec), dataset_task,
-                            cross_domain_dataset_label, num_samples, defect_ratio,
-                        )
-                        acc_tgt = target_metrics.get(metric_key) if target_metrics else None
-                        if acc_tgt is not None and acc_src != 0:
-                            row["cross_domain_delta_acc_pct"] = cross_domain_degradation(acc_src, acc_tgt)
-                except Exception as exc:
-                    warnings.append(f"{model_label}: cross-domain probe skipped ({type(exc).__name__}: {exc})")
-            return index, model_label, row, warnings, count
-        except Exception as exc:
-            return index, model_label, None, [f"{model_label}: {type(exc).__name__}: {exc}"], None
+            report = _run_model_worker(model_payload(index, model_label, device))
         finally:
-            if model is not None:
-                _release_model(model)
+            running.pop(index, None)
+
+        if report.get("error"):
+            error = str(report["error"])
+            _record_worker_failure(model_label, error, report.get("traceback"))
+            return (
+                index, model_label, None,
+                [f"{model_label}: {error}{_poisoned_cuda_hint(error)}"], [], None,
+            )
+        return (
+            index, model_label, report.get("row"),
+            list(report.get("warnings") or []), list(report.get("notes") or []),
+            report.get("count"),
+        )
 
     scheduled = list(enumerate(model_labels, start=1))
+    finished = 0
+
+    def status_line(index: int, model_label: str) -> str:
+        """What finished, and what is still on the GPUs.
+
+        One model per process means the parent no longer watches a shared
+        progress bar, so it reports the in-flight set itself: a 19-model run on
+        7 GPUs spends most of its wall clock with several models running, and
+        "12/19" alone cannot say whether the rest are queued, running or stuck.
+        """
+
+        if len(devices) == 1:
+            return tr(lang, "bench_progress", index=index, total=total, model=model_label)
+        # `dict(running)` first: worker threads add and remove entries while this
+        # runs, and iterating the live view can raise "dictionary changed size
+        # during iteration".
+        names = "、".join(dict.fromkeys(dict(running).values()))
+        return tr(
+            lang, "bench_progress_running", done=finished, total=total,
+            running=names or tr(lang, "value_none"),
+        )
+
     if len(devices) == 1:
         completed = (
             evaluate_model(index, model_label, devices[0])
             for index, model_label in scheduled
         )
     else:
-        _preload_benchmark_dependencies(model_labels)
-
         def parallel_completed():
             with ThreadPoolExecutor(max_workers=len(devices)) as executor:
                 remaining = iter(scheduled)
@@ -598,16 +873,23 @@ def run_benchmark(
 
         completed = parallel_completed()
 
-    for index, model_label, row, warnings, count in completed:
+    for index, model_label, row, warnings, model_notes, count in completed:
         if row is not None:
             rows.append(row)
         errors.extend(warnings)
+        notes.extend(model_notes)
         if sample_count is None and count is not None:
             sample_count = count
-        status = tr(lang, "bench_progress", index=index, total=total, model=model_label)
-        yield _render(rows, sample_count, shot_mode, errors, status, lang, technical_weight, overhead_weight)
+        finished += 1
+        yield _render(
+            rows, sample_count, shot_mode, errors, status_line(index, model_label), lang,
+            technical_weight, overhead_weight, notes,
+        )
 
-    yield _render(rows, sample_count, shot_mode, errors, lang=lang, technical_weight=technical_weight, overhead_weight=overhead_weight)
+    yield _render(
+        rows, sample_count, shot_mode, errors, lang=lang, technical_weight=technical_weight,
+        overhead_weight=overhead_weight, notes=notes,
+    )
 
 
 def _render(
@@ -619,6 +901,7 @@ def _render(
     lang: str = DEFAULT_LANGUAGE,
     technical_weight: float = 0.5,
     overhead_weight: float = 0.5,
+    notes: list[str] | None = None,
 ) -> tuple[list[str], list[list[Any]], str, list[dict[str, Any]]]:
     """Returns `(columns, table, status, scored)`. `table` is the
     positional, display-formatted form the `gr.Dataframe` wants; `scored` is
@@ -651,6 +934,11 @@ def _render(
         )
     if errors:
         status += " ⚠️ " + "; ".join(errors)
+    if notes:
+        # Metrics this model cannot produce (fixed-shape export, no
+        # profiler-compatible export) are information, not failures — the
+        # panel used to print them under the same warning triangle as a crash.
+        status += " ℹ️ " + "; ".join(notes)
     return columns, table, status, scored
 
 

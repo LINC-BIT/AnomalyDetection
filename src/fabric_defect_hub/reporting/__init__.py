@@ -6,6 +6,11 @@ import csv
 import json
 from pathlib import Path
 
+try:  # POSIX only. Windows has no fcntl; appends there stay unlocked.
+    import fcntl
+except ImportError:  # pragma: no cover - exercised only on Windows
+    fcntl = None  # type: ignore[assignment]
+
 from fabric_defect_hub.core.provenance import collect_provenance
 from fabric_defect_hub.core.serialization import experiment_result_to_dict
 from fabric_defect_hub.core.types import ExperimentResult
@@ -69,8 +74,21 @@ def append_run_log(result: ExperimentResult, path: str | Path) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     row = {**experiment_result_to_dict(result), "provenance": collect_provenance()}
+    line = json.dumps(row, ensure_ascii=False, allow_nan=False) + "\n"
     with path.open("a", encoding="utf-8") as file:
-        file.write(json.dumps(row, ensure_ascii=False, allow_nan=False) + "\n")
+        # Benchmark models are scored in separate processes (see
+        # `application.benchmark_worker`), so rows can arrive at the same instant.
+        # An append is normally one `write` and lands whole, but a line longer
+        # than the stream buffer can split — and one interleaved line makes
+        # `read_run_log` raise for the *whole* file, not just that row.
+        if fcntl is None:  # pragma: no cover - Windows has no fcntl
+            file.write(line)
+        else:
+            fcntl.flock(file.fileno(), fcntl.LOCK_EX)
+            try:
+                file.write(line)
+            finally:
+                fcntl.flock(file.fileno(), fcntl.LOCK_UN)
     return path
 
 

@@ -144,3 +144,38 @@ def test_validate_experiment_result_rejects_non_numeric_metric():
     )
     with pytest.raises(jsonschema.ValidationError):
         validate_experiment_result(bad)
+
+
+def test_non_finite_prediction_values_are_written_as_null(tmp_path):
+    """EfficientAD/STFPM/GANomaly emit NaN anomaly scores on some splits. The
+    writer used to raise on them, which aborted those models' whole benchmark
+    evaluation *after* their metrics had been computed — one non-finite score
+    read as "the model failed". JSON has no NaN literal, so `null` it is.
+    """
+
+    path = tmp_path / "predictions.json"
+    save_predictions(
+        [
+            Prediction(
+                sample_id="nan-score",
+                anomaly_score=float("nan"),
+                scores=[float("inf"), 0.5],
+                boxes=[[0.0, 0.0, float("-inf"), 1.0]],
+                masks=[[[0.0, float("nan")]]],
+            ),
+            Prediction(sample_id="finite", anomaly_score=0.25),
+        ],
+        path,
+    )
+
+    text = path.read_text(encoding="utf-8")
+    assert "NaN" not in text and "Infinity" not in text
+    rows = json.loads(text)  # a bare NaN literal would make this raise
+    assert rows[0]["anomaly_score"] is None
+    assert rows[0]["scores"] == [None, 0.5]
+    assert rows[0]["boxes"] == [[0.0, 0.0, None, 1.0]]
+    assert rows[0]["masks"] == [[[0.0, None]]]
+
+    restored = load_predictions(path)
+    assert restored[0].anomaly_score is None
+    assert restored[1].anomaly_score == 0.25

@@ -143,6 +143,27 @@ def test_export_input_style_is_vocabulary_checked():
         )
 
 
+def test_probe_input_size_is_shape_checked():
+    """A backend that declares the side length its live forward accepts must
+    declare a real `(height, width)` pair: the FLOPs prober feeds it straight
+    into `compute_model_flops`, so a malformed value would surface as a shape
+    error deep inside thop's hooks instead of at the declaration.
+    """
+
+    assert ModelCapabilities(
+        tasks=("anomaly",), prediction_fields=("anomaly_score",)
+    ).probe_input_size is None
+    assert ModelCapabilities(
+        tasks=("anomaly",), prediction_fields=("anomaly_score",), probe_input_size=(448, 448)
+    ).probe_input_size == (448, 448)
+
+    for malformed in ((448,), (448, 448, 448), (0, 448), (-14, 448), "448", 448):
+        with pytest.raises(ValueError, match="probe_input_size"):
+            ModelCapabilities(
+                tasks=("anomaly",), prediction_fields=("anomaly_score",), probe_input_size=malformed
+            )
+
+
 @pytest.mark.architecture
 @pytest.mark.parametrize("backend", INSTALLED_BACKENDS)
 def test_declared_export_targets_are_honest(backend):

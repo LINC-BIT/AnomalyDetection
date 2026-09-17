@@ -172,6 +172,7 @@ _STRINGS: dict[str, dict[str, str]] = {
         "bench_starting": "🔵 Starting benchmark — 0/{total} models scored.",
         "bench_task_mismatch": "{model}: {dataset} has no ground truth for its task ({task}).",
         "bench_progress": "🔵 Scored {index}/{total} — last: {model}.",
+        "bench_progress_running": "🔵 Scored {done}/{total} — on the GPUs now: {running}.",
         "bench_done": "🟢 Scored {count} model(s) on {samples} samples ({shot}).",
         "bench_no_results": "🔴 No results produced.",
         "bench_profiling_no_metrics": (
@@ -316,6 +317,7 @@ _STRINGS: dict[str, dict[str, str]] = {
         "bench_starting": "🔵 开始基准测试 — 已评分 0/{total} 个模型。",
         "bench_task_mismatch": "{model}：{dataset} 没有该任务（{task}）所需的真实标注。",
         "bench_progress": "🔵 已评分 {index}/{total} — 最近完成：{model}。",
+        "bench_progress_running": "🔵 已评分 {done}/{total} — 正在跑：{running}。",
         "bench_done": "🟢 已在 {samples} 个样本（{shot}）上评分 {count} 个模型。",
         "bench_no_results": "🔴 未产生任何结果。",
         "bench_profiling_no_metrics": "已请求性能剖析，但这些模型没有产生任何指标 — 跳过原因见上方状态信息。",

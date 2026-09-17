@@ -8,6 +8,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from fabric_defect_hub.core.execution import model_execution
 from fabric_defect_hub.core.types import Prediction, Sample
 from fabric_defect_hub.i18n import DEFAULT_LANGUAGE, tr
 from fabric_defect_hub.loader import load_model
@@ -80,7 +81,12 @@ class InferenceSessionManager:
                 raise ModelNotLoadedError(
                     f"{self._active.model_id!r} is loaded; load {model_id!r} before running inference."
                 )
-            return self._active.adapter.predict(samples, self._active.artifact, **kwargs)
+            # A resident-model inference is a forward pass like any other: it
+            # must not be captured by a benchmark worker's export trace (see
+            # `core.execution`), which is exactly what the UI runs while a
+            # benchmark is in flight.
+            with model_execution():
+                return self._active.adapter.predict(samples, self._active.artifact, **kwargs)
 
     def capabilities(self, model_id: str):
         """What the resident model can produce (`ModelCapabilities`), or None

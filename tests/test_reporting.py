@@ -143,3 +143,34 @@ def test_latest_run_per_model_keeps_only_the_most_recent_row_per_model():
     by_name = {row["model"]["name"]: row for row in latest}
     assert by_name["yolo"]["metrics"]["map50"] == 0.9
     assert by_name["patchcore"]["metrics"]["image_auroc"] == 0.8
+
+
+def test_append_run_log_survives_concurrent_appends(tmp_path):
+    """Benchmark models are scored in separate processes, so rows can land at
+    the same moment; the file has to stay one valid JSON object per line (a
+    single interleaved line makes `read_run_log` raise for the whole file)."""
+
+    import threading
+
+    log = tmp_path / "leaderboard_log.jsonl"
+    padded = _result()
+    padded.metrics = {f"metric_{index:03d}": float(index) for index in range(200)}
+    errors: list[BaseException] = []
+
+    def writer() -> None:
+        try:
+            for _ in range(10):
+                append_run_log(padded, log)
+        except BaseException as exc:  # pragma: no cover - reported below
+            errors.append(exc)
+
+    threads = [threading.Thread(target=writer) for _ in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=30)
+
+    assert not errors
+    rows = read_run_log(log)
+    assert len(rows) == 80
+    assert all(row["experiment_id"] == "exp-1" for row in rows)

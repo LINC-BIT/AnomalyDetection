@@ -263,6 +263,12 @@ class MoECLIPAdapter(ModelAdapter):
     }
 
     def capabilities(self) -> ModelCapabilities:
+        # The CLIP backbone interpolates a *fixed* positional-embedding grid, so
+        # the FLOPs probe has to use the size this backend is inferred at
+        # (518 -> 37x37 patches at patch 14). Probing at the shared 640 default
+        # raised "size of tensor a (2026) must match ... b (1370)": 640//14 = 45
+        # gives the prober 2026 tokens while the model builds 1370.
+        side = int(self.arch_kwargs["img_size"])
         return ModelCapabilities(
             tasks=("anomaly",),
             prediction_fields=("anomaly_score", "anomaly_map"),
@@ -273,6 +279,7 @@ class MoECLIPAdapter(ModelAdapter):
             # trace to a static graph.
             export_targets=(),
             supports_amp=False,
+            probe_input_size=(side, side),
         )
 
     def train(self, config: dict[str, Any] | TrainConfig) -> Artifact:

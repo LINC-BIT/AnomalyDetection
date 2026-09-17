@@ -20,6 +20,7 @@ from fabric_defect_hub.web.tables import (
 from fabric_defect_hub.application.benchmark import (
     DEFAULT_RUN_LOG_PATH,
     compatible_models,
+    install_fast_exit,
     run_benchmark,
     score_preset_choices,
 )
@@ -433,8 +434,14 @@ def create_app():
                                 label=tr(lang0, "benchmark_texture_label"),
                             )
                         with gr.Column(scale=3, elem_classes="fdh-control-card"):
+                            # Few-shot is the default because Full-shot means
+                            # *every* test image: the predictions for a
+                            # detection/segmentation model then run to
+                            # gigabytes, which is the run that runs out of
+                            # memory. Few-shot is the regime the published
+                            # numbers use anyway.
                             bench_shot_mode = gr.Radio(
-                                choices=shot_mode_choices(lang0), value="Full-shot",
+                                choices=shot_mode_choices(lang0), value="Few-shot",
                                 label=tr(lang0, "benchmark_shot_label"),
                             )
                     with gr.Row():
@@ -863,6 +870,12 @@ def launch(**kwargs):
         pass
     # `launch()` blocks until the server stops, so the filter has to stay
     # installed for the whole call; the banner is printed part-way through it.
+    # Quitting has to be quick. The benchmark waits on its worker processes
+    # from thread-pool threads, and uvicorn's graceful shutdown waits for the
+    # request doing that waiting — so a Ctrl+C while a model is scoring used to
+    # sit there for minutes. This has to run before `launch()` starts uvicorn,
+    # because that is where the signal handler it wraps gets registered.
+    install_fast_exit()
     stdout = sys.stdout
     try:
         sys.stdout = _LoopbackBanner(stdout)

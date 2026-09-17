@@ -24,6 +24,7 @@ from types import MethodType
 from pathlib import Path
 from typing import Any
 
+from fabric_defect_hub.core.progress import ProgressReporter
 from fabric_defect_hub.core.provenance import describe_training
 from fabric_defect_hub.core.registry import register_model
 from fabric_defect_hub.core.train_config import TrainConfig, resolve_train_config
@@ -258,10 +259,8 @@ class AnomalibAdapter(ModelAdapter):
             )
 
         import numpy as np
-        from anomalib.data import ImageBatch, PredictDataset
         from anomalib.engine import Engine
         from lightning.pytorch import Trainer
-        from torch.utils.data import DataLoader
 
         model = self._load_artifact(artifact)
 
@@ -274,68 +273,94 @@ class AnomalibAdapter(ModelAdapter):
         # at the repository root during an interactive UI prediction.
         engine_root = maps_dir.parent if maps_dir is not None else Path(artifact.path).parent
         engine_kwargs = _prediction_engine_kwargs(config)
+        # Lightning's RichProgressBar is not concurrency-safe: every Trainer in a
+        # benchmark worker thread starts and tears down a live display on the
+        # console shared by the whole process, and when two of them overlap one
+        # thread pops the console's already-empty live stack --
+        # `rich/console.py::clear_live` -> `IndexError: pop from empty list` --
+        # during `teardown`, which Lightning reports as this model's evaluation
+        # failing while its siblings are fine. Prediction is called once per
+        # sample here and this repo already prints its own per-image progress
+        # (`ProgressReporter`), so the bar carries nothing extra; keep it
+        # overridable for a caller that wants it and is running alone.
+        engine_kwargs["enable_progress_bar"] = bool((config or {}).get("enable_progress_bar", False))
         engine = Engine(default_root_dir=str(engine_root), **engine_kwargs)
 
-        predictions = []
-        for sample in samples:
-            dataset = PredictDataset(path=sample.image_path)
-            if artifact.metadata.get("zero_shot", False):
-                # Anomalib's Engine routes WinCLIP through validation, but
-                # WinCLIP intentionally has no val_dataloader. Supplying an
-                # explicit prediction loader keeps Lightning on predict_step.
-                trainer = Trainer(
-                    default_root_dir=str(engine_root),
-                    logger=False,
-                    enable_checkpointing=False,
-                    **engine_kwargs,
-                )
-                batches = trainer.predict(
-                    model=model,
-                    dataloaders=DataLoader(dataset, batch_size=1, collate_fn=ImageBatch.collate),
-                ) or []
-            else:
-                batches = engine.predict(model=model, dataset=dataset) or []
-            if not batches:
-                raise RuntimeError(
-                    f"Anomalib produced no prediction output for sample {sample.id!r} "
-                    f"({sample.image_path})."
-                )
-            score = None
-            predicted_label = None
-            anomaly_map_path = None
-            if batches:
-                batch = batches[0]
-                if batch.pred_score is not None:
-                    score = float(batch.pred_score[0])
-                raw_label = getattr(batch, "pred_label", None)
-                if raw_label is not None:
-                    value = raw_label[0]
-                    value = value.item() if hasattr(value, "item") else value
-                    predicted_label = "anomaly" if int(value) else "normal"
-                raw_map = getattr(batch, "anomaly_map", None)
-                if maps_dir is not None and raw_map is not None:
-                    arr = raw_map[0]
-                    arr = arr.detach().cpu().numpy() if hasattr(arr, "detach") else np.asarray(arr)
-                    map_path = maps_dir / f"{sample.id}.npy"
-                    # `sample.id` is an opaque identifier, not guaranteed to be a
-                    # single path segment — datasets like MVTecADDataset use
-                    # "category/defect_type/stem" ids, which need their own
-                    # subdirectories created before `np.save` can write there.
-                    map_path.parent.mkdir(parents=True, exist_ok=True)
-                    np.save(map_path, np.squeeze(arr))
-                    anomaly_map_path = str(map_path)
-            if score is None:
-                raise RuntimeError(
-                    f"Anomalib prediction for sample {sample.id!r} has no anomaly score."
-                )
-            predictions.append(
-                Prediction(
-                    sample_id=sample.id,
-                    labels=[predicted_label] if predicted_label is not None else None,
-                    anomaly_score=score,
-                    anomaly_map=anomaly_map_path,
-                )
+        # Predict in chunks, not one sample per `engine.predict` call.
+        #
+        # The per-sample loop this replaces built a Lightning Trainer for every
+        # image, reprinting its banner, its callback notice and anomalib's
+        # "ckpt_path is not provided" warning each time — 350 Trainer setups for
+        # a 350-image benchmark, which pinned throughput at ~1.4 images/s on an
+        # A100 that needs tens of milliseconds per image. Chunking amortizes
+        # that setup (11 calls for 350 images) while keeping progress lines
+        # meaningful: one reporter update per batch as the results come back.
+        zero_shot = bool(artifact.metadata.get("zero_shot", False))
+        chunk_size = max(1, int((config or {}).get("predict_chunk_size", _PREDICT_CHUNK_SIZE)))
+        trainer = None
+        if zero_shot:
+            # Anomalib's Engine routes WinCLIP through validation, but WinCLIP
+            # intentionally has no val_dataloader. Supplying explicit prediction
+            # loaders keeps Lightning on predict_step.
+            trainer = Trainer(
+                default_root_dir=str(engine_root),
+                logger=False,
+                enable_checkpointing=False,
+                **engine_kwargs,
             )
+
+        predictions = []
+        progress = ProgressReporter(f"anomalib/{self.name} predict", total=len(samples), unit="img")
+        with progress:
+            for start in range(0, len(samples), chunk_size):
+                chunk = samples[start : start + chunk_size]
+                loader = _predict_loader(chunk)
+                batches = (
+                    trainer.predict(model=model, dataloaders=loader)
+                    if trainer is not None
+                    else engine.predict(model=model, dataloaders=loader)
+                ) or []
+                if len(batches) != len(chunk):
+                    raise RuntimeError(
+                        f"Anomalib returned {len(batches)} prediction batch(es) for {len(chunk)} "
+                        f"sample(s) starting at {chunk[0].id!r}."
+                    )
+                for sample, batch in zip(chunk, batches):
+                    score = None
+                    predicted_label = None
+                    anomaly_map_path = None
+                    if batch.pred_score is not None:
+                        score = float(batch.pred_score[0])
+                    raw_label = getattr(batch, "pred_label", None)
+                    if raw_label is not None:
+                        value = raw_label[0]
+                        value = value.item() if hasattr(value, "item") else value
+                        predicted_label = "anomaly" if int(value) else "normal"
+                    raw_map = getattr(batch, "anomaly_map", None)
+                    if maps_dir is not None and raw_map is not None:
+                        arr = raw_map[0]
+                        arr = arr.detach().cpu().numpy() if hasattr(arr, "detach") else np.asarray(arr)
+                        map_path = maps_dir / f"{sample.id}.npy"
+                        # `sample.id` is an opaque identifier, not guaranteed to be a
+                        # single path segment — datasets like MVTecADDataset use
+                        # "category/defect_type/stem" ids, which need their own
+                        # subdirectories created before `np.save` can write there.
+                        map_path.parent.mkdir(parents=True, exist_ok=True)
+                        np.save(map_path, np.squeeze(arr))
+                        anomaly_map_path = str(map_path)
+                    if score is None:
+                        raise RuntimeError(
+                            f"Anomalib prediction for sample {sample.id!r} has no anomaly score."
+                        )
+                    predictions.append(
+                        Prediction(
+                            sample_id=sample.id,
+                            labels=[predicted_label] if predicted_label is not None else None,
+                            anomaly_score=score,
+                            anomaly_map=anomaly_map_path,
+                        )
+                    )
+                    progress.update()
         return predictions
     def export(
         self, artifact: Artifact, target: str, config: dict[str, Any] | None = None
@@ -439,6 +464,12 @@ class AnomalibAdapter(ModelAdapter):
         return self._model
 
 
+# How many images one `engine.predict` call covers. Trainer construction, not
+# inference, dominated this backend's per-image cost (see `predict`), and every
+# image in a chunk is one progress update.
+_PREDICT_CHUNK_SIZE = 32
+
+
 def _prediction_engine_kwargs(config: dict[str, Any] | None) -> dict[str, Any]:
     """Translate the uniform adapter device config into Lightning options.
 
@@ -467,6 +498,41 @@ def _prediction_engine_kwargs(config: dict[str, Any] | None) -> dict[str, Any]:
     if device == "cpu":
         return {"accelerator": "cpu", "devices": 1}
     return {"devices": 1}
+
+
+class _SamplePredictDataset:
+    """Anomalib's `PredictDataset`, over our `Sample` list.
+
+    `anomalib.data.PredictDataset` takes a single path or a directory; benchmark
+    samples come from a dataset adapter and can span directories, so this yields
+    the same `ImageItem` for an explicit list — built from the same `read_image`
+    call the per-sample path used, so the pixels reaching the model are
+    unchanged. Deliberately not a `torch.utils.data.Dataset` subclass: torch's
+    loader only needs `__len__`/`__getitem__`, and inheriting would drag torch
+    into this module's import time (it is imported by framework-free tests).
+    """
+
+    def __init__(self, samples: list[Sample]) -> None:
+        self._samples = samples
+
+    def __len__(self) -> int:
+        return len(self._samples)
+
+    def __getitem__(self, index: int) -> Any:
+        from anomalib.data import ImageItem
+        from anomalib.data.utils import read_image
+
+        path = self._samples[index].image_path
+        return ImageItem(image=read_image(path, as_tensor=True), image_path=str(path))
+
+
+def _predict_loader(samples: list[Sample]):
+    """A batch-size-1 loader `anomalib.engine.Engine.predict` accepts."""
+
+    from anomalib.data import ImageBatch
+    from torch.utils.data import DataLoader
+
+    return DataLoader(_SamplePredictDataset(samples), batch_size=1, collate_fn=ImageBatch.collate)
 
 
 def _patch_winclip_open_clip_layout(model: Any) -> None:

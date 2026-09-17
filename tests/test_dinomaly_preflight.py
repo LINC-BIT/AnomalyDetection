@@ -148,3 +148,15 @@ def test_encoder_load_failure_names_the_file_and_where_to_put_it(tmp_path, monke
     assert "dinov2_vitb14_reg4_pretrain.pth" in message
     assert str(tmp_path) in message
     assert "connection timed out" in message
+
+
+def test_dinomaly_declares_a_probe_size_its_patch_size_accepts():
+    """ViTill asserts the input is a whole number of 14-pixel patches. The
+    FLOPs prober used to feed it a 640x640 default, so every Dinomaly
+    benchmark row lost its FLOPs/LMEI columns to an assertion about the probe
+    rather than about the model.
+    """
+
+    caps = DinomalyAdapter(name="dinov2reg_vit_base_14").capabilities()
+    assert caps.probe_input_size == (448, 448)
+    assert caps.probe_input_size[0] % 14 == 0

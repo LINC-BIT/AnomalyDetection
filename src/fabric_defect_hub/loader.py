@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 from typing import Any
 
+from fabric_defect_hub.core.execution import model_execution
 from fabric_defect_hub.core.registry import get_dataset_cls, get_model_cls
 from fabric_defect_hub.core.serialization import save_experiment_result, save_predictions
 from fabric_defect_hub.core.types import DatasetInfo, ExperimentResult, ModelInfo, RuntimeInfo
@@ -166,6 +167,11 @@ def run_experiment(
         predict_config["imgsz"] = runtime.input_size[0]
 
     # Check if sliding-window tiling strategy is enabled on dataset
+    #
+    # Everything that runs the model is under `model_execution()`: a benchmark
+    # worker profiling (tracing) another model patches module dispatch for the
+    # whole process, and a forward pass caught by that tracer lands in the wrong
+    # namespace -- see `core.execution`. Readers still run concurrently.
     if getattr(dataset, "_tiling_enabled", False):
         from fabric_defect_hub.strategies.loader_strategies import SlidingWindowTiler
 
@@ -180,19 +186,22 @@ def run_experiment(
                 predict_kwargs = {"config": predict_config}
                 if output_dir and model.capabilities().fills("anomaly_map"):
                     predict_kwargs["output_dir"] = output_dir
-                tile_preds = model.predict(tiles, active_artifact, **predict_kwargs)
+                with model_execution():
+                    tile_preds = model.predict(tiles, active_artifact, **predict_kwargs)
                 stitched_pred = tiler.stitch_predictions(tile_preds, meta_info)
                 predictions.append(stitched_pred)
             else:
                 predict_kwargs = {"config": predict_config}
                 if output_dir and model.capabilities().fills("anomaly_map"):
                     predict_kwargs["output_dir"] = output_dir
-                predictions.extend(model.predict([s], active_artifact, **predict_kwargs))
+                with model_execution():
+                    predictions.extend(model.predict([s], active_artifact, **predict_kwargs))
     else:
         predict_kwargs = {"config": predict_config}
         if output_dir and model.capabilities().fills("anomaly_map"):
             predict_kwargs["output_dir"] = output_dir
-        predictions = model.predict(samples, active_artifact, **predict_kwargs)
+        with model_execution():
+            predictions = model.predict(samples, active_artifact, **predict_kwargs)
 
     evaluated_metrics = evaluator.evaluate(samples, predictions) if evaluator is not None else {}
     metrics = {

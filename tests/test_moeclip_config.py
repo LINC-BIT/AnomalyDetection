@@ -207,3 +207,17 @@ def test_normal_only_train_split_is_rejected():
 def test_all_defects_unmasked_is_rejected():
     with pytest.raises(ValueError, match="no usable MoECLIP training samples|needs defective"):
         _select([_sample("d1", defect=True)])
+
+
+def test_moeclip_declares_the_probe_size_its_clip_backbone_accepts():
+    """The CLIP backbone interpolates a fixed positional-embedding grid, so a
+    FLOPs probe at the shared 640x640 default gives it 2026 tokens where the
+    model builds 1370 (640 // 14 = 45 is not a whole number of patches). Every
+    MoECLIP benchmark row used to lose its FLOPs/LMEI columns to that.
+    """
+
+    from fabric_defect_hub.models.moeclip.adapter import MoECLIPAdapter
+
+    caps = MoECLIPAdapter(name=presets.DEFAULT_MODEL_NAME).capabilities()
+    assert caps.probe_input_size == (518, 518)
+    assert caps.probe_input_size[0] % 14 == 0

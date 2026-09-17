@@ -243,6 +243,12 @@ class DinomalyAdapter(ModelAdapter):
     }
 
     def capabilities(self) -> ModelCapabilities:
+        # ViTill asserts its input is a whole number of 14-pixel patches, so the
+        # FLOPs probe must use the size this backend is actually inferred at:
+        # `predict` feeds `image_size` (448 -> 32x32 patches), not the 640 the
+        # shared prober defaults to (640 / 14 is not an integer, and the assert
+        # surfaced as "FLOPs/LMEI skipped" for every Dinomaly benchmark row).
+        side = int(presets.DEFAULT_TRAIN_KWARGS["image_size"])
         return ModelCapabilities(
             tasks=("anomaly",),
             prediction_fields=("anomaly_score", "anomaly_map"),
@@ -251,6 +257,7 @@ class DinomalyAdapter(ModelAdapter):
             # that has not been verified to trace.
             export_targets=(),
             supports_amp=False,
+            probe_input_size=(side, side),
         )
 
     def train(self, config: dict[str, Any] | TrainConfig) -> Artifact:
