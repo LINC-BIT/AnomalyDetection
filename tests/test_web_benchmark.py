@@ -139,7 +139,7 @@ def _install_fake_catalog(monkeypatch, tmp_path):
     monkeypatch.setattr(web_benchmark, "DATASET_CATALOG", dataset_catalog)
     monkeypatch.setattr(web_benchmark, "MODEL_CATALOG", model_catalog)
     monkeypatch.setattr(web_benchmark, "default_dataset_root", lambda label: str(tmp_path))
-    monkeypatch.setattr(web_benchmark, "_detect_device", lambda: "cpu")
+    monkeypatch.setattr(web_benchmark, "_detect_devices", lambda: ["cpu"])
 
 
 def test_run_benchmark_basic_leaderboard_has_no_score_columns_without_metrics(monkeypatch, tmp_path):

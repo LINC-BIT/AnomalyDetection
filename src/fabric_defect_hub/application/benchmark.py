@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import gc
+import os
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -79,8 +82,36 @@ def compatible_models(dataset_label: str) -> list[str]:
     ]
 
 
+def _idle_cuda_device_indices(device_count: int) -> list[int]:
+    """Return GPUs without a foreign compute process, when `nvidia-smi` is available."""
+
+    try:
+        gpu_query = subprocess.run(
+            ["nvidia-smi", "--query-gpu=index,uuid", "--format=csv,noheader,nounits"],
+            check=True, capture_output=True, text=True,
+        )
+        uuid_to_index = {
+            uuid.strip(): int(index.strip())
+            for line in gpu_query.stdout.splitlines() if "," in line
+            for index, uuid in [line.split(",", maxsplit=1)]
+        }
+        process_query = subprocess.run(
+            ["nvidia-smi", "--query-compute-apps=pid,gpu_uuid", "--format=csv,noheader,nounits"],
+            check=True, capture_output=True, text=True,
+        )
+        busy = {
+            uuid_to_index[uuid.strip()]
+            for line in process_query.stdout.splitlines() if "," in line
+            for pid, uuid in [line.split(",", maxsplit=1)]
+            if int(pid.strip()) != os.getpid() and uuid.strip() in uuid_to_index
+        }
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return []
+    return [index for index in range(device_count) if index not in busy]
+
+
 def _detect_devices(torch_module: Any | None = None) -> list[str]:
-    """Return every usable local accelerator, or one serial fallback device."""
+    """Prefer CUDA GPUs without other jobs; otherwise return a serial fallback."""
 
     try:
         torch = torch_module
@@ -88,7 +119,10 @@ def _detect_devices(torch_module: Any | None = None) -> list[str]:
             import torch
 
         if torch.cuda.is_available():
-            return [f"cuda:{index}" for index in range(torch.cuda.device_count())]
+            device_count = torch.cuda.device_count()
+            idle = _idle_cuda_device_indices(device_count)
+            indices = idle or list(range(device_count))
+            return [f"cuda:{index}" for index in indices]
         if torch.backends.mps.is_available():
             return ["mps"]
     except ImportError:
@@ -108,6 +142,25 @@ def _activate_device(device: str) -> None:
     import torch
 
     torch.cuda.set_device(int(device.partition(":")[2]))
+
+
+def _preload_benchmark_dependencies(model_labels: list[str]) -> None:
+    """Finish third-party lazy imports before concurrent model workers start.
+
+    Anomalib/Lightning and torchvision contain import cycles that are safe
+    during serial import but can expose partially initialized modules when
+    their first import happens in different benchmark threads.
+    """
+
+    backends = {MODEL_CATALOG[label]["backend"] for label in model_labels}
+    if backends & {"torchvision", "ultralytics", "anomalib"}:
+        import torch
+        import torchvision
+        from torchvision.transforms import InterpolationMode
+    if "anomalib" in backends:
+        from anomalib.data import ImageBatch, PredictDataset
+        from anomalib.engine import Engine
+        from lightning.pytorch import Trainer
 
 
 def _profile_setup(model: Any, device: str):
@@ -218,6 +271,9 @@ def _profile_model(model: Any, artifact: Any, device: str, samples: list[Any] | 
     export_path = Path(exported.path)
     if not export_path.is_file():
         raise FileNotFoundError(f"exported model does not exist: {export_path}")
+    exported_input_size = exported.metadata.get("input_size")
+    if exported_input_size is not None:
+        config = replace(config, input_size=tuple(exported_input_size))
     metrics = profiler.profile(exported, config)
     memory_context = getattr(profiler, "last_instrumentation", {}).get("memory", {})
     metrics["memory_measurement_kind"] = memory_context.get("kind", "unknown")
@@ -239,13 +295,15 @@ def _resolution_sweep(model: Any, artifact: Any, device: str) -> dict[str, float
 
     from fabric_defect_hub.profiling.sweeps import resolution_scaling
 
-    profiler = get_profiler_cls("pytorch")()
-    input_style = model.capabilities().export_input_style
-    exported = model.export(artifact, target="torchscript")
-    config = ProfileConfig(
-        device=device, engine="pytorch", precision="fp32",
-        input_style=input_style, warmup_runs=2, measured_runs=5,
-    )
+    setup = _profile_setup(model, device)
+    if setup is None:
+        raise RuntimeError("model has no export format supported by a benchmark profiler")
+    profiler, config, export_target = setup
+    exported = model.export(artifact, target=export_target)
+    exported_input_size = exported.metadata.get("input_size")
+    if exported_input_size is not None:
+        config = replace(config, input_size=tuple(exported_input_size))
+    config = replace(config, warmup_runs=2, measured_runs=5)
     # `resolution_scaling` (the same driver `fdh.measure` uses) drops sizes
     # the export cannot run instead of dying on the first one — an
     # Ultralytics TorchScript bakes in its imgsz, so this loop used to raise
@@ -515,13 +573,28 @@ def run_benchmark(
             for index, model_label in scheduled
         )
     else:
+        _preload_benchmark_dependencies(model_labels)
+
         def parallel_completed():
             with ThreadPoolExecutor(max_workers=len(devices)) as executor:
-                futures = [
-                    executor.submit(evaluate_model, index, model_label, devices[(index - 1) % len(devices)])
-                    for index, model_label in scheduled
-                ]
-                yield from (future.result() for future in as_completed(futures))
+                remaining = iter(scheduled)
+                futures = {}
+                for device in devices:
+                    try:
+                        index, model_label = next(remaining)
+                    except StopIteration:
+                        break
+                    futures[executor.submit(evaluate_model, index, model_label, device)] = device
+
+                while futures:
+                    future = next(as_completed(futures))
+                    device = futures.pop(future)
+                    yield future.result()
+                    try:
+                        index, model_label = next(remaining)
+                    except StopIteration:
+                        continue
+                    futures[executor.submit(evaluate_model, index, model_label, device)] = device
 
         completed = parallel_completed()
 

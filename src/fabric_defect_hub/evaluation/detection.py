@@ -78,6 +78,7 @@ class DetectionEvaluator(Evaluator):
                     metrics[key] = v
 
         metrics.update(_precision_recall_f1(pairs, class_map, self.pr_score_threshold))
+        metrics.update(_image_level_detection_metrics(pairs, self.pr_score_threshold))
         # Size-bucketed recall ships with every detection score rather than
         # waiting for a quantization comparison to ask for it: `recall_small`
         # on its own already answers "does this model see tiny defects at
@@ -218,6 +219,34 @@ def _precision_recall_f1(pairs, class_map: dict[str, int], score_threshold: floa
         "false_positives": float(fp),
         "false_negatives": float(fn),
     }
+
+
+def _image_level_detection_metrics(pairs, score_threshold: float) -> dict[str, float]:
+    """Score each image by its most confident predicted defect box.
+
+    This is complementary to mAP: it measures whether an image should be
+    flagged for review, regardless of whether the predicted box localizes
+    the defect precisely enough to meet an IoU threshold.
+    """
+
+    from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
+
+    y_true = [
+        int(sample.annotations.is_anomalous)
+        if sample.annotations.is_anomalous is not None
+        else int(bool(sample.annotations.boxes))
+        for sample, _ in pairs
+    ]
+    y_score = [max(prediction.scores or [0.0]) for _, prediction in pairs]
+    metrics: dict[str, float] = {}
+    if len(set(y_true)) >= 2:
+        metrics["image_auroc"] = float(roc_auc_score(y_true, y_score))
+    y_pred = [int(score >= score_threshold) for score in y_score]
+    metrics["image_f1"] = float(f1_score(y_true, y_pred, zero_division=0))
+    metrics["image_precision"] = float(precision_score(y_true, y_pred, zero_division=0))
+    metrics["image_recall"] = float(recall_score(y_true, y_pred, zero_division=0))
+    metrics["image_threshold"] = score_threshold
+    return metrics
 
 
 def _shorter_side(box: list[float]) -> float:

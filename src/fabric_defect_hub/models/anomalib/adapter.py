@@ -273,7 +273,8 @@ class AnomalibAdapter(ModelAdapter):
         # rather than allowing its default ``results/`` directory to appear
         # at the repository root during an interactive UI prediction.
         engine_root = maps_dir.parent if maps_dir is not None else Path(artifact.path).parent
-        engine = Engine(default_root_dir=str(engine_root))
+        engine_kwargs = _prediction_engine_kwargs(config)
+        engine = Engine(default_root_dir=str(engine_root), **engine_kwargs)
 
         predictions = []
         for sample in samples:
@@ -286,6 +287,7 @@ class AnomalibAdapter(ModelAdapter):
                     default_root_dir=str(engine_root),
                     logger=False,
                     enable_checkpointing=False,
+                    **engine_kwargs,
                 )
                 batches = trainer.predict(
                     model=model,
@@ -335,7 +337,6 @@ class AnomalibAdapter(ModelAdapter):
                 )
             )
         return predictions
-
     def export(
         self, artifact: Artifact, target: str, config: dict[str, Any] | None = None
     ) -> ExportedArtifact:
@@ -436,6 +437,21 @@ class AnomalibAdapter(ModelAdapter):
             _patch_winclip_open_clip_layout(self._model)
             self._loaded_path = artifact.path
         return self._model
+
+
+def _prediction_engine_kwargs(config: dict[str, Any] | None) -> dict[str, Any]:
+    """Translate the uniform adapter device config into Lightning options."""
+
+    device = str((config or {}).get("device") or "").lower()
+    if device.startswith("cuda:"):
+        return {"accelerator": "gpu", "devices": [int(device.partition(":")[2])]}
+    if device == "cuda":
+        return {"accelerator": "gpu", "devices": 1}
+    if device == "mps":
+        return {"accelerator": "mps", "devices": 1}
+    if device == "cpu":
+        return {"accelerator": "cpu", "devices": 1}
+    return {}
 
 
 def _patch_winclip_open_clip_layout(model: Any) -> None:

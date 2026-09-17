@@ -119,6 +119,28 @@ def test_precision_recall_f1_hand_computed_scenario():
     assert result["f1_at_threshold"] == 0.5
 
 
+def test_detection_scores_also_produce_image_level_metrics():
+    samples = [
+        Sample(id="positive-high", image_path="a.jpg", task="detection", annotations=Annotations(boxes=[[0, 0, 10, 10]], labels=["defect"])),
+        Sample(id="positive-low", image_path="b.jpg", task="detection", annotations=Annotations(boxes=[[0, 0, 10, 10]], labels=["defect"])),
+        Sample(id="negative-low", image_path="c.jpg", task="detection", annotations=Annotations(boxes=[], labels=[])),
+        Sample(id="negative-none", image_path="d.jpg", task="detection", annotations=Annotations(boxes=[], labels=[])),
+    ]
+    predictions = [
+        Prediction(sample_id="positive-high", boxes=[[0, 0, 10, 10]], labels=["defect"], scores=[0.9]),
+        Prediction(sample_id="positive-low", boxes=[[0, 0, 10, 10]], labels=["defect"], scores=[0.6]),
+        Prediction(sample_id="negative-low", boxes=[[0, 0, 10, 10]], labels=["defect"], scores=[0.2]),
+        Prediction(sample_id="negative-none", boxes=[], labels=[], scores=[]),
+    ]
+
+    metrics = DetectionEvaluator().evaluate(samples, predictions)
+
+    assert metrics["image_auroc"] == 1.0
+    assert metrics["image_f1"] == 1.0
+    assert metrics["image_precision"] == 1.0
+    assert metrics["image_recall"] == 1.0
+
+
 def test_recall_by_size_buckets_small_and_normal_defects_separately():
     # "small": an 8x8 gt box (shorter side 8 < 10px), matched -> tp
     small_hit = Sample(

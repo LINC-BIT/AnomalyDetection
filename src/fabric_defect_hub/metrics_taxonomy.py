@@ -49,10 +49,9 @@ TABLES: tuple[str, ...] = (*TECHNICAL_TABLES, *OVERHEAD_TABLES)
 # mean "you did not ask for it". Shown by the UI whenever a table has no rows.
 EMPTY_HINTS: dict[str, str] = {
     "image_level": (
-        "No selected model reports image-level scores. These come from the anomaly "
-        "backends (PatchCore, PaDiM, Reverse Distillation, STFPM, GANomaly, Dinomaly, "
-        "MambaAD, MoECLIP); detection models such as YOLO and Faster R-CNN are scored at "
-        "instance level instead."
+        "No selected model reports image-level scores. Anomaly backends provide native "
+        "anomaly scores; detection backends such as YOLO and Faster R-CNN derive one from "
+        "the highest confidence defect box per image."
     ),
     "pixel_level": (
         "No selected model reports pixel-level scores. Needs a model that outputs an "

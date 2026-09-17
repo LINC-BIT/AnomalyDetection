@@ -7,6 +7,7 @@ training, so they stay in the default test suite.
 
 import pytest
 
+from fabric_defect_hub.core.types import Annotations, Sample
 from fabric_defect_hub.models.ultralytics.adapter import UltralyticsAdapter
 from fabric_defect_hub.models.ultralytics.config import UltralyticsConfig, resolve_variant_profile
 from fabric_defect_hub.models.ultralytics.presets import (
@@ -150,3 +151,29 @@ def test_raw_module_unwraps_the_yolo_wrapper_to_the_torch_module():
     adapter._model = _FakeYOLO()
     assert adapter.raw_module() is adapter._model.model
     assert isinstance(adapter.raw_module(), _FakeTorchModule)
+
+
+def test_predict_streams_ultralytics_results():
+    class _FakeResult:
+        names = {0: "defect"}
+        boxes = None
+
+    class _FakeYOLO:
+        def __init__(self):
+            self.kwargs = None
+
+        def predict(self, **kwargs):
+            self.kwargs = kwargs
+            return iter([_FakeResult(), _FakeResult()])
+
+    adapter = UltralyticsAdapter(name="yolov8n")
+    adapter._model = _FakeYOLO()
+    samples = [
+        Sample(id="one", image_path="one.jpg", task="detection", annotations=Annotations()),
+        Sample(id="two", image_path="two.jpg", task="detection", annotations=Annotations()),
+    ]
+
+    predictions = adapter.predict(samples)
+
+    assert adapter._model.kwargs["stream"] is True
+    assert [prediction.sample_id for prediction in predictions] == ["one", "two"]

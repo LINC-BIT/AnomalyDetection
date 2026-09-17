@@ -384,12 +384,8 @@ class UltralyticsAdapter(ModelAdapter):
         if tiling:
             return self._predict_tiled(samples, cfg, tile_size=tile_size, overlap=tile_overlap)
         image_paths = [s.image_path for s in samples]
-        results = self.model.predict(source=image_paths, **cfg)
-
-        predictions: list[Prediction] = []
-        for sample, result in zip(samples, results):
-            predictions.append(self._result_to_prediction(sample, result))
-        return predictions
+        results = self.model.predict(source=image_paths, stream=True, **cfg)
+        return [self._result_to_prediction(sample, result) for sample, result in zip(samples, results)]
 
     def _predict_tiled(self, samples: list[Sample], cfg: dict[str, Any], *, tile_size: tuple[int, int], overlap: float) -> list[Prediction]:
         """Predict overlapping tiles, restore their coordinates, then globally NMS."""
@@ -411,7 +407,7 @@ class UltralyticsAdapter(ModelAdapter):
                             image.crop((left, top, min(left + tile_w, image.width), min(top + tile_h, image.height))).save(path)
                             tile_paths.append(str(path))
                             origins.append((sample.id, left, top))
-            results = self.model.predict(source=tile_paths, **cfg)
+            results = self.model.predict(source=tile_paths, stream=True, **cfg)
             for result, (sample_id, left, top) in zip(results, origins):
                 boxes_obj = result.boxes
                 if boxes_obj is None:

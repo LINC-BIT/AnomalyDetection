@@ -161,6 +161,10 @@ def run_experiment(
     if _recipe is not None and active_artifact is not None:
         active_artifact.metadata.setdefault("recipe", _recipe.recipe_id)
 
+    predict_config: dict[str, Any] = {"device": runtime.device}
+    if model_info.backend == "ultralytics":
+        predict_config["imgsz"] = runtime.input_size[0]
+
     # Check if sliding-window tiling strategy is enabled on dataset
     if getattr(dataset, "_tiling_enabled", False):
         from fabric_defect_hub.strategies.loader_strategies import SlidingWindowTiler
@@ -173,19 +177,19 @@ def run_experiment(
         for s in samples:
             tiles, meta_info = tiler.split_sample(s)
             if meta_info.get("tiled", False):
-                predict_kwargs = {"config": {"device": runtime.device}}
+                predict_kwargs = {"config": predict_config}
                 if output_dir and model.capabilities().fills("anomaly_map"):
                     predict_kwargs["output_dir"] = output_dir
                 tile_preds = model.predict(tiles, active_artifact, **predict_kwargs)
                 stitched_pred = tiler.stitch_predictions(tile_preds, meta_info)
                 predictions.append(stitched_pred)
             else:
-                predict_kwargs = {"config": {"device": runtime.device}}
+                predict_kwargs = {"config": predict_config}
                 if output_dir and model.capabilities().fills("anomaly_map"):
                     predict_kwargs["output_dir"] = output_dir
                 predictions.extend(model.predict([s], active_artifact, **predict_kwargs))
     else:
-        predict_kwargs = {"config": {"device": runtime.device}}
+        predict_kwargs = {"config": predict_config}
         if output_dir and model.capabilities().fills("anomaly_map"):
             predict_kwargs["output_dir"] = output_dir
         predictions = model.predict(samples, active_artifact, **predict_kwargs)

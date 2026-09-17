@@ -14,7 +14,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from fabric_defect_hub.models.anomalib.adapter import AnomalibAdapter, _patch_winclip_open_clip_layout
+from fabric_defect_hub.models.anomalib.adapter import (
+    AnomalibAdapter,
+    _patch_winclip_open_clip_layout,
+    _prediction_engine_kwargs,
+)
 from fabric_defect_hub.models.anomalib.config import AnomalibConfig
 from fabric_defect_hub.models.anomalib.presets import (
     IMAGE_LEVEL_ONLY,
@@ -128,6 +132,16 @@ def test_ganomaly_capabilities_omit_pixel_level_map():
     assert "anomaly_score" in caps.prediction_fields
 
     assert "anomaly_map" in AnomalibAdapter(name="PatchCore").capabilities().prediction_fields
+
+
+def test_prediction_engine_uses_only_the_assigned_accelerator():
+    assert _prediction_engine_kwargs({"device": "cuda:3"}) == {
+        "accelerator": "gpu", "devices": [3],
+    }
+    assert _prediction_engine_kwargs({"device": "cpu"}) == {
+        "accelerator": "cpu", "devices": 1,
+    }
+    assert _prediction_engine_kwargs(None) == {}
 
 
 def test_draem_refuses_to_start_without_a_staged_texture_source(tmp_path):
