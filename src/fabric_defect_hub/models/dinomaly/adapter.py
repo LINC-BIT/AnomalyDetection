@@ -19,12 +19,14 @@ there's no "untrusted checkpoint" trust gate needed here.
 
 from __future__ import annotations
 
+import contextlib
 import csv
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
 
-from fabric_defect_hub.core.progress import ProgressReporter
+from fabric_defect_hub.core.progress import ProgressReporter, note
 from fabric_defect_hub.core.provenance import describe_training
 from fabric_defect_hub.core.registry import register_model
 from fabric_defect_hub.core.train_config import TrainConfig, resolve_train_config
@@ -34,6 +36,106 @@ from fabric_defect_hub.model_statistics import parameter_counts
 from fabric_defect_hub.models.base import Artifact, ExportedArtifact, ModelAdapter, ModelCapabilities
 from fabric_defect_hub.models.dinomaly import presets
 from fabric_defect_hub.models.dinomaly.vendor import import_vendor
+
+# Where the vendored loader fetches pretrained backbones from, and how long a
+# single stalled read may block before we call the host unreachable. See
+# `_load_pretrained_encoder` for why both need to be named here rather than
+# left to `components/dinomaly/models/vit_encoder.py`.
+_BACKBONE_CDN = "https://dl.fbaipublicfiles.com/dinov2"
+_BACKBONE_TIMEOUT_SECONDS = 30.0
+_ARCH_INITIALS = {"small": "s", "base": "b", "large": "l"}
+
+
+def backbone_weights_url(encoder_name: str) -> str | None:
+    """The DINOv2 checkpoint URL the vendored loader uses for `encoder_name`.
+
+    Mirrors the `dinov2reg_vit_*` branch of the vendored
+    `models/vit_encoder.py::load`. `None` for anything else: that function
+    also knows dinov1/beit/mae/moco/... spellings this adapter never ships, and
+    guessing their URLs would be worse than admitting we cannot name the file.
+    """
+
+    parts = encoder_name.split("_")
+    if len(parts) != 4 or not encoder_name.startswith("dinov2reg_vit_"):
+        return None
+    _, _, arch, patch = parts
+    initial = _ARCH_INITIALS.get(arch)
+    if initial is None:
+        return None
+    stem = f"dinov2_vit{initial}{patch}"
+    return f"{_BACKBONE_CDN}/{stem}/{stem}_reg4_pretrain.pth"
+
+
+def backbone_cache_dir() -> Path:
+    """Where the vendored loader caches backbones.
+
+    `vendor.import_vendor()` sets `DINOMALY_WEIGHTS_DIR` before the vendored
+    module is imported, so in practice this reads that; the fallback repeats
+    upstream's own default for callers that reach here first.
+    """
+
+    configured = os.environ.get("DINOMALY_WEIGHTS_DIR")
+    if configured:
+        return Path(configured)
+    return Path.home() / ".cache" / "dinomaly" / "weights"
+
+
+@contextlib.contextmanager
+def _bounded_network_wait(seconds: float = _BACKBONE_TIMEOUT_SECONDS):
+    """Give the vendored download a deadline, then restore the old one.
+
+    `torch.hub.download_url_to_file` opens its connection with the process-wide
+    default socket timeout, which is `None`. An unreachable CDN therefore
+    blocks forever instead of failing, and because upstream announces the
+    download through `logging.info` -- nothing in this project configures
+    logging -- the wait is completely silent: a UI handler that never returns,
+    with no line explaining why. A default timeout converts that into an
+    exception we can attach a name, a URL and a next step to.
+    """
+
+    import socket
+
+    previous = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(seconds)
+    try:
+        yield
+    finally:
+        socket.setdefaulttimeout(previous)
+
+
+def _load_pretrained_encoder(encoder_name: str, vit_encoder: Any):
+    """Build the DINOv2 encoder, making its one network access visible.
+
+    This is the only step in the whole backend that needs the network. It used
+    to be invisible and unbounded in both directions: no line before it (so a
+    first Dinomaly load in the UI looks like a hang, not a download) and no
+    timeout inside it (so an unreachable CDN turns that hang into a permanent
+    one). Announce, bound, and -- on failure -- say which file and URL, since
+    the fix is to stage that file, not to retry.
+    """
+
+    url = backbone_weights_url(encoder_name)
+    cache_dir = backbone_cache_dir()
+    cached = None if url is None else cache_dir / url.rsplit("/", 1)[-1]
+    missing = cached is not None and not cached.is_file()
+    if missing:
+        note(
+            f"dinomaly backbone {cached.name} is not cached under {cache_dir}; downloading it from "
+            f"{url} (hundreds of MB, first load only, fails after {_BACKBONE_TIMEOUT_SECONDS:g}s of a stalled connection)"
+        )
+    try:
+        with _bounded_network_wait():
+            return vit_encoder.load(encoder_name)
+    except Exception as exc:
+        where = (
+            f"place {cached.name} at {cached} (or point DINOMALY_WEIGHTS_DIR at a directory holding it)"
+            if missing
+            else f"check this host's access to {url or _BACKBONE_CDN}"
+        )
+        raise RuntimeError(
+            f"could not build the pretrained {encoder_name} encoder "
+            f"({type(exc).__name__}: {exc}); {where}"
+        ) from exc
 
 
 @register_model("dinomaly")
@@ -88,7 +190,7 @@ class DinomalyAdapter(ModelAdapter):
         preset = presets.encoder_preset(encoder_name)
         embed_dim, num_heads = preset["embed_dim"], preset["num_heads"]
 
-        encoder = vit_encoder.load(encoder_name)
+        encoder = _load_pretrained_encoder(encoder_name, vit_encoder)
 
         bottleneck = nn.ModuleList(
             [bMlp(embed_dim, embed_dim * presets.BOTTLENECK_HIDDEN_RATIO, embed_dim,

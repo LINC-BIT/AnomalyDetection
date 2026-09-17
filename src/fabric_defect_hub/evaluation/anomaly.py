@@ -61,21 +61,29 @@ class AnomalyEvaluator(Evaluator):
         y_true: list[int] = []
         y_score: list[float] = []
         pixel_pairs: list[tuple[Any, Any]] = []  # (gt_mask_2d, pred_map_2d) per sample
+        invalid_score_count = 0
+        invalid_map_count = 0
 
         for sample in samples:
             pred = pred_by_id.get(sample.id)
             if pred is None or pred.anomaly_score is None:
+                continue
+            if not np.isfinite(pred.anomaly_score):
+                invalid_score_count += 1
                 continue
             y_true.append(1 if sample.annotations.is_anomalous else 0)
             y_score.append(pred.anomaly_score)
 
             if pred.anomaly_map is not None:
                 pred_map = np.load(pred.anomaly_map)
+                if not np.isfinite(pred_map).all():
+                    invalid_map_count += 1
+                    continue
                 gt_mask = _load_ground_truth_mask(sample, pred_map.shape)
                 pixel_pairs.append((gt_mask, pred_map))
 
         if not y_true:
-            return {}
+            return {"invalid_anomaly_score_count": float(invalid_score_count)} if invalid_score_count else {}
 
         metrics = _image_level_metrics(
             np.asarray(y_true), np.asarray(y_score, dtype=float),
@@ -91,6 +99,11 @@ class AnomalyEvaluator(Evaluator):
                     allow_oracle_threshold=self.allow_oracle_threshold,
                 )
             )
+
+        if invalid_score_count:
+            metrics["invalid_anomaly_score_count"] = float(invalid_score_count)
+        if invalid_map_count:
+            metrics["invalid_anomaly_map_count"] = float(invalid_map_count)
 
         return metrics
 

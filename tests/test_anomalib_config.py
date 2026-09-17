@@ -141,7 +141,18 @@ def test_prediction_engine_uses_only_the_assigned_accelerator():
     assert _prediction_engine_kwargs({"device": "cpu"}) == {
         "accelerator": "cpu", "devices": 1,
     }
-    assert _prediction_engine_kwargs(None) == {}
+
+
+def test_unspecified_prediction_device_still_pins_one_device():
+    # `{}` used to mean "let Lightning decide", and Lightning's own default is
+    # `devices="auto"` — every visible GPU. Predicting one image then became a
+    # DDP run whose extra ranks re-execute the current entry script; inside
+    # `adh-ui` each rank launched another Gradio server, hit the port already in
+    # use, and died, after which Lightning's child observer killed the serving
+    # process. The fallback must therefore pin a *single* device — the
+    # accelerator itself stays "auto" so CUDA/MPS/CPU is still the host's call.
+    for config in (None, {}, {"device": ""}, {"device": "auto"}):
+        assert _prediction_engine_kwargs(config) == {"devices": 1}
 
 
 def test_draem_refuses_to_start_without_a_staged_texture_source(tmp_path):

@@ -440,7 +440,22 @@ class AnomalibAdapter(ModelAdapter):
 
 
 def _prediction_engine_kwargs(config: dict[str, Any] | None) -> dict[str, Any]:
-    """Translate the uniform adapter device config into Lightning options."""
+    """Translate the uniform adapter device config into Lightning options.
+
+    An unspecified device means "whichever accelerator this host has", not
+    "every accelerator it has". Returning `{}` left `devices` at Lightning's
+    own default of `"auto"` — all visible GPUs — so predicting a single image
+    became a multi-process DDP run. Lightning's DDP launcher starts the extra
+    ranks by re-executing *this process's entry script*
+    (`lightning.fabric.strategies.launchers.subprocess_script.
+    _basic_subprocess_cmd`), which inside an embedding host like the Gradio UI
+    means every rank launched another `adh-ui`, collided with the port the
+    serving process already held, and exited — and Lightning's child observer
+    then SIGKILLs the main process when a rank dies. `devices=1` keeps
+    prediction in-process everywhere while still letting `accelerator="auto"`
+    pick CUDA/MPS/CPU; callers that care *which* GPU pin it themselves, as
+    `run_experiment` does with the benchmark's assigned `cuda:N`.
+    """
 
     device = str((config or {}).get("device") or "").lower()
     if device.startswith("cuda:"):
@@ -451,7 +466,7 @@ def _prediction_engine_kwargs(config: dict[str, Any] | None) -> dict[str, Any]:
         return {"accelerator": "mps", "devices": 1}
     if device == "cpu":
         return {"accelerator": "cpu", "devices": 1}
-    return {}
+    return {"devices": 1}
 
 
 def _patch_winclip_open_clip_layout(model: Any) -> None:

@@ -59,6 +59,16 @@ def test_no_predictions_returns_empty_dict():
     assert AnomalyEvaluator().evaluate(samples, []) == {}
 
 
+def test_nonfinite_scores_are_reported_without_failing_the_remaining_evaluation():
+    samples, predictions = _image_level_dataset()
+    predictions[0].anomaly_score = float("nan")
+
+    metrics = AnomalyEvaluator().evaluate(samples, predictions)
+
+    assert metrics["invalid_anomaly_score_count"] == 1.0
+    assert metrics["image_auroc"] == 1.0
+
+
 def test_best_f1_threshold_single_class_shortcircuits():
     y_true = np.array([1, 1, 1])
     y_score = np.array([0.1, 0.5, 0.9])
