@@ -1,6 +1,6 @@
 <h1 align="center">AnomalyDetection</h1>
 
-**Test Report: ** We provide a test report on differernt paltforms for this project ([Project Test Report AnomalyDetection](docs/writting/Project%20Test%20Report%20AnomalyDetection.md))
+**Test Report**: We provide a test report on differernt paltforms for this project ([Project Test Report AnomalyDetection](docs/writting/Project%20Test%20Report%20AnomalyDetection.md))
 
 **Published checkpoints**:
 We provide the trained checkpoints on textile datasets for the AnomalyDetection models:
