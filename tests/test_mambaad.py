@@ -382,3 +382,61 @@ def test_train_requires_samples():
     adapter = MambaADAdapter.__new__(MambaADAdapter)
     with pytest.raises(ValueError, match="requires config\\['train_samples'\\]"):
         adapter.train({})
+
+
+def test_out_of_memory_hint_names_the_numbers_and_the_knob():
+    """A CUDA OOM during training is a configuration problem — one activation of
+    `batch x widest_level x image_size^2` and a decoder that holds several per
+    Hilbert direction. The message has to say which numbers caused it and what to
+    change, because the traceback says neither."""
+
+    from fabric_defect_hub.models.mambaad.adapter import _out_of_memory_hint
+
+    hint = _out_of_memory_hint(
+        {"batch_size": 16, "image_size": 256, "dims_decoder": [512, 256, 128, 64]},
+        iterations_done=0,
+    )
+
+    assert "batch_size=16" in hint and "image_size=256" in hint
+    assert "2.0 GiB" in hint                      # 16 * 512 * 256 * 256 * 4 bytes
+    assert "--set train.batch_size=4" in hint
+    assert "expandable_segments" in hint
+
+
+def test_out_of_memory_hint_survives_a_config_that_omits_the_numbers():
+    """The hint is raised from inside a failure path: it must not raise itself."""
+
+    from fabric_defect_hub.models.mambaad.adapter import _out_of_memory_hint
+
+    hint = _out_of_memory_hint({}, iterations_done=3)
+
+    assert "3 iteration(s)" in hint
+    assert "--set train.batch_size=1" in hint
+
+
+def test_amp_settings_only_ever_engage_on_cuda():
+    """Mixed precision is opt-in, CUDA-only, and bf16 needs no loss scaler while
+    fp16 does — the same contract `models/torchvision/engine.py` implements."""
+
+    import torch
+
+    from fabric_defect_hub.models.mambaad.adapter import _amp_settings
+
+    cuda = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda")
+    # Resolve the CUDA branch without needing a GPU: the helper only reads
+    # `device.type`.
+    fake_cuda = type("D", (), {"type": "cuda"})()
+    fake_mps = type("D", (), {"type": "mps"})()
+
+    assert _amp_settings("bf16", fake_cuda) == (True, torch.bfloat16, False)
+    assert _amp_settings("fp16", fake_cuda) == (True, torch.float16, True)
+    assert _amp_settings("fp32", fake_cuda) == (False, torch.float32, False)
+    assert _amp_settings(None, fake_cuda) == (False, torch.float32, False)
+    assert _amp_settings("bf16", fake_mps) == (False, torch.float32, False)
+    assert cuda.type in {"cpu", "cuda"}  # the real device never changes the helper's contract
+
+
+def test_precision_defaults_to_fp32_so_numbers_stay_comparable():
+    from fabric_defect_hub.models.mambaad import presets
+
+    assert presets.default_train_kwargs()["precision"] == "fp32"

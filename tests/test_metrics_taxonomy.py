@@ -259,3 +259,39 @@ def test_rows_are_ordered_by_model_for_a_stable_table():
     compute = {t.name: t for t in build_tables(rows)}["compute"]
 
     assert [row["model"] for row in compute.rows] == ["a", "z"]
+
+
+def test_the_memory_table_names_the_instrument_that_measured_it():
+    """`peak_memory_mb` can be PyTorch allocator bytes, whole-process RSS or a
+    TensorRT I/O-buffer lower bound, and `scoring.py` refuses to rank them
+    against each other for exactly that reason. Kept out of the table they
+    read as one comparable quantity; the column is what makes the memory table
+    interpretable."""
+
+    tables = {t.name: t for t in build_tables([
+        _row("m", {"peak_memory_mb": 512.0, "memory_measurement_kind": "device_allocator"}),
+        _row("n", {"peak_memory_mb": 4096.0, "memory_measurement_kind": "process_rss"}),
+    ])}
+
+    memory = tables["memory"]
+    assert "memory_measurement_kind" in memory.columns
+    assert "Memory source" in memory.header()
+    matrix = memory.as_matrix()
+    assert matrix[0][memory.header().index("Memory source")] == "device_allocator"
+    assert matrix[1][memory.header().index("Memory source")] == "process_rss"
+    # Scope and comparability stay bookkeeping: one is a longer form of the
+    # kind, the other is False for every kind there is.
+    assert "memory_measurement_scope" in BOOKKEEPING_KEYS
+    assert "memory_measurement_kind" not in BOOKKEEPING_KEYS
+
+
+def test_the_export_size_is_not_reported_as_the_model_size():
+    """The export's own size lives in bookkeeping, so it stays in the row log
+    without becoming a second public "Model size" column."""
+
+    tables = {t.name: t for t in build_tables([
+        _row("m", {"model_size_mb": 800.0, "exported_model_size_mb": 24.0}),
+    ])}
+
+    assert "exported_model_size_mb" not in tables["memory"].columns
+    assert "exported_model_size_mb" in BOOKKEEPING_KEYS

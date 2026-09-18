@@ -138,3 +138,38 @@ def test_val_spec_rejects_removed_score_threshold_key():
                 "val": {"score_threshold": 0.3},
             }
         )
+
+
+def test_patched_methods_carry_no_import_statements():
+    """`torch.jit.script` — the export `_resolution_sweep` drives for these
+    variants — compiles every method's own code object and refuses an `import`
+    inside it:
+
+        UnsupportedNodeError: import statements aren't supported
+
+    which cost DETR, Cascade R-CNN and DeepLabV3+ their resolution slope. Any
+    name a patched method touches has to be a module global in `presets.py`;
+    the module-level factory functions are never scripted and keep their own
+    local imports.
+
+    Checked from the source with `ast`, so this holds without building a
+    model, downloading weights or running TorchScript.
+    """
+
+    import ast
+    from pathlib import Path
+
+    source = Path(__file__).resolve().parents[1] / "src" / "fabric_defect_hub" / "models" / "torchvision" / "presets.py"
+    tree = ast.parse(source.read_text(encoding="utf-8"))
+
+    offenders = []
+    for cls in [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]:
+        for fn in [node for node in ast.walk(cls) if isinstance(node, ast.FunctionDef)]:
+            for node in ast.walk(fn):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    offenders.append(f"{fn.name} (line {fn.lineno}): {ast.unparse(node)}")
+
+    assert not offenders, (
+        "an import inside a class method breaks the TorchScript export the "
+        "resolution sweep and profiling use: " + "; ".join(offenders)
+    )

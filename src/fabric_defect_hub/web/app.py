@@ -133,6 +133,97 @@ body:not(.dark) .fdh-caption, body:not(.dark) .fdh-placeholder { color: #52627a;
 """
 
 
+# -- Clipboard fallback ----------------------------------------------------
+# Gradio's copy buttons (`gr.Dataframe`'s "copy table data", the copy button on
+# a textbox/code block) call `navigator.clipboard.writeText` directly, with no
+# fallback and no visible error when it is missing (the Dataframe bundle's
+# `copy_data` just rethrows). `navigator.clipboard` only exists on a *secure*
+# origin -- https, or http on localhost. This UI binds 0.0.0.0 and is normally
+# opened at `http://<host>:6008`, which is not one, so every copy button
+# silently did nothing there: the benchmark tables and the run-history table
+# alike.
+#
+# The injected shim hands `writeText` back to `document.execCommand("copy")`,
+# which still works on an insecure origin. The browser's own implementation
+# stays in charge whenever it exists (and gets a second chance when it rejects
+# a permission prompt), so nothing changes on a secure origin. It has to be
+# installed from `<head>` -- before the Gradio bundle can capture the property
+# -- which is why `launch()` passes it as `head=`, rather than patching it in
+# after the page loads.
+CLIPBOARD_FALLBACK_HEAD = """
+<script>
+(function () {
+  "use strict";
+  if (window.__fdhClipboardFallbackInstalled) { return; }
+  window.__fdhClipboardFallbackInstalled = true;
+
+  var descriptor = Object.getOwnPropertyDescriptor(Navigator.prototype, "clipboard");
+
+  function nativeClipboard() {
+    try {
+      return descriptor && descriptor.get ? descriptor.get.call(navigator) : undefined;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  function legacyWrite(text) {
+    return new Promise(function (resolve, reject) {
+      try {
+        var area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.top = "-1000px";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.focus();
+        area.select();
+        var copied = document.execCommand("copy");
+        document.body.removeChild(area);
+        if (copied) { resolve(); } else { reject(new Error("execCommand('copy') was refused")); }
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  var shim = {
+    writeText: function (text) {
+      var native = nativeClipboard();
+      if (native && typeof native.writeText === "function") {
+        return native.writeText(text).catch(function () { return legacyWrite(text); });
+      }
+      return legacyWrite(text);
+    },
+    readText: function () {
+      var native = nativeClipboard();
+      if (native && typeof native.readText === "function") { return native.readText(); }
+      return Promise.reject(new Error("clipboard readText is unavailable on this origin"));
+    },
+    write: function (items) {
+      var native = nativeClipboard();
+      if (native && typeof native.write === "function") { return native.write(items); }
+      return Promise.reject(new Error("clipboard write is unavailable on this origin"));
+    }
+  };
+
+  try {
+    Object.defineProperty(Navigator.prototype, "clipboard", {
+      configurable: true,
+      get: function () { return shim; }
+    });
+    if (!window.isSecureContext) {
+      console.info("[AnomalyDetection] insecure origin: using the execCommand clipboard fallback.");
+    }
+  } catch (error) {
+    console.warn("[AnomalyDetection] could not install the clipboard fallback:", error);
+  }
+})();
+</script>
+"""
+
+
 def _nav_html(lang: str) -> str:
     return (
         "<div class='fdh-nav'><a class='fdh-brand' href='https://github.com/LINC-BIT/AnomalyDetection' "
@@ -454,15 +545,22 @@ def create_app():
                                 tr(lang0, "btn_run_benchmark"), variant="primary", elem_classes="fdh-primary"
                             )
                     with gr.Row():
-                        with gr.Column(scale=4, elem_classes="fdh-control-card"):
+                        with gr.Column(scale=3, elem_classes="fdh-control-card"):
                             bench_profiling = gr.Checkbox(
                                 value=False, label=tr(lang0, "benchmark_profiling_label")
                             )
-                        with gr.Column(scale=4, elem_classes="fdh-control-card"):
+                        with gr.Column(scale=3, elem_classes="fdh-control-card"):
                             bench_resolution_sweep = gr.Checkbox(
                                 value=False, label=tr(lang0, "benchmark_resolution_sweep_label")
                             )
-                        with gr.Column(scale=4, elem_classes="fdh-control-card"):
+                        # Off by default: it costs a second inference pass per
+                        # anomaly model and moves the reported numbers, so a
+                        # run only pays for it when the operator asks.
+                        with gr.Column(scale=3, elem_classes="fdh-control-card"):
+                            bench_calibrate = gr.Checkbox(
+                                value=False, label=tr(lang0, "benchmark_calibrate_label")
+                            )
+                        with gr.Column(scale=3, elem_classes="fdh-control-card"):
                             bench_cross_domain = gr.Dropdown(
                                 choices=[tr(lang0, "benchmark_cross_domain_none"), *DATASET_CATALOG],
                                 value=tr(lang0, "benchmark_cross_domain_none"),
@@ -534,8 +632,8 @@ def create_app():
 
                     def bench_run_handler(
                         dataset_label, texture_label, shot_mode_value, model_labels,
-                        include_profiling, include_resolution_sweep, cross_domain_choice,
-                        score_preset, custom_weight, lang,
+                        include_profiling, include_resolution_sweep, calibrate_thresholds,
+                        cross_domain_choice, score_preset, custom_weight, lang,
                     ):
                         # `run_benchmark` always yields at least once (it
                         # yields an error row when no model is selected), but
@@ -552,6 +650,7 @@ def create_app():
                             cross_domain_dataset_label=cross_domain_label,
                             score_preset=score_preset,
                             custom_technical_weight=custom_weight,
+                            calibrate_thresholds=calibrate_thresholds,
                         ):
                             # Progress streams; the tables do not. Re-sending
                             # a Dataframe's headers *and* value on every
@@ -612,7 +711,8 @@ def create_app():
                         bench_run_handler,
                         inputs=[
                             bench_dataset, bench_texture, bench_shot_mode, bench_models,
-                            bench_profiling, bench_resolution_sweep, bench_cross_domain,
+                            bench_profiling, bench_resolution_sweep, bench_calibrate,
+                            bench_cross_domain,
                             bench_score_preset, bench_custom_weight, lang_state,
                         ],
                         outputs=[
@@ -845,6 +945,11 @@ def launch(**kwargs):
     import os
 
     kwargs.setdefault("css", CSS)
+    # Gradio 6 serves `head` from `launch()`, not from `gr.Blocks` (where it is
+    # deprecated). See `CLIPBOARD_FALLBACK_HEAD`: without it every copy button
+    # is dead on the `http://<host>:6008` origin this app is actually opened
+    # at. `setdefault` keeps a caller's own `head=` intact.
+    kwargs.setdefault("head", CLIPBOARD_FALLBACK_HEAD)
     # The cloud host this project is deployed to only has port 6008 open;
     # standardize on it everywhere so `adh-ui` works unmodified there.
     # `GRADIO_SERVER_PORT` still wins for local use — hard-coding the port

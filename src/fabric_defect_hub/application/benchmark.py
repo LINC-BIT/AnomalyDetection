@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import atexit
 import json
 import os
-import signal
 import subprocess
 import sys
 import tempfile
@@ -18,8 +16,10 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from fabric_defect_hub.core.execution import model_execution, model_tracing
+from fabric_defect_hub.core.processes import WorkerRegistry, terminate_process
 from fabric_defect_hub.core.registry import get_profiler_cls
 from fabric_defect_hub.core.types import ModelInfo, RuntimeInfo
+from fabric_defect_hub.models.base import checkpoint_size_mb
 from fabric_defect_hub.evaluation import evaluator_for_task, ground_truth_task
 from fabric_defect_hub.evaluation.cross_domain import cross_domain_degradation
 from fabric_defect_hub.i18n import DEFAULT_LANGUAGE, tr
@@ -40,7 +40,29 @@ from fabric_defect_hub.application.workspace import (
 )
 
 DEFAULT_RUN_LOG_PATH = "runs/leaderboard_log.jsonl"
+# The Benchmark tab's *complete* row per model, including the overhead
+# metrics (`fps`, latency percentiles, peak memory, FLOPs, LMEI) that
+# `DEFAULT_RUN_LOG_PATH` deliberately leaves out: those are added to the row
+# after `run_experiment` has already logged the accuracy result, so before
+# this file existed they lived only in the UI's memory. Every table built
+# from them — a report, a paper — had to be transcribed off the screen, and
+# a transcription shifts columns and drops digits (2026-09-18: an
+# instance-level table with FN filed under TP, a compute table with
+# resolution slopes in the LMEI column, and an aggregate `fps` cell that is
+# literally the instantaneous mean). A `-` in a report now has a record
+# behind it, and the reason for a missing metric travels in `warnings`.
+DEFAULT_BENCHMARK_ROW_LOG = "runs/benchmark_rows.jsonl"
 BENCHMARK_ANOMALY_MAP_ROOT = "artifacts/runtime/anomaly_maps/benchmark"
+# How many samples the opt-in threshold calibration pass draws from the
+# dataset's *train* split. The F1-optimal threshold is one order statistic out
+# of the calibration scores, so a few hundred balanced samples pin it down
+# well enough to report, while keeping the extra inference pass cheap next to
+# the test pass it precedes — the full-shot ZJU-Leaper train split is ~63k
+# images, which is far more than the threshold needs and would dominate the
+# row's wall clock. Defect ratio is 0.5 on purpose: a threshold search needs
+# both classes in quantity, unlike the test regime's own ratio.
+THRESHOLD_CALIBRATION_SAMPLE_COUNT = 400
+THRESHOLD_CALIBRATION_DEFECT_RATIO = 0.5
 # Where `_record_benchmark_failure` appends the stacks the status line cannot
 # carry. Beside the per-model anomaly maps, so one run's failures live with the
 # artifacts they belong to (both are gitignored `artifacts/runtime/` output).
@@ -120,82 +142,34 @@ def _record_worker_failure(model_label: str, error: str, traceback_text: str | N
 BENCHMARK_WORKER_TIMEOUT_SECONDS = float(os.environ.get("FDH_BENCHMARK_WORKER_TIMEOUT", "3600"))
 _BENCHMARK_WORKER_MODULE = "fabric_defect_hub.application.benchmark_worker"
 
-# Every worker this process has running right now. Kept so a quit (Ctrl+C on the
-# UI, or a normal exit) can kill them: a stranded worker keeps a GPU and a
-# 350-sample evaluation's worth of memory until it finishes on its own.
-_LIVE_WORKERS: set[subprocess.Popen] = set()
-_LIVE_WORKERS_LOCK = threading.Lock()
-
-
-def _child_setup() -> None:  # pragma: no cover - runs in the forked child
-    """Ask the kernel to signal a worker if this process dies.
-
-    `preexec_fn` runs between fork and exec, so it must not allocate or import
-    anything heavy. Linux-only (`prctl`); elsewhere the `atexit` cleanup is the
-    only guard, which is why it is registered unconditionally.
-    """
-
-    try:
-        import ctypes
-        import signal as _signal
-
-        libc = ctypes.CDLL("libc.so.6", use_errno=True)
-        libc.prctl(1, _signal.SIGTERM, 0, 0, 0)  # PR_SET_PDEATHSIG = 1
-    except Exception:
-        return
+# Model evaluations are separate processes, and they must not outlive this one:
+# a stranded worker holds a GPU until it finishes on its own. The registry owns
+# the "track, kill, die-with-parent" mechanics (see `core.processes`).
+_BENCHMARK_WORKERS = WorkerRegistry("benchmark")
 
 
 def _spawn_worker(payload: dict[str, Any], results_path: Path, env: dict[str, str]) -> subprocess.Popen:
-    """Start one worker process, and remember it until it exits."""
+    """Start one worker process, remember it, and hand it its payload."""
 
-    process = subprocess.Popen(
+    process = _BENCHMARK_WORKERS.spawn(
         [sys.executable, "-m", _BENCHMARK_WORKER_MODULE],
         stdin=subprocess.PIPE, text=True, env=env,
-        preexec_fn=_child_setup if sys.platform.startswith("linux") else None,
     )
-    with _LIVE_WORKERS_LOCK:
-        _LIVE_WORKERS.add(process)
     assert process.stdin is not None  # noqa: S101 - guaranteed by stdin=PIPE
     process.stdin.write(json.dumps({**payload, "results_path": str(results_path)}))
     process.stdin.close()
     return process
 
 
-def _terminate_process(process: subprocess.Popen, grace_seconds: float = 3.0) -> None:
-    """SIGTERM a worker, SIGKILL it if it will not go.
-
-    SIGTERM first: a worker between samples dies at once. SIGKILL only for one
-    that ignores it — stuck inside a CUDA call, say — because waiting for that
-    one is exactly the "quitting takes minutes" behaviour this exists to remove.
-    """
-
-    if process.poll() is not None:
-        return
-    process.terminate()
-    try:
-        process.wait(timeout=max(0.0, grace_seconds))
-    except subprocess.TimeoutExpired:
-        process.kill()
-
-
 def terminate_benchmark_workers(grace_seconds: float = 3.0) -> int:
-    """Stop every worker process this one started; return how many it stopped.
+    """Stop every benchmark worker this process started; return how many.
 
-    Called from the exit hooks below, and after an interrupted wait — a
-    stranded worker keeps a GPU and a whole evaluation's worth of memory until
-    it finishes on its own.
+    Called from the exit hooks (`install_fast_exit`) and after an interrupted
+    wait. SIGTERM first, SIGKILL for one that ignores it — a worker stuck inside
+    a CUDA call is exactly the one that made quitting take minutes.
     """
 
-    with _LIVE_WORKERS_LOCK:
-        processes = list(_LIVE_WORKERS)
-    for process in processes:
-        _terminate_process(process, grace_seconds)
-        with _LIVE_WORKERS_LOCK:
-            _LIVE_WORKERS.discard(process)
-    return len(processes)
-
-
-_fast_exit_installed = False
+    return _BENCHMARK_WORKERS.terminate_all(grace_seconds)
 
 
 def install_fast_exit() -> bool:
@@ -206,39 +180,15 @@ def install_fast_exit() -> bool:
     without this, Ctrl+C on a running benchmark sat there until the current
     model finished — minutes, for a 350-sample evaluation. So the first SIGINT
     (or SIGTERM) kills the workers *before* uvicorn's own handler runs, which
-    lets that request unwind immediately; the second signal still gets
-    uvicorn's force-exit, so a shutdown stuck on anything else is one more
-    Ctrl+C away rather than a `kill -9`.
+    lets that request unwind immediately; the second signal still gets uvicorn's
+    force-exit, so a shutdown stuck on anything else is one more Ctrl+C away
+    rather than a `kill -9`.
 
-    uvicorn registers `Server.handle_exit` as its signal handler when it starts,
-    so the wrapper has to be in place before `launch()` runs — which is why the
-    UI launcher calls this first. Returns whether the handler was wrapped.
+    Must be called before `launch()` starts uvicorn, because that is where the
+    signal handler it wraps gets registered. Returns whether it was installed.
     """
 
-    global _fast_exit_installed
-    atexit.register(terminate_benchmark_workers)
-    if _fast_exit_installed:
-        return True
-    try:
-        import uvicorn
-    except ImportError:  # pragma: no cover - the UI extra always brings uvicorn
-        return False
-
-    original = uvicorn.Server.handle_exit
-
-    def handle_exit(self, sig, frame):  # type: ignore[no-untyped-def]
-        stopped = terminate_benchmark_workers()
-        if stopped:
-            print(
-                f"[benchmark] {signal.Signals(sig).name}: stopped {stopped} worker process(es) "
-                f"before shutting down",
-                file=sys.stderr, flush=True,
-            )
-        return original(self, sig, frame)
-
-    uvicorn.Server.handle_exit = handle_exit  # type: ignore[method-assign]
-    _fast_exit_installed = True
-    return True
+    return _BENCHMARK_WORKERS.install_exit_hooks(also_uvicorn=True)
 
 
 def _run_model_worker(payload: dict[str, Any]) -> dict[str, Any]:
@@ -258,14 +208,13 @@ def _run_model_worker(payload: dict[str, Any]) -> dict[str, Any]:
         try:
             process.wait(timeout=BENCHMARK_WORKER_TIMEOUT_SECONDS)
         except subprocess.TimeoutExpired:
-            _terminate_process(process)
+            terminate_process(process)
             return _worker_report(
                 f"worker timed out after {BENCHMARK_WORKER_TIMEOUT_SECONDS:.0f}s "
                 f"(raise FDH_BENCHMARK_WORKER_TIMEOUT to allow longer runs)"
             )
         finally:
-            with _LIVE_WORKERS_LOCK:
-                _LIVE_WORKERS.discard(process)
+            _BENCHMARK_WORKERS.forget(process)
             if process.poll() is None:
                 # This call was interrupted (Ctrl+C in the parent) rather than
                 # the worker exiting: do not leave it running with a GPU.
@@ -449,14 +398,70 @@ def _profile_setup(model: Any, device: str):
     if export_target is None:
         return None
 
-    engine = engine_for_target[export_target]
+    profiler, config = _profiler_for_target(model, device, export_target)
+    return profiler, config, export_target
+
+
+# The export targets a profiler can drive, in the order `_profile_setup`
+# prefers them (see its docstring for why torchscript leads).
+_ENGINE_FOR_TARGET = {
+    "torchscript": "pytorch", "onnx": "onnxruntime", "exported_program": "pytorch",
+}
+
+
+def _profiler_for_target(model: Any, device: str, target: str):
+    """The `(profiler, config)` pair that drives one export target."""
+
+    engine = _ENGINE_FOR_TARGET[target]
+    capabilities = model.capabilities()
     profiler = get_profiler_cls(engine)()
     config = ProfileConfig(
         device=device, engine=engine, precision="fp32", input_size=(640, 640),
         input_style=capabilities.export_input_style, warmup_runs=5, measured_runs=20,
         power_mode="disabled",
     )
-    return profiler, config, export_target
+    return profiler, config
+
+
+def _export_for_profiling(model: Any, artifact: Any, device: str):
+    """The first offered export target this model can actually produce.
+
+    A backend's *preferred* target can be the one target it cannot export, and
+    the failure is model-specific rather than backend-wide:
+
+    * DETR: `torch.jit.script` refuses its training-only pieces ("indexing
+      tensor with unsupported index type 'str'"), while `torch.export` traces
+      it in seconds — so the model has a perfectly good profile and slope, just
+      not through the target the preference order asks for first;
+    * Cascade R-CNN: no target works (TorchScript as above, `torch.onnx` and
+      `torch.export` reject its custom layers), so it is profiled natively and
+      has no resolution slope — a fact the sweep should state, not a traceback.
+
+    Returns `(setup, exported, failures)`: `setup`/`exported` are `None` when
+    every offered target failed, and `failures` names each target's exception
+    type so the caller can say why instead of surfacing a raw traceback.
+    """
+
+    capabilities = model.capabilities()
+    failures: list[str] = []
+    for target in _ENGINE_FOR_TARGET:
+        if target not in capabilities.export_targets:
+            continue
+        profiler, config = _profiler_for_target(model, device, target)
+        try:
+            # Tracing patches module dispatch process-wide while it runs, so
+            # this is a writer: it must not overlap any forward pass or another
+            # export (see `core.execution`).
+            with model_tracing():
+                exported = model.export(artifact, target=target)
+        except Exception as exc:  # noqa: BLE001 -- the next target is the fallback
+            failures.append(f"{target}: {type(exc).__name__}")
+            continue
+        if not Path(exported.path).is_file():
+            failures.append(f"{target}: FileNotFoundError")
+            continue
+        return (profiler, config, target), exported, failures
+    return None, None, failures
 
 
 def _native_profile_model(model: Any, artifact: Any, samples: list[Any], device: str) -> dict[str, float]:
@@ -479,12 +484,22 @@ def _native_profile_model(model: Any, artifact: Any, samples: list[Any], device:
     with model_execution():
         for _ in range(warmup):
             model.predict([sample], artifact)
+
+    # Sampled after every measured run, exactly as `ONNXRuntimeProfiler` does,
+    # so the two RSS numbers carry the same definition. The previous version
+    # took a single sample *after* the loop and published it as "Memory peak",
+    # which under-reports by construction and is not a peak of anything.
+    process = _rss_sampler()
     latencies: list[float] = []
+    memory_samples_bytes: list[int] = []
     for _ in range(measured):
         started = _time.perf_counter()
         with model_execution():
             model.predict([sample], artifact)
         latencies.append((_time.perf_counter() - started) * 1000.0)
+        if process is not None:
+            memory_samples_bytes.append(process.memory_info().rss)
+
     mean_ms = statistics.fmean(latencies)
     metrics: dict[str, float] = {
         "latency_ms_mean": mean_ms,
@@ -493,18 +508,34 @@ def _native_profile_model(model: Any, artifact: Any, samples: list[Any], device:
         "latency_ms_p99": sorted(latencies)[min(len(latencies) - 1, int(round(.99 * (len(latencies) - 1))))],
         "fps": 1000.0 / mean_ms if mean_ms > 0 else 0.0,
         "profiling_mode": "native",
+        # The same strings `ONNXRuntimeProfiler.memory_context` uses for the
+        # same quantity: two labels for one instrument made rows look like two
+        # different measurements.
         "memory_measurement_kind": "process_rss",
-        "memory_measurement_scope": "host_process",
+        "memory_measurement_scope": "whole_process_resident_set",
         "memory_cross_engine_comparable": False,
     }
-    try:
-        import os
-        import psutil
-
-        metrics["peak_memory_mb"] = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
-    except ImportError:
-        metrics["peak_memory_mb"] = 0.0
+    if memory_samples_bytes:
+        metrics["peak_memory_mb"] = max(memory_samples_bytes) / (1024 * 1024)
+        metrics["avg_memory_mb"] = statistics.fmean(memory_samples_bytes) / (1024 * 1024)
+    # No psutil means no memory measurement, not a memory measurement of zero:
+    # a 0.0 in the memory table reads as "measured, and tiny".
+    size_mb = checkpoint_size_mb(artifact)
+    if size_mb is not None:
+        metrics["model_size_mb"] = size_mb
     return metrics
+
+
+def _rss_sampler():
+    """A psutil process handle for RSS sampling, or `None` without psutil."""
+
+    try:
+        import psutil
+    except ImportError:  # pragma: no cover - psutil ships with the profiling extra
+        return None
+    return psutil.Process()
+
+
 
 
 def _profile_model(model: Any, artifact: Any, device: str, samples: list[Any] | None = None) -> dict[str, float]:
@@ -518,10 +549,6 @@ def _profile_model(model: Any, artifact: Any, device: str, samples: list[Any] | 
     optional metric rather than a failed model.
     """
 
-    setup = _profile_setup(model, device)
-    if setup is None:
-        return _native_profile_model(model, artifact, samples or [], device)
-    profiler, config, export_target = setup
     # No export config: the dict is forwarded verbatim into the backend's own
     # exporter, and each backend has its own vocabulary — Ultralytics rejects
     # any key YOLO does not define ("'input_size' is not a valid YOLO
@@ -535,18 +562,13 @@ def _profile_model(model: Any, artifact: Any, device: str, samples: list[Any] | 
     # directly is strictly better than dropping the row's overhead columns, and
     # `_native_profile_model` labels itself as `profiling_mode="native"` so the
     # two kinds of number are never silently mixed.
-    try:
-        # Tracing patches module dispatch process-wide while it runs, so this is
-        # a writer: it must not overlap any forward pass or another export (see
-        # `core.execution`). The profiler pass below is not a trace and stays
-        # parallel.
-        with model_tracing():
-            exported = model.export(artifact, target=export_target)
-        export_path = Path(exported.path)
-        if not export_path.is_file():
-            raise FileNotFoundError(f"exported model does not exist: {export_path}")
-    except Exception:
+    setup, exported, failures = _export_for_profiling(model, artifact, device)
+    if setup is None:
+        # Every offered target failed; measuring the adapter directly beats
+        # dropping the row's overhead columns (see `_native_profile_model`).
         return _native_profile_model(model, artifact, samples or [], device)
+    profiler, config, export_target = setup
+    export_path = Path(exported.path)
     exported_input_size = exported.metadata.get("input_size")
     if exported_input_size is not None:
         config = replace(config, input_size=tuple(exported_input_size))
@@ -561,7 +583,13 @@ def _profile_model(model: Any, artifact: Any, device: str, samples: list[Any] | 
     metrics["memory_cross_engine_comparable"] = bool(
         memory_context.get("cross_engine_comparable", False)
     )
-    metrics["model_size_mb"] = export_path.stat().st_size / (1024 * 1024)
+    # The exported artifact's size, kept separately: `model_size_mb` is the
+    # checkpoint (see `_checkpoint_size_mb`), and silently reporting the ONNX
+    # file under the same key made two different files look like one column.
+    metrics["exported_model_size_mb"] = export_path.stat().st_size / (1024 * 1024)
+    size_mb = checkpoint_size_mb(artifact)
+    if size_mb is not None:
+        metrics["model_size_mb"] = size_mb
     return metrics
 
 
@@ -575,14 +603,14 @@ def _resolution_sweep(model: Any, artifact: Any, device: str) -> dict[str, float
 
     from fabric_defect_hub.profiling.sweeps import resolution_scaling
 
-    setup = _profile_setup(model, device)
+    setup, exported, failures = _export_for_profiling(model, artifact, device)
     if setup is None:
         raise MetricNotApplicable(
-            "this backend has no export format a benchmark profiler can drive"
+            "no export target this model offers could be produced "
+            f"({'; '.join(failures) or 'none offered'}), and a throughput-versus-resolution "
+            "slope needs an exported graph — it can still be profiled natively"
         )
     profiler, config, export_target = setup
-    with model_tracing():
-        exported = model.export(artifact, target=export_target)
     exported_input_size = exported.metadata.get("input_size")
     if exported_input_size is not None:
         config = replace(config, input_size=tuple(exported_input_size))
@@ -702,6 +730,8 @@ def run_benchmark(
     score_preset: str = "balanced",
     custom_technical_weight: float | None = None,
     run_log_path: str | None = DEFAULT_RUN_LOG_PATH,
+    calibrate_thresholds: bool = False,
+    row_log_path: str | None = DEFAULT_BENCHMARK_ROW_LOG,
 ) -> Iterator[tuple[list[str], list[list[Any]], str, list[dict[str, Any]]]]:
     """Evaluate every model in `model_labels` against the same dataset
     sample (test split only — the benchmark tab never trains). Every model is
@@ -732,6 +762,23 @@ def run_benchmark(
     `composite_score` column, recomputed across all rows collected so far
     after every model. `run_log_path`, if not `None`, appends every
     completed row to that shared JSONL log via `reporting.append_run_log`.
+
+    `row_log_path`, if not `None`, appends this model's *complete* row — accuracy
+    and overhead alike — to a second JSONL log as soon as it is finished (see
+    `DEFAULT_BENCHMARK_ROW_LOG`). `run_log_path` cannot carry that: the overhead
+    metrics are added after `run_experiment` has already written its record.
+
+    `calibrate_thresholds` adds one extra inference pass per *anomaly* model:
+    a balanced sample of the dataset's train split is scored, the F1-optimal
+    image threshold is fitted there, and that threshold is handed to
+    `AnomalyEvaluator` for the test split. It is what fills
+    `image_f1`/`image_precision`/`image_recall`/`image_threshold`, which stay
+    unmeasured otherwise (the evaluator refuses to pick its own threshold on
+    the split it reports on — see `evaluation.anomaly`). It is opt-in because
+    it changes the reported numbers and costs a second pass, and it is
+    skipped with a note when the train split cannot separate the two classes
+    (MVTec AD and the flat-folder datasets hand out normal-only training
+    images).
     """
 
     if not model_labels:
@@ -784,7 +831,9 @@ def run_benchmark(
             "include_profiling": include_profiling,
             "include_resolution_sweep": include_resolution_sweep,
             "cross_domain_dataset_label": cross_domain_dataset_label,
+            "calibrate_thresholds": calibrate_thresholds,
             "run_log_path": run_log_path,
+            "row_log_path": row_log_path,
             "lang": lang,
         }
 

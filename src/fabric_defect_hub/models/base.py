@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from fabric_defect_hub.core.train_config import TrainConfig
@@ -50,6 +51,28 @@ class Artifact:
     path: str
     backend: str
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+def checkpoint_size_mb(artifact: "Artifact | None") -> float | None:
+    """Size of the trained artifact on disk, in MiB (README's "Model size").
+
+    Deliberately *not* an exported file's size: an ONNX export and the
+    checkpoint it came from differ by an order of magnitude, and a "Model
+    size" column holding whichever of the two a row happened to produce
+    cannot be compared down a table. Export sizes travel as
+    `exported_model_size_mb`, which the memory table does not show.
+
+    `None` (rather than 0.0) when there is no file to measure: a zero in a
+    memory table reads as "measured, and tiny".
+    """
+
+    path = getattr(artifact, "path", None)
+    if not path:
+        return None
+    candidate = Path(path)
+    if not candidate.is_file():
+        return None
+    return candidate.stat().st_size / (1024 * 1024)
 
 
 @dataclass

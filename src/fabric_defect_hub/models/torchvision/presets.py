@@ -34,6 +34,60 @@ except ImportError:
         pass
     nn = type("nn", (object,), {"Module": nn_Module})
 
+# The patched module classes below are compiled by `torch.jit.script` when a
+# benchmark exports them (and traced by `torch.export` when it profiles them).
+# `torch.jit` walks each method's *own* code object and refuses an `import`
+# statement inside it — "UnsupportedNodeError: import statements aren't
+# supported", which cost DETR, Cascade R-CNN and DeepLabV3+ their resolution
+# sweep — so every name those methods touch has to be a module global. Bound
+# here, under the same optional guard, so this module still imports without
+# torchvision/scipy. The factory functions (`build_model`, `convert_to_
+# cascade`, ...) are never scripted and keep their own local imports.
+try:
+    import math
+    import torch.nn.functional as F
+    import torchvision.models as models
+    from scipy.optimize import linear_sum_assignment
+    from torchvision.models.detection._utils import BoxCoder, Matcher
+    from torchvision.models.detection.faster_rcnn import FastRCNNPredictor, TwoMLPHead
+    from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+    from torchvision.models.detection.roi_heads import maskrcnn_inference
+    from torchvision.models.detection.transform import GeneralizedRCNNTransform
+    from torchvision.ops import box_convert, clip_boxes_to_image, generalized_box_iou
+    from torchvision.ops import boxes as box_ops
+except ImportError:  # pragma: no cover - the backends that install these patches need all of them
+    math = None
+    F = None
+    models = None
+    linear_sum_assignment = None
+    BoxCoder = Matcher = None
+    FastRCNNPredictor = TwoMLPHead = None
+    MaskRCNNPredictor = None
+    maskrcnn_inference = None
+    GeneralizedRCNNTransform = None
+    box_convert = clip_boxes_to_image = generalized_box_iou = None
+    box_ops = None
+
+# The patched `forward`s below run under `torch.export` / `torch.fx` when a
+# benchmark profiles or resolution-sweeps them, and the tracer walks the
+# function's *own* code object: an `import` statement inside a forward is a
+# hard error ("UnsupportedNodeError: import statements aren't supported",
+# which cost DETR, Cascade R-CNN and DeepLabV3+ their resolution slope). Every
+# name a forward touches therefore has to be a module global, imported here
+# under the same optional guard so this module stays importable without
+# torchvision/scipy.
+try:
+    import torch.nn.functional as F
+    from scipy.optimize import linear_sum_assignment
+    from torchvision.models.detection.roi_heads import maskrcnn_inference
+    from torchvision.ops import box_convert, generalized_box_iou
+except ImportError:  # pragma: no cover - the backends that install these patches need all of them
+    F = None
+    linear_sum_assignment = None
+    maskrcnn_inference = None
+    box_convert = None
+    generalized_box_iou = None
+
 # Friendly variant name -> torchvision factory function name + weights enum
 # name (both resolved lazily in `build_model()` so importing this module
 # never requires torchvision to be installed).
@@ -587,7 +641,6 @@ def _get_cascade_roi_heads_class():
             self.box_heads = nn.ModuleList(box_heads)
             self.box_predictors = nn.ModuleList(box_predictors)
 
-            from torchvision.models.detection._utils import Matcher, BoxCoder
             self.proposal_matchers = [
                 Matcher(fg, bg, allow_low_quality_matches=False)
                 for fg, bg in zip(fg_iou_thresholds, bg_iou_thresholds)
@@ -596,6 +649,7 @@ def _get_cascade_roi_heads_class():
                 BoxCoder(weights) for weights in bbox_reg_weights_list
             ]
 
+        @torch.jit.unused
         def select_training_samples_stage(self, stage_idx, proposals, targets):
             if targets is None:
                 raise ValueError("targets should not be None")
@@ -660,9 +714,8 @@ def _get_cascade_roi_heads_class():
             regression_targets = self.box_coders[stage_idx].encode(matched_gt_boxes, sampled_proposals)
             return sampled_proposals, sampled_matched_idxs, sampled_labels, regression_targets
 
+        @torch.jit.unused
         def refine_proposals(self, stage_idx, proposals, box_regression, labels, image_shapes):
-            import torch
-            from torchvision.ops import clip_boxes_to_image
 
             pred_boxes = self.box_coders[stage_idx].decode(box_regression.detach(), proposals)
             num_classes = pred_boxes.shape[1]
@@ -690,8 +743,6 @@ def _get_cascade_roi_heads_class():
             return refined_proposals
 
         def refine_proposals_inference(self, stage_idx, proposals, box_regression, pred_classes, image_shapes):
-            import torch
-            from torchvision.ops import clip_boxes_to_image
 
             pred_boxes = self.box_coders[stage_idx].decode(box_regression, proposals)
             num_classes = pred_boxes.shape[1]
@@ -718,8 +769,6 @@ def _get_cascade_roi_heads_class():
             return refined_proposals
 
         def postprocess_detections_cascade(self, pred_scores, box_regression, proposals, image_shapes):
-            import torch
-            from torchvision.ops import boxes as box_ops
 
             device = pred_scores.device
             num_classes = pred_scores.shape[-1]
@@ -764,8 +813,6 @@ def _get_cascade_roi_heads_class():
             return all_boxes, all_scores, all_labels
 
         def forward(self, features, proposals, image_shapes, targets=None):
-            import torch
-            import torch.nn.functional as F
 
             if self.training:
                 if targets is None:
@@ -843,7 +890,6 @@ def _get_cascade_roi_heads_class():
                         mask_features = self.mask_head(mask_features)
                         mask_logits = self.mask_predictor(mask_features)
 
-                        from torchvision.models.detection.roi_heads import maskrcnn_inference
                         labels_list = [r["labels"] for r in result]
                         masks_probs = maskrcnn_inference(mask_logits, labels_list)
                         for mask_prob, r in zip(masks_probs, result):
@@ -913,12 +959,10 @@ class PositionEmbeddingSine(nn.Module):
         self.temperature = temperature
         self.normalize = normalize
         if scale is None:
-            import math
             scale = 2 * math.pi
         self.scale = scale
 
     def forward(self, x):
-        import torch
 
         mask = torch.zeros((x.shape[0], x.shape[2], x.shape[3]), dtype=torch.bool, device=x.device)
         not_mask = ~mask
@@ -953,9 +997,6 @@ class HungarianMatcher(nn.Module):
         # lazily inside a method body, so importing this module never
         # requires torch to be installed. Doing it as a `with` block instead
         # keeps that guarantee while still disabling autograd for the match.
-        import torch
-        from scipy.optimize import linear_sum_assignment
-        from torchvision.ops import generalized_box_iou, box_convert
 
         with torch.no_grad():
             bs, num_queries = outputs["pred_logits"].shape[:2]
@@ -1002,7 +1043,6 @@ class SetCriterion(nn.Module):
         self.register_buffer("empty_weight", empty_weight)
 
     def loss_labels(self, outputs, targets, indices, num_boxes):
-        import torch.nn.functional as F
 
         pred_logits = outputs["pred_logits"]
         device = pred_logits.device
@@ -1014,9 +1054,6 @@ class SetCriterion(nn.Module):
         return {"loss_ce": loss_ce}
 
     def loss_boxes(self, outputs, targets, indices, num_boxes):
-        import torch
-        import torch.nn.functional as F
-        from torchvision.ops import box_convert, generalized_box_iou
 
         pred_boxes = outputs["pred_boxes"]
         device = pred_boxes.device
@@ -1060,7 +1097,6 @@ class MLP(nn.Module):
         )
 
     def forward(self, x):
-        import torch.nn.functional as F
         for i, layer in enumerate(self.layers):
             x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
         return x
@@ -1110,7 +1146,6 @@ class DETR(nn.Module):
         self.class_embed = nn.Linear(d_model, num_classes)
         self.bbox_embed = MLP(d_model, d_model, 4, 3)
 
-        from torchvision.models.detection.transform import GeneralizedRCNNTransform
         self.transform = GeneralizedRCNNTransform(
             min_size=min_size, max_size=max_size,
             image_mean=[0.485, 0.456, 0.406],
@@ -1127,8 +1162,6 @@ class DETR(nn.Module):
         )
 
     def forward(self, images, targets=None):
-        import torch
-        from torchvision.ops import box_convert
 
         original_image_sizes = []
         for img in images:
@@ -1264,7 +1297,6 @@ class SegVGGBlock(nn.Module):
 class UNetPlusPlusResNet(nn.Module):
     def __init__(self, num_classes=1, pretrained=True):
         super().__init__()
-        import torchvision.models as models
         weights = models.ResNet34_Weights.DEFAULT if pretrained else None
         resnet = models.resnet34(weights=weights)
 
@@ -1362,7 +1394,6 @@ class SegASPP(nn.Module):
         )
 
     def forward(self, x):
-        import torch.nn.functional as F
 
         res = []
         for conv in self.convs:
@@ -1380,7 +1411,6 @@ class SegASPP(nn.Module):
 class DeepLabV3Plus(nn.Module):
     def __init__(self, num_classes=1, pretrained=True):
         super().__init__()
-        import torchvision.models as models
         weights = models.ResNet50_Weights.DEFAULT if pretrained else None
         resnet = models.resnet50(weights=weights, replace_stride_with_dilation=[False, True, True])
 
@@ -1416,7 +1446,6 @@ class DeepLabV3Plus(nn.Module):
         )
 
     def forward(self, x):
-        import torch.nn.functional as F
 
         h_img, w_img = x.shape[2:]
 

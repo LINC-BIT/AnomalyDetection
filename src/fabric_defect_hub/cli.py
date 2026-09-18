@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 from dataclasses import asdict
+from pathlib import Path
 from typing import Any
 
 
@@ -138,6 +139,13 @@ def build_parser() -> argparse.ArgumentParser:
     train_parser.add_argument("--tile-overlap", type=float, help="YOLO only: tile overlap in [0, 1)")
     train_parser.add_argument("--profile", default="configs/training_profile.yaml", help="shared ZJU training policy YAML")
     train_parser.add_argument("--no-profile", action="store_true", help="ignore the shared training profile")
+    train_parser.add_argument(
+        "--json-report",
+        help=(
+            "write this run's payload (metrics, published path, artifacts) as JSON to this path. "
+            "Used by `adh train-all --jobs N`, whose children are exactly this command"
+        ),
+    )
     train_parser.add_argument(
         "--no-publish",
         action="store_true",
@@ -345,6 +353,13 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "shot mode for every model. Omit to use each config's own sample counts. "
             "'test' is an 8-image wiring check that does NOT produce usable weights"
+        ),
+    )
+    train_all_parser.add_argument(
+        "--jobs", type=int, default=None,
+        help=(
+            "how many models to train at once, one process and one device each "
+            "(default: the number of usable devices — one per CUDA GPU, 1 on MPS/CPU)"
         ),
     )
     train_all_parser.add_argument(
@@ -606,7 +621,7 @@ def _run_train(args: argparse.Namespace) -> Any:
         publish=not args.no_publish,
     )
     result = run.result
-    return {
+    payload = {
         "backend": run.backend,
         "resolved_config": run.config_path,
         "resolved_variant": run.variant,
@@ -617,6 +632,12 @@ def _run_train(args: argparse.Namespace) -> Any:
         "weight_manifest_path": run.weight_manifest_path,
         "exports": [asdict(artifact) for artifact in result.exports],
     }
+    if getattr(args, "json_report", None):
+        # The parallel scheduler reads this instead of parsing stdout: the same
+        # text is also streamed to the terminal and into the model's log, and a
+        # backend that prints a JSON-looking line must not confuse it.
+        Path(args.json_report).write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return payload
 
 
 def _run_train_all(args: argparse.Namespace) -> Any:
@@ -650,8 +671,15 @@ def _run_train_all(args: argparse.Namespace) -> Any:
         {"key": model.key, "backend": model.backend, "variant": model.variant, "config": model.config}
         for model in selected
     ]
+    jobs = args.jobs
+    if jobs is None:
+        from fabric_defect_hub.runtime_device import available_torch_devices
+
+        jobs = len(available_torch_devices())
+    jobs = max(1, min(jobs, max(1, len(plan))))
+
     if args.dry_run:
-        return {"plan": plan, "model_count": len(plan)}
+        return {"plan": plan, "model_count": len(plan), "jobs": jobs}
 
     if args.resume and not args.run_id:
         raise ValueError("--resume requires --run-id")
@@ -660,6 +688,37 @@ def _run_train_all(args: argparse.Namespace) -> Any:
         args.run_root, args.run_id or default_run_id(), plan, resume=args.resume
     )
     print(f"Batch state: {tracker.directory}", flush=True)
+
+    if jobs > 1:
+        from fabric_defect_hub.runtime_device import available_torch_devices
+        from fabric_defect_hub.training_runs import run_parallel_batch
+
+        devices = available_torch_devices()
+        print(f"Training {jobs} model(s) at a time on: {', '.join(devices)}", flush=True)
+
+        def command_for(model: Any, report_path: str, device: str) -> list[str]:
+            command = [
+                sys.executable, "-m", "fabric_defect_hub", "train", model.key,
+                "--config-dir", args.config_dir, "--json-report", report_path,
+            ]
+            if args.mode:
+                command += ["--mode", args.mode]
+            if args.no_publish:
+                command += ["--no-publish"]
+            return command
+
+        results = run_parallel_batch(
+            selected, tracker, jobs=jobs, devices=devices, command_for=command_for
+        )
+        succeeded = sum(1 for r in results if r["status"] in ("succeeded", "skipped"))
+        return {
+            "batch_state": str(tracker.directory),
+            "succeeded": succeeded,
+            "total": len(results),
+            "jobs": jobs,
+            "devices": devices,
+            "results": results,
+        }
 
     results = []
     for model in selected:

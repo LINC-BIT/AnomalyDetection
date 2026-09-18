@@ -89,6 +89,11 @@ class TrainSpec:
     decay_rate: float = DEFAULT_TRAIN_KWARGS["decay_rate"]
     num_workers: int = 0
     device: str | None = None
+    # "fp32" | "bf16" | "fp16": mixed precision for the training forward only.
+    # Resolved by `adapter._amp_settings` -- CUDA-only, and fp32 everywhere else
+    # so a run's numbers stay comparable with the fp32 ones this project
+    # publishes.
+    precision: str = DEFAULT_TRAIN_KWARGS["precision"]
 
 
 @dataclass
@@ -103,6 +108,15 @@ class ValSpec:
     max_pixels: int = 1_000_000
     max_aupro_images: int = 50
     seed: int = 0
+    # `AnomalyPipeline.evaluate` forwards these straight to
+    # `AnomalyEvaluator(...)`; without them a run crashed at the evaluation
+    # step with `AttributeError: 'ValSpec' object has no attribute
+    # 'image_threshold'` -- the evaluator grew the parameters and only
+    # anomalib's spec was updated. `tests/test_pipeline_contract.py` now pins
+    # the whole set against the evaluator's signature.
+    image_threshold: float | None = None
+    pixel_threshold: float | None = None
+    allow_oracle_threshold: bool = False
 
 
 @dataclass

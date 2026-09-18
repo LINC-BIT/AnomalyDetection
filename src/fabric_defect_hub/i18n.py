@@ -181,6 +181,17 @@ _STRINGS: dict[str, dict[str, str]] = {
         ),
         "benchmark_profiling_label": "Include profiling (FPS / latency / memory)",
         "benchmark_resolution_sweep_label": "Include resolution sweep (throughput decay slope)",
+        "benchmark_calibrate_label": (
+            "Calibrate decision thresholds on the training split "
+            "(fills image F1 / precision / recall and pixel F1)"
+        ),
+        "bench_threshold_calibrated": (
+            "{model}: thresholds calibrated on {samples} training-split samples ({detail})."
+        ),
+        "bench_threshold_uncalibratable": (
+            "{model}: thresholds not calibrated — the training split has only one class, "
+            "so no threshold separates a defective image or pixel from a normal one."
+        ),
         "benchmark_cross_domain_label": "Cross-domain degradation target dataset (optional)",
         "benchmark_cross_domain_none": "None",
         "benchmark_score_preset_label": "Score preset",
@@ -323,6 +334,12 @@ _STRINGS: dict[str, dict[str, str]] = {
         "bench_profiling_no_metrics": "已请求性能剖析，但这些模型没有产生任何指标 — 跳过原因见上方状态信息。",
         "benchmark_profiling_label": "启用性能剖析（FPS / 延迟 / 显存）",
         "benchmark_resolution_sweep_label": "启用分辨率扫描（吞吐量衰减斜率）",
+        "benchmark_calibrate_label": "在训练集上校准决策阈值（补全 Image F1 / 精确率 / 召回率与 Pixel F1）",
+        "bench_threshold_calibrated": "{model}：已用训练集 {samples} 个样本校准阈值（{detail}）。",
+        "bench_threshold_uncalibratable": (
+            "{model}：未校准阈值 — 训练集只有单一类别，"
+            "不存在能把缺陷图/缺陷像素与正常分开的阈值。"
+        ),
         "benchmark_cross_domain_label": "跨域退化率目标数据集（可选）",
         "benchmark_cross_domain_none": "不启用",
         "benchmark_score_preset_label": "评分预设",

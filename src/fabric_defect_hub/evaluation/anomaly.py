@@ -27,6 +27,10 @@ from fabric_defect_hub.evaluation.base import Evaluator
 # intact) — keeps evaluation memory bounded regardless of test-set size.
 DEFAULT_MAX_PIXELS = 1_000_000
 DEFAULT_MAX_AUPRO_IMAGES = 50
+# Below this many scored samples, every score being equal is a plausible
+# tie (two images, one class) rather than a saturated model; above it, it
+# is a diagnosis worth reporting.
+DEGENERATE_SCORE_MIN_SAMPLES = 8
 
 
 @register_evaluator
@@ -56,31 +60,9 @@ class AnomalyEvaluator(Evaluator):
     def evaluate(self, samples: list[Sample], predictions: list[Prediction]) -> dict[str, float]:
         import numpy as np
 
-        pred_by_id = {p.sample_id: p for p in predictions}
-
-        y_true: list[int] = []
-        y_score: list[float] = []
-        pixel_pairs: list[tuple[Any, Any]] = []  # (gt_mask_2d, pred_map_2d) per sample
-        invalid_score_count = 0
-        invalid_map_count = 0
-
-        for sample in samples:
-            pred = pred_by_id.get(sample.id)
-            if pred is None or pred.anomaly_score is None:
-                continue
-            if not np.isfinite(pred.anomaly_score):
-                invalid_score_count += 1
-                continue
-            y_true.append(1 if sample.annotations.is_anomalous else 0)
-            y_score.append(pred.anomaly_score)
-
-            if pred.anomaly_map is not None:
-                pred_map = np.load(pred.anomaly_map)
-                if not np.isfinite(pred_map).all():
-                    invalid_map_count += 1
-                    continue
-                gt_mask = _load_ground_truth_mask(sample, pred_map.shape)
-                pixel_pairs.append((gt_mask, pred_map))
+        y_true, y_score, pixel_pairs, invalid_score_count, invalid_map_count = collect_pairs(
+            samples, predictions
+        )
 
         if not y_true:
             return {"invalid_anomaly_score_count": float(invalid_score_count)} if invalid_score_count else {}
@@ -104,8 +86,155 @@ class AnomalyEvaluator(Evaluator):
             metrics["invalid_anomaly_score_count"] = float(invalid_score_count)
         if invalid_map_count:
             metrics["invalid_anomaly_map_count"] = float(invalid_map_count)
+        if len(y_score) >= DEGENERATE_SCORE_MIN_SAMPLES and len(set(y_score)) == 1:
+            # One score for every image is not a weak model, it is a model
+            # whose output saturated (see
+            # `models.anomalib.adapter._raw_anomaly_predictions`): AUROC 0.5,
+            # AUPRO 0.0 and IAP == the positive-pixel ratio then look like
+            # measurements. Report the fact so a caller can say so out loud
+            # instead of publishing them.
+            metrics["constant_anomaly_scores"] = float(len(y_score))
 
         return metrics
+
+
+def collect_pairs(
+    samples: list[Sample], predictions: list[Prediction],
+) -> tuple[list[int], list[float], list[tuple[Any, Any]], int, int]:
+    """The curve inputs `AnomalyEvaluator.evaluate` and the calibration pass
+    both read: `(y_true, y_score, pixel_pairs, invalid_score_count,
+    invalid_map_count)`.
+
+    One implementation on purpose. The calibration pass has to see exactly
+    the samples and pixels the scored pass will see — a calibration that
+    quietly accepted a `NaN` score, or a map the evaluator would have
+    rejected, would fit a threshold to a dataset neither side reports on.
+    """
+
+    import numpy as np
+
+    pred_by_id = {p.sample_id: p for p in predictions}
+
+    y_true: list[int] = []
+    y_score: list[float] = []
+    pixel_pairs: list[tuple[Any, Any]] = []  # (gt_mask_2d, pred_map_2d) per sample
+    invalid_score_count = 0
+    invalid_map_count = 0
+
+    for sample in samples:
+        pred = pred_by_id.get(sample.id)
+        score = usable_anomaly_score(pred)
+        if score is None:
+            if pred is not None and pred.anomaly_score is not None:
+                invalid_score_count += 1
+            continue
+        y_true.append(1 if sample.annotations.is_anomalous else 0)
+        y_score.append(score)
+
+        if pred.anomaly_map is not None:
+            pred_map = np.load(pred.anomaly_map)
+            if not np.isfinite(pred_map).all():
+                invalid_map_count += 1
+                continue
+            gt_mask = _load_ground_truth_mask(sample, pred_map.shape)
+            pixel_pairs.append((gt_mask, pred_map))
+
+    return y_true, y_score, pixel_pairs, invalid_score_count, invalid_map_count
+
+
+def usable_anomaly_score(prediction: Prediction | None) -> float | None:
+    """The prediction's image-level anomaly score, or `None` when there is no
+    usable one.
+
+    A prediction with no `anomaly_score`, or one that is `NaN`/`inf` (some
+    backends emit those on degenerate inputs), cannot take part in a
+    threshold or an AUROC — callers count it as invalid and move on rather
+    than letting one bad score poison the whole metric. Shared by
+    `AnomalyEvaluator.evaluate` and `calibrate_thresholds` so the
+    calibration pass and the scoring pass agree on what counts as usable.
+    """
+
+    if prediction is None or prediction.anomaly_score is None:
+        return None
+    import math
+
+    score = float(prediction.anomaly_score)
+    return score if math.isfinite(score) else None
+
+
+def calibrate_thresholds(
+    samples: list[Sample],
+    predictions: list[Prediction],
+    *,
+    max_pixels: int = DEFAULT_MAX_PIXELS,
+    seed: int = 0,
+) -> tuple[float | None, float | None, int]:
+    """Pick the F1-optimal image and pixel thresholds on a *calibration* split.
+
+    Returns `(image_threshold, pixel_threshold, scored_samples)`. Either
+    threshold is `None` when that metric's data cannot separate anything:
+    fewer than two ground-truth classes among the usable image scores, or no
+    usable anomaly maps / only one class among their pixels (the normal-only
+    training splits MVTec AD and the flat-folder datasets expose, and every
+    model that does not persist an anomaly map at all).
+
+    A caller that gets `None` must leave that metric family *unmeasured*
+    rather than fall back to a same-set optimum: `AnomalyEvaluator` refuses to
+    pick its own threshold on the split it reports on (see the module
+    docstring), and a silent fallback would put the oracle straight back in.
+    `pixel_threshold` is fitted on the same `max_pixels`-subsampled pixels the
+    evaluator will use, so the threshold and the reported `pixel_f1` describe
+    the same pixel sample.
+
+    The thresholds belong to the samples they were fitted on. Passing the test
+    split here re-creates the same-set optimum under another name; pass a
+    split the model was not scored on.
+    """
+
+    import numpy as np
+
+    y_true, y_score, pixel_pairs, _, _ = collect_pairs(samples, predictions)
+
+    image_threshold = None
+    if len(set(y_true)) >= 2:
+        image_threshold = _best_f1_threshold(
+            np.asarray(y_true), np.asarray(y_score, dtype=float)
+        )
+
+    return image_threshold, _best_pixel_f1_threshold(pixel_pairs, max_pixels, seed), len(y_true)
+
+
+def _best_pixel_f1_threshold(
+    pixel_pairs: list[tuple[Any, Any]], max_pixels: int, seed: int,
+) -> float | None:
+    """F1-optimal threshold over the flattened pixels, or `None` when the
+    calibration pixels hold only one class.
+
+    Subsampling mirrors `_pixel_level_metrics` (same cap, same seed, same
+    uniform choice) so a threshold fitted here is fitted on the pixel sample
+    the evaluator would have scored. The class check runs *after* subsampling
+    too: dropping every positive pixel is a real outcome on a sparse mask, and
+    a one-class sample has no F1 optimum to report.
+    """
+
+    import numpy as np
+
+    if not pixel_pairs:
+        return None
+
+    flat_true = np.concatenate([mask.reshape(-1) for mask, _ in pixel_pairs])
+    flat_score = np.concatenate([score_map.reshape(-1) for _, score_map in pixel_pairs])
+    if len(set(flat_true.tolist())) < 2:
+        return None
+
+    rng = np.random.default_rng(seed)
+    if len(flat_true) > max_pixels:
+        idx = rng.choice(len(flat_true), max_pixels, replace=False)
+        flat_true, flat_score = flat_true[idx], flat_score[idx]
+    if len(set(flat_true.tolist())) < 2:
+        return None
+
+    return _best_f1_threshold(flat_true, flat_score)
 
 
 def _load_ground_truth_mask(sample: Sample, target_shape: tuple[int, ...]):

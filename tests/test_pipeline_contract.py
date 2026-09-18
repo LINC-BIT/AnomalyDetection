@@ -343,3 +343,29 @@ def test_anomaly_backends_share_one_evaluate(module_path):
     # None of the four may carry its own copy of predict-then-score.
     assert "evaluate" not in pipeline_cls.__dict__
     assert pipeline_cls.evaluate is AnomalyPipeline.evaluate
+
+
+@pytest.mark.parametrize("package", ["anomalib", "dinomaly", "mambaad", "moeclip"])
+def test_every_anomaly_val_spec_can_build_the_evaluator(package):
+    """`AnomalyPipeline.evaluate` forwards `config.val`'s fields straight into
+    `AnomalyEvaluator(...)`, so a spec missing one of them fails *after* training
+    and prediction have already succeeded. That is exactly how the MambaAD smoke
+    run died — `AttributeError: 'ValSpec' object has no attribute
+    'image_threshold'` — when the evaluator grew its threshold parameters and
+    only anomalib's spec was updated. Pin the set against the evaluator's own
+    signature rather than against a list kept here and forgotten.
+    """
+
+    import dataclasses
+    import inspect
+
+    from fabric_defect_hub.evaluation.anomaly import AnomalyEvaluator
+
+    config_module = pytest.importorskip(f"fabric_defect_hub.models.{package}.config")
+    spec_fields = {field.name for field in dataclasses.fields(config_module.ValSpec)}
+    evaluator_parameters = set(inspect.signature(AnomalyEvaluator.__init__).parameters) - {"self"}
+
+    assert evaluator_parameters <= spec_fields, (
+        f"{package}.ValSpec is missing {sorted(evaluator_parameters - spec_fields)}; "
+        "AnomalyPipeline.evaluate forwards every one of them"
+    )

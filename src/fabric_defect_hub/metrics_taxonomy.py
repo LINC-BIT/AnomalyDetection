@@ -195,6 +195,12 @@ METRIC_SPECS: tuple[MetricSpec, ...] = (
     _spec("peak_memory_mb", "Memory peak", "overhead", "memory", "lower", "MB", 1),
     _spec("avg_memory_mb", "Memory average", "overhead", "memory", "lower", "MB", 1),
     _spec("model_size_mb", "Model size", "overhead", "memory", "lower", "MB", 2),
+    # Not a measurement but the *instrument*: the same "Memory peak" cell can
+    # be PyTorch allocator bytes, whole-process RSS or a TensorRT I/O-buffer
+    # lower bound, and `scoring.py` refuses to rank them against each other
+    # for exactly that reason. Hidden from the table, they read as one
+    # quantity; the column is what makes a memory table interpretable.
+    _spec("memory_measurement_kind", "Memory source", "overhead", "memory"),
     _spec("power_sample_count", "Power samples", "overhead", "compute", precision=0),
     _spec("model_transfer_mb", "Model transfer", "overhead", "compute", "lower", "MB", 2),
     _spec("model_transfer_bytes", "Model transfer bytes", "overhead", "compute", "lower", "B", 0),
@@ -241,7 +247,19 @@ BOOKKEEPING_KEYS: frozenset[str] = frozenset({
     "resolution_sweep_points", "resolution_slope_alpha", "concurrency_probe_points",
     "metric", "mode", "source_value", "k", "selected_patterns", "skipped_patterns",
     "per_pattern_degradation_pct", "traceback_tail",
-    "memory_measurement_kind", "memory_measurement_scope", "memory_cross_engine_comparable",
+    # `memory_measurement_kind` is deliberately *not* here any more: it is a
+    # column of the memory table (see METRIC_SPECS). Scope and comparability
+    # stay bookkeeping -- scope is a longer form of the kind, and every kind
+    # today is `cross_engine_comparable: False`.
+    "memory_measurement_scope", "memory_cross_engine_comparable",
+    # Size of the *exported* artifact, kept beside `model_size_mb` (the
+    # checkpoint) rather than replacing it: the two are different files, and
+    # one column holding whichever was available is how a memory table starts
+    # comparing a 24 MB ONNX export against an 800 MB checkpoint.
+    "exported_model_size_mb",
+    # A diagnostic about the *prediction set*, not a measurement of the
+    # model: read by the benchmark worker to flag a saturated model.
+    "constant_anomaly_scores",
     # `scoring.py`'s blended rankings. Derived *from* the metrics below
     # rather than measured, so they belong to a summary rather than to any
     # one table — listing them here keeps them out of the tables without

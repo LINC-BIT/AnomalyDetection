@@ -17,6 +17,7 @@ Requires the `anomalib` extra: `pip install -e ".[anomalib]"`.
 
 from __future__ import annotations
 
+import contextlib
 import inspect
 import shutil
 import tempfile
@@ -250,6 +251,10 @@ class AnomalibAdapter(ModelAdapter):
         `evaluation.anomaly.AnomalyEvaluator`'s pixel-level metrics
         (pixel AUROC/AUPRO). Omit it to skip that disk write when you only
         need image-level scores.
+
+        `config["raw_anomaly"]` returns the model's own score and map instead
+        of the checkpoint's stored normalization — an evaluation wants that,
+        a display does not. See `_raw_anomaly_predictions`.
         """
 
         if not artifact.metadata.get("trusted", False):
@@ -263,6 +268,11 @@ class AnomalibAdapter(ModelAdapter):
         from lightning.pytorch import Trainer
 
         model = self._load_artifact(artifact)
+        raw_predictions = (
+            _raw_anomaly_predictions(model)
+            if (config or {}).get("raw_anomaly")
+            else contextlib.nullcontext()
+        )
 
         maps_dir = None
         if output_dir is not None:
@@ -311,7 +321,7 @@ class AnomalibAdapter(ModelAdapter):
 
         predictions = []
         progress = ProgressReporter(f"anomalib/{self.name} predict", total=len(samples), unit="img")
-        with progress:
+        with raw_predictions, progress:
             for start in range(0, len(samples), chunk_size):
                 chunk = samples[start : start + chunk_size]
                 loader = _predict_loader(chunk)
@@ -373,8 +383,31 @@ class AnomalibAdapter(ModelAdapter):
         from anomalib.engine import Engine
 
         model = self._load_artifact(artifact)
-        engine = Engine()
-        exported_path = engine.export(model=model, export_type=target)
+        # Anomalib writes its export to `<default_root_dir>/weights/<format>/model.<ext>`,
+        # and a benchmark runs one worker process per GPU in parallel. The
+        # default root is the process CWD, so every anomalib model in a batch
+        # used to export to the *same* `results/weights/onnx/model.onnx`:
+        #
+        #   * two exports racing hand one reader a half-written protobuf —
+        #     `InvalidProtobuf: Load model from results/weights/onnx/model.onnx
+        #     failed: Protobuf parsing failed` (observed 2026-09-18, Reverse
+        #     Distillation; the file parses fine once the run stops, which is
+        #     how a race looks from the outside);
+        #   * a benign ordering is worse: the second export overwrites the first
+        #     before its profiler reads it, so one model is measured as
+        #     another's graph and nothing reports an error at all.
+        #
+        # One directory per export. `tempfile.mkdtemp` rather than a
+        # `TemporaryDirectory`: the artifact has to outlive this call (the
+        # profiler and the resolution sweep read it afterwards), so the system
+        # temp directory owns its lifetime instead.
+        export_root = Path(tempfile.mkdtemp(prefix="fdh-anomalib-export-"))
+        engine = Engine(default_root_dir=str(export_root))
+        exported_path = Path(engine.export(model=model, export_type=target))
+        if not exported_path.is_file():
+            raise FileNotFoundError(
+                f"anomalib reported an export at {exported_path}, which does not exist"
+            )
         return ExportedArtifact(path=str(exported_path), target=target)
 
     # ------------------------------------------------------------------ #
@@ -535,6 +568,47 @@ def _predict_loader(samples: list[Sample]):
     return DataLoader(_SamplePredictDataset(samples), batch_size=1, collate_fn=ImageBatch.collate)
 
 
+@contextlib.contextmanager
+def _raw_anomaly_predictions(model: Any):
+    """Suspend anomalib's stored normalization for one prediction pass.
+
+    Every anomalib checkpoint carries a post-processor with the min/max (and
+    threshold) its *training* validation pass measured, and `predict_step`
+    applies it to every output:
+
+        y = clamp(((x - threshold) / (max - min)) + 0.5, 0, 1)
+
+    That clamp is harmless while the inference-time scores stay inside the
+    stored range — a global affine does not change AUROC/AUPRO/IAP, which is
+    why the healthy models report the same numbers either way. It is *not*
+    harmless once the raw error sits above the ceiling: every pixel of every
+    image then lands on exactly 1.0, every `pred_score` becomes exactly 1.0,
+    and the evaluator faithfully reports AUROC 0.5, AUPRO 0.0 and an IAP equal
+    to the dataset's positive-pixel ratio for a model that may be perfectly
+    discriminative (observed 2026-09-17: Reverse Distillation and
+    SuperSimpleNet, whose stored ceilings are raw >= 1.96 and >= 0.70 and whose
+    saved maps were byte-identical all-ones tensors).
+
+    An evaluation wants the model's own ranking, not a training-time rescale
+    of it, and the thresholded metrics come from the benchmark's own
+    train-split calibration (`evaluation.anomaly.calibrate_thresholds`), so
+    the stored normalization has nothing left to contribute. Display paths
+    keep it: it is what makes a heat map renderable.
+    """
+
+    post_processor = getattr(model, "post_processor", None)
+    if post_processor is None or not hasattr(post_processor, "enable_normalization"):
+        yield
+        return
+
+    previous = post_processor.enable_normalization
+    post_processor.enable_normalization = False
+    try:
+        yield
+    finally:
+        post_processor.enable_normalization = previous
+
+
 def _patch_winclip_open_clip_layout(model: Any) -> None:
     """Adapt anomalib 2.5 WinCLIP to OpenCLIP's batch-first transformer.
 
@@ -582,7 +656,13 @@ def _load_checkpoint(model_cls, path: str):
     unsafe raw-checkpoint load in `load_trained_model()`.
     """
 
-    load_kwargs: dict[str, Any] = {"weights_only": False}
+    # `map_location="cpu"`: these checkpoints are GPU-saved, so the default
+    # would materialize the whole state dict on whichever CUDA device the
+    # training run happened to use — before this worker has even pinned its
+    # own device, and on a host that may expose a different GPU set than the
+    # one that saved it. Restoring on the CPU and letting Lightning move the
+    # finished model is deterministic and costs one copy.
+    load_kwargs: dict[str, Any] = {"weights_only": False, "map_location": "cpu"}
     if "pre_trained" in inspect.signature(model_cls).parameters:
         # A trained Lightning checkpoint already contains the feature extractor.
         # Avoid an unnecessary network request before those weights are restored.

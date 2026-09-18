@@ -18,6 +18,7 @@ from fabric_defect_hub.models.anomalib.adapter import (
     AnomalibAdapter,
     _patch_winclip_open_clip_layout,
     _prediction_engine_kwargs,
+    _raw_anomaly_predictions,
 )
 from fabric_defect_hub.models.anomalib.config import AnomalibConfig
 from fabric_defect_hub.models.anomalib.presets import (
@@ -309,3 +310,79 @@ def test_winclip_keeps_legacy_openclip_window_path():
     _patch_winclip_open_clip_layout(model)
 
     assert not hasattr(torch_model, "_get_window_embeddings")
+
+
+def test_raw_anomaly_predictions_suspend_and_restore_the_stored_normalization():
+    """The checkpoint's post-processor rescales every map with the min/max its
+    training validation measured, then clamps — which turns a raw error above
+    that ceiling into a byte-identical all-ones map (`AUROC 0.5, AUPRO 0.0`).
+    An evaluation asks for the model's own scores instead; a display keeps the
+    normalized ones, so the flag has to be restored."""
+
+    post_processor = SimpleNamespace(enable_normalization=True)
+    model = SimpleNamespace(post_processor=post_processor)
+
+    with _raw_anomaly_predictions(model):
+        assert post_processor.enable_normalization is False
+
+    assert post_processor.enable_normalization is True
+
+
+def test_raw_anomaly_predictions_restore_after_a_failure():
+    post_processor = SimpleNamespace(enable_normalization=True)
+    model = SimpleNamespace(post_processor=post_processor)
+
+    with pytest.raises(RuntimeError):
+        with _raw_anomaly_predictions(model):
+            raise RuntimeError("predict blew up")
+
+    assert post_processor.enable_normalization is True
+
+
+def test_raw_anomaly_predictions_tolerate_a_model_without_one():
+    """Export-based backends and any future anomalib model without the
+    one-class post-processor must pass through untouched."""
+
+    with _raw_anomaly_predictions(SimpleNamespace()):
+        pass
+
+
+def test_each_anomalib_export_gets_its_own_directory(monkeypatch):
+    """Anomalib writes `<default_root_dir>/weights/<format>/model.<ext>`, so a
+    shared root makes every worker in a parallel benchmark export to the same
+    file: two exports racing hand one reader a half-written protobuf
+    (`InvalidProtobuf: Protobuf parsing failed`, observed on Reverse
+    Distillation 2026-09-18), and a benign ordering silently profiles one
+    model as another's graph."""
+
+    import sys
+    from pathlib import Path
+
+    from fabric_defect_hub.models.base import Artifact
+
+    roots: list[str | None] = []
+
+    class FakeEngine:
+        def __init__(self, default_root_dir=None, **kwargs):
+            roots.append(default_root_dir)
+            self.root = Path(default_root_dir)
+
+        def export(self, model, export_type):
+            path = self.root / "weights" / export_type / f"model.{export_type}"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"graph")
+            return str(path)
+
+    monkeypatch.setitem(sys.modules, "anomalib.engine", SimpleNamespace(Engine=FakeEngine))
+    adapter = AnomalibAdapter(name="PatchCore")
+    monkeypatch.setattr(adapter, "_load_artifact", lambda artifact: SimpleNamespace())
+    artifact = Artifact(path="ckpt.ckpt", backend="anomalib", metadata={"trusted": True})
+
+    first = adapter.export(artifact, "onnx")
+    second = adapter.export(artifact, "onnx")
+
+    assert first.path != second.path
+    assert Path(first.path).is_file()
+    assert Path(second.path).is_file()
+    assert len(set(roots)) == 2, roots
+    assert all(root and Path(root) != Path.cwd() for root in roots), roots

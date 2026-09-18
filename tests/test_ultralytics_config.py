@@ -8,7 +8,7 @@ training, so they stay in the default test suite.
 import pytest
 
 from fabric_defect_hub.core.types import Annotations, Sample
-from fabric_defect_hub.models.ultralytics.adapter import UltralyticsAdapter
+from fabric_defect_hub.models.ultralytics.adapter import UltralyticsAdapter, prediction_kwargs
 from fabric_defect_hub.models.ultralytics.config import UltralyticsConfig, resolve_variant_profile
 from fabric_defect_hub.models.ultralytics.presets import (
     default_train_kwargs,
@@ -177,3 +177,43 @@ def test_predict_streams_ultralytics_results():
 
     assert adapter._model.kwargs["stream"] is True
     assert [prediction.sample_id for prediction in predictions] == ["one", "two"]
+
+
+def test_ultralytics_never_sees_the_shared_config_keys_it_rejects():
+    """`run_experiment` builds one backend-agnostic predict config, and
+    ultralytics raises `SyntaxError: '<key>' is not a valid YOLO argument` for
+    anything it does not define — which turned every YOLO row into a failure
+    the moment the evaluation started asking for a confidence floor
+    (`score_threshold`) and, for the anomaly backends, raw predictions
+    (`raw_anomaly`)."""
+
+    kwargs = prediction_kwargs({
+        "device": "cuda:0",
+        "score_threshold": 0.001,
+        "raw_anomaly": True,
+        "imgsz": 640,
+    })
+
+    assert kwargs == {"device": "cuda:0", "conf": 0.001, "imgsz": 640}
+
+
+def test_the_explicit_ultralytics_confidence_wins():
+    """`conf` is ultralytics' own name; a caller that set it was not asking for
+    the generic floor."""
+
+    kwargs = prediction_kwargs({"conf": 0.25, "score_threshold": 0.001})
+
+    assert kwargs == {"conf": 0.25}
+
+
+def test_real_ultralytics_keys_and_typos_are_left_alone():
+    """A typo among the adapter's own keys must still fail loudly in
+    ultralytics rather than being silently swallowed here."""
+
+    kwargs = prediction_kwargs({"iou": 0.5, "conf_": 0.25, "max_det": 300})
+
+    assert kwargs == {"iou": 0.5, "conf_": 0.25, "max_det": 300}
+
+
+def test_an_empty_config_stays_empty():
+    assert prediction_kwargs(None) == {}

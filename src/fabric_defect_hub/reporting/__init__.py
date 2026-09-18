@@ -70,17 +70,20 @@ def _flatten(result: ExperimentResult, columns: list[str]) -> dict[str, object]:
     return {column: row.get(column, "") for column in columns}
 
 
-def append_run_log(result: ExperimentResult, path: str | Path) -> Path:
+def append_jsonl(record: dict, path: str | Path) -> Path:
+    """Append one JSON object to a shared JSONL file, under an exclusive lock.
+
+    Benchmark models are scored in separate processes (see
+    `application.benchmark_worker`), so records can arrive at the same instant.
+    An append is normally one `write` and lands whole, but a line longer than
+    the stream buffer can split — and one interleaved line makes a reader raise
+    for the *whole* file, not just that record.
+    """
+
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    row = {**experiment_result_to_dict(result), "provenance": collect_provenance()}
-    line = json.dumps(row, ensure_ascii=False, allow_nan=False) + "\n"
+    line = json.dumps(record, ensure_ascii=False, allow_nan=False) + "\n"
     with path.open("a", encoding="utf-8") as file:
-        # Benchmark models are scored in separate processes (see
-        # `application.benchmark_worker`), so rows can arrive at the same instant.
-        # An append is normally one `write` and lands whole, but a line longer
-        # than the stream buffer can split — and one interleaved line makes
-        # `read_run_log` raise for the *whole* file, not just that row.
         if fcntl is None:  # pragma: no cover - Windows has no fcntl
             file.write(line)
         else:
@@ -90,6 +93,21 @@ def append_run_log(result: ExperimentResult, path: str | Path) -> Path:
             finally:
                 fcntl.flock(file.fileno(), fcntl.LOCK_UN)
     return path
+
+
+def append_run_log(result: ExperimentResult, path: str | Path) -> Path:
+    """Append one *scored experiment* to the run log.
+
+    Accuracy only, and by design: this is the record `read_run_log` /
+    `flatten_run_log_rows` turn into the Run History table, one row per model
+    per run. The Benchmark tab's full row — overhead metrics, calibration
+    notes, composite-score inputs — is a different record; see
+    `application.benchmark.DEFAULT_BENCHMARK_ROW_LOG`.
+    """
+
+    return append_jsonl(
+        {**experiment_result_to_dict(result), "provenance": collect_provenance()}, path
+    )
 
 
 def read_run_log(path: str | Path) -> list[dict]:
@@ -154,6 +172,7 @@ def _markdown(columns: list[str], rows: list[dict[str, object]]) -> str:
 __all__ = [
     "save_leaderboard",
     "append_run_log",
+    "append_jsonl",
     "read_run_log",
     "flatten_run_log_rows",
     "latest_run_per_model",

@@ -86,6 +86,58 @@ from fabric_defect_hub.models.mambaad.data import ImageOnlyDataset
 
 
 @register_model("mambaad")
+def _out_of_memory_hint(kwargs: dict[str, Any], iterations_done: int) -> str:
+    """Turn a CUDA OOM into the number that caused it and the knob that fixes it.
+
+    MambaAD's decoder keeps one full-resolution map per Hilbert direction per
+    level, so its memory is dominated by
+    `batch_size x dims_decoder[0] x image_size^2`: at the shipped batch of 16 and
+    256 px a single activation is 2 GiB (`16 * 512 * 256 * 256 * 4` bytes) and a
+    real run was measured at ~73 GiB before the allocator gave up. A bare
+    traceback communicates none of that, so state it with this run's numbers.
+    """
+
+    batch = int(kwargs.get("batch_size") or 0)
+    size = int(kwargs.get("image_size") or 0)
+    dims = [int(value) for value in (kwargs.get("dims_decoder") or [])]
+    widest = max(dims) if dims else 0
+    per_activation = (batch * widest * size * size * 4) / (1024 ** 3) if batch and widest and size else 0.0
+    smaller = max(1, batch // 4) if batch else 1
+    return (
+        f"CUDA ran out of memory after {iterations_done} iteration(s) at "
+        f"batch_size={batch}, image_size={size} (one activation at the widest decoder level is "
+        f"about {per_activation:.1f} GiB, and the decoder holds several per Hilbert direction). "
+        f"Retry with a smaller batch: --set train.batch_size={smaller} "
+        f"(or a smaller image_size, a power-of-two multiple of 32). "
+        f"PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True can help with fragmentation."
+    )
+
+
+def _amp_settings(precision: Any, device: Any) -> tuple[bool, Any, bool]:
+    """`(enabled, dtype, use_grad_scaler)` for the training loop.
+
+    Mirrors `models/torchvision/engine.py`: mixed precision only on CUDA, where
+    the tensor cores are, and only when asked for. bf16 is the useful one here —
+    no loss scaling, and half the activation memory — while fp16 is opt-in and
+    does need a `GradScaler`. Anything else, or any non-CUDA device, is plain
+    fp32: silently changing numerics on MPS/CPU would make a run's numbers
+    incomparable with the fp32 ones this project publishes.
+    """
+
+    import torch
+
+    name = str(precision or "fp32").lower()
+    if name == "bf16":
+        dtype, scaler = torch.bfloat16, False
+    elif name == "fp16":
+        dtype, scaler = torch.float16, True
+    else:
+        return False, torch.float32, False
+    if getattr(device, "type", str(device)) != "cuda":
+        return False, torch.float32, False
+    return True, dtype, scaler
+
+
 class MambaADAdapter(ModelAdapter):
     """Wraps the reimplemented MambaAD network (frozen `timm` teacher +
     `MultiScaleFusion` + `MambaUPNet`).
@@ -380,27 +432,45 @@ class MambaADAdapter(ModelAdapter):
                 return max(base_lr * decay_rate, min_lr)
             return base_lr
 
+        requested_precision = str(kwargs.get("precision") or "fp32").lower()
+        amp_enabled, amp_dtype, use_scaler = _amp_settings(requested_precision, device)
+        scaler = torch.amp.GradScaler(device="cuda", enabled=use_scaler)
+        effective_precision = requested_precision if amp_enabled else "fp32"
+
         it = 0
-        with ProgressReporter(f"mambaad/{self.encoder_name} train", total=total_iters) as progress:
-            while it < total_iters:
-                for images in loader:
-                    images = images.to(device)
-                    for group in optimizer.param_groups:
-                        group["lr"] = lr_at(it)
+        try:
+            with ProgressReporter(f"mambaad/{self.encoder_name} train", total=total_iters) as progress:
+                while it < total_iters:
+                    for images in loader:
+                        images = images.to(device)
+                        for group in optimizer.param_groups:
+                            group["lr"] = lr_at(it)
 
-                    teacher_features, student_features = model(images)
-                    loss = self._reconstruction_loss(
-                        teacher_features, student_features, lam=float(kwargs["loss_lambda"])
-                    )
+                        with torch.autocast(
+                            device_type=device.type, dtype=amp_dtype, enabled=amp_enabled
+                        ):
+                            teacher_features, student_features = model(images)
+                            loss = self._reconstruction_loss(
+                                teacher_features, student_features, lam=float(kwargs["loss_lambda"])
+                            )
 
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
+                        optimizer.zero_grad()
+                        # A disabled scaler is a documented no-op passthrough, so
+                        # the fp32 path runs through exactly the same three calls.
+                        scaler.scale(loss).backward()
+                        scaler.step(optimizer)
+                        scaler.update()
 
-                    it += 1
-                    progress.update(loss=loss.detach().item(), lr=optimizer.param_groups[0]["lr"])
-                    if it >= total_iters:
-                        break
+                        it += 1
+                        progress.update(loss=loss.detach().item(), lr=optimizer.param_groups[0]["lr"])
+                        if it >= total_iters:
+                            break
+        except Exception as exc:
+            # A CUDA OOM here is a configuration problem, and the traceback says
+            # nothing about which knob to turn. See `_out_of_memory_hint`.
+            if "out of memory" not in str(exc).lower():
+                raise
+            raise RuntimeError(_out_of_memory_hint(kwargs, it)) from exc
 
         work_dir = Path(config.get("work_dir") or tempfile.mkdtemp(prefix="fdh_mambaad_"))
         work_dir.mkdir(parents=True, exist_ok=True)
@@ -425,7 +495,8 @@ class MambaADAdapter(ModelAdapter):
                 # No scheduler object exists; the schedule is the inline
                 # `lr_at` above (upstream's warmup + step decay).
                 "training": describe_training(
-                    optimizer, "linear-warmup+step-decay (upstream schedule)"
+                    optimizer, "linear-warmup+step-decay (upstream schedule)",
+                    precision=effective_precision,
                 ),
                 "batch_spec": dataset.batch_spec().as_run_metadata(),
                 **parameter_counts(model),

@@ -40,3 +40,21 @@ def resolve_torch_device(requested: str | None = "auto") -> str:
             "Use --device auto, --device cpu, or run on a CUDA-enabled host."
         )
     raise ValueError("device must be one of auto, cpu, mps, cuda, or cuda:<index>")
+
+
+def available_torch_devices() -> list[str]:
+    """Every device a one-worker-per-device fan-out should use.
+
+    CUDA hosts get `cuda:0..N-1`, one worker each. MPS and CPU get exactly one
+    entry: a second worker on the same device competes for the same memory and
+    the same compute, so `--jobs` defaults to this list's length and a laptop or
+    a CPU host stays sequential without the caller having to know which it is.
+    """
+
+    import torch
+
+    if torch.cuda.is_available():
+        return [f"cuda:{index}" for index in range(torch.cuda.device_count())]
+    if torch.backends.mps.is_available():
+        return ["mps"]
+    return ["cpu"]

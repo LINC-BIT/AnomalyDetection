@@ -198,3 +198,164 @@ def test_pixel_level_subsampling_is_deterministic_for_same_seed(tmp_path):
     metrics_1 = AnomalyEvaluator(max_pixels=100, max_aupro_images=2, seed=7).evaluate(samples, predictions)
     metrics_2 = AnomalyEvaluator(max_pixels=100, max_aupro_images=2, seed=7).evaluate(samples, predictions)
     assert metrics_1 == metrics_2
+
+
+def test_calibration_fits_a_threshold_the_test_split_never_saw():
+    """The threshold comes from a *calibration* split and is then handed to
+    the evaluator that scores a different one -- the only way
+    `image_f1`/`precision`/`recall` can be reported without the evaluator
+    falling back to the same-set optimum it refuses to pick itself."""
+
+    from fabric_defect_hub.evaluation.anomaly import calibrate_thresholds
+
+    samples, predictions = _image_level_dataset()
+    threshold, pixel_threshold, scored = calibrate_thresholds(samples, predictions)
+
+    assert scored == 4
+    # Every defective score sits above every normal one, so an F1-optimal
+    # threshold lands inside the gap.
+    assert 0.2 < threshold <= 0.9
+    # These predictions carry no anomaly map, so there are no pixels to fit.
+    assert pixel_threshold is None
+
+    scored_metrics = AnomalyEvaluator(image_threshold=threshold).evaluate(samples, predictions)
+    assert scored_metrics["image_f1"] == 1.0
+    assert scored_metrics["image_precision"] == 1.0
+    assert scored_metrics["image_recall"] == 1.0
+    assert scored_metrics["image_threshold"] == threshold
+
+
+def test_calibration_fits_a_pixel_threshold_from_the_anomaly_maps(tmp_path):
+    """`pixel_f1` has the same problem `image_f1` had: it needs a threshold,
+    and the evaluator will not fit one on the split it reports on. The
+    calibration pass flattens the same pixels the evaluator will score."""
+
+    from fabric_defect_hub.evaluation.anomaly import calibrate_thresholds
+
+    samples, predictions = _mixed_pixel_dataset(tmp_path)
+    image_threshold, pixel_threshold, scored = calibrate_thresholds(samples, predictions)
+
+    assert scored == 6
+    assert image_threshold is not None
+    # The defect regions are scored above the rest, so a separating pixel
+    # threshold exists.
+    assert pixel_threshold is not None
+
+    metrics = AnomalyEvaluator(pixel_threshold=pixel_threshold).evaluate(samples, predictions)
+    assert metrics["pixel_f1"] > 0.9
+    assert 0.0 <= metrics["pixel_auroc"] <= 1.0
+
+
+def test_calibration_reports_no_pixel_threshold_for_a_single_class_calibration_set(tmp_path):
+    """A normal-only calibration split has no defective pixels, so the pixel
+    threshold cannot be fitted even when the maps are there."""
+
+    from fabric_defect_hub.evaluation.anomaly import calibrate_thresholds
+
+    samples, predictions = _mixed_pixel_dataset(tmp_path)
+    normal_only = [s for s in samples if not s.annotations.is_anomalous]
+    normal_ids = {s.id for s in normal_only}
+    normal_predictions = [p for p in predictions if p.sample_id in normal_ids]
+
+    image_threshold, pixel_threshold, scored = calibrate_thresholds(normal_only, normal_predictions)
+    assert image_threshold is None
+    assert pixel_threshold is None
+    assert scored == len(normal_only)
+
+
+def test_calibration_refuses_a_single_class_split():
+    """MVTec AD and the flat-folder datasets hand out normal-only training
+    images: nothing separates, so the caller is told `None` and has to leave
+    the thresholded metrics unmeasured rather than publish a made-up 0.5."""
+
+    from fabric_defect_hub.evaluation.anomaly import calibrate_thresholds
+
+    samples = [
+        Sample(id="a", image_path="a.jpg", task="anomaly", annotations=Annotations(is_anomalous=False)),
+        Sample(id="b", image_path="b.jpg", task="anomaly", annotations=Annotations(is_anomalous=False)),
+    ]
+    predictions = [
+        Prediction(sample_id="a", anomaly_score=0.9),
+        Prediction(sample_id="b", anomaly_score=0.1),
+    ]
+
+    threshold, pixel_threshold, scored = calibrate_thresholds(samples, predictions)
+    assert threshold is None
+    # No anomaly maps were supplied either, so the pixel threshold is
+    # unmeasured for the same reason.
+    assert pixel_threshold is None
+    assert scored == 2
+
+
+def test_calibration_ignores_predictions_with_no_usable_score():
+    """A missing or non-finite score cannot vote on a threshold; counting it
+    as a normal image (score 0) would drag the fitted threshold down."""
+
+    from fabric_defect_hub.evaluation.anomaly import calibrate_thresholds
+
+    samples = [
+        Sample(id="a", image_path="a.jpg", task="anomaly", annotations=Annotations(is_anomalous=True)),
+        Sample(id="b", image_path="b.jpg", task="anomaly", annotations=Annotations(is_anomalous=False)),
+        Sample(id="c", image_path="c.jpg", task="anomaly", annotations=Annotations(is_anomalous=True)),
+        Sample(id="d", image_path="d.jpg", task="anomaly", annotations=Annotations(is_anomalous=False)),
+    ]
+    predictions = [
+        Prediction(sample_id="a", anomaly_score=0.9),
+        Prediction(sample_id="b", anomaly_score=0.1),
+        Prediction(sample_id="c", anomaly_score=float("nan")),
+        Prediction(sample_id="d", anomaly_score=None),
+    ]
+
+    threshold, _pixel_threshold, scored = calibrate_thresholds(samples, predictions)
+    assert scored == 2  # the two usable scores, not four
+    assert 0.1 < threshold <= 0.9
+
+
+def test_a_saturated_prediction_set_is_reported_not_scored():
+    """One score for every image is a model whose output saturated, not a
+    model that scores 0.5 AUROC. The evaluator cannot fix that, but it can
+    refuse to let it pass for a measurement."""
+
+    from fabric_defect_hub.evaluation.anomaly import DEGENERATE_SCORE_MIN_SAMPLES
+
+    count = DEGENERATE_SCORE_MIN_SAMPLES + 2
+    samples = [
+        Sample(
+            id=f"s{i}", image_path=f"{i}.jpg", task="anomaly",
+            annotations=Annotations(is_anomalous=bool(i % 2)),
+        )
+        for i in range(count)
+    ]
+    saturated = [Prediction(sample_id=s.id, anomaly_score=1.0) for s in samples]
+    varying = [
+        Prediction(sample_id=s.id, anomaly_score=0.9 if s.annotations.is_anomalous else 0.1)
+        for s in samples
+    ]
+
+    saturated_metrics = AnomalyEvaluator().evaluate(samples, saturated)
+    varying_metrics = AnomalyEvaluator().evaluate(samples, varying)
+
+    assert saturated_metrics["constant_anomaly_scores"] == float(count)
+    # AUROC is still 0.5 and AUPRO/IAP are absent here -- the point of the
+    # flag is that those numbers must not be read as a measurement.
+    assert saturated_metrics["image_auroc"] == 0.5
+    assert "constant_anomaly_scores" not in varying_metrics
+    assert varying_metrics["image_auroc"] == 1.0
+
+
+def test_a_small_tied_prediction_set_is_not_called_saturated():
+    """Two images can legitimately share a score; that is not a diagnosis."""
+
+    from fabric_defect_hub.evaluation.anomaly import DEGENERATE_SCORE_MIN_SAMPLES
+
+    count = DEGENERATE_SCORE_MIN_SAMPLES - 1
+    samples = [
+        Sample(
+            id=f"s{i}", image_path=f"{i}.jpg", task="anomaly",
+            annotations=Annotations(is_anomalous=bool(i % 2)),
+        )
+        for i in range(count)
+    ]
+    tied = [Prediction(sample_id=s.id, anomaly_score=0.5) for s in samples]
+
+    assert "constant_anomaly_scores" not in AnomalyEvaluator().evaluate(samples, tied)

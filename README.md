@@ -482,11 +482,13 @@ Evaluates the image as a whole.
     <tr><td>Image F1</td><td>F1 of the thresholded image decision.</td></tr>
     <tr><td>Image Precision</td><td>Share of the images called defective that are defective.</td></tr>
     <tr><td>Image Recall</td><td>Share of the defective images that are called.</td></tr>
-    <tr><td>Decision threshold</td><td>The threshold the decision was taken at. It is calibrated on a validation set.</td></tr>
+    <tr><td>Decision threshold</td><td>The threshold the decision was taken at. With **Calibrate decision thresholds on the training split** ticked it is fitted on that split (the pixel threshold comes from the same pass), which scoring never touches; detection models instead use their fixed score threshold, and without calibration the thresholded image metrics stay unmeasured.</td></tr>
     <tr><td>AUROC</td><td>The unprefixed AUROC key some runs record for the same curve.</td></tr>
     <tr><td>AP</td><td>Average precision of the same image-level ranking.</td></tr>
   </tbody>
 </table>
+
+Benchmark runs score the model's **own** scores and anomaly maps, not the stored normalization an Anomalib checkpoint also carries. That stored affine (min/max measured during training) is clamped to `[0, 1]`, so once a raw error rises above the stored ceiling every pixel of every image clamps to the same value and the row reports a meaningless `AUROC 0.5 / AUPRO 0.0` for a model that may discriminate perfectly well. The interactive pages still use it, because it is what makes a heat map renderable.
 
 #### 3.3.2 Technical Metrics: Pixel level
 
@@ -503,7 +505,7 @@ Evaluates the classification result of every pixel.
     <tr><td>Pixel AUROC</td><td>Ranking quality over individual pixels, defective vs normal.</td></tr>
     <tr><td>AUPRO</td><td>Area under the per-region overlap curve, capped at a maximum false-positive rate.</td></tr>
     <tr><td>IAP</td><td>Instance Average Precision: each connected defect region gets its own precision/recall integral, and the regions are averaged with equal weight.</td></tr>
-    <tr><td>Pixel F1</td><td>F1 over pixels at the calibrated pixel threshold.</td></tr>
+    <tr><td>Pixel F1</td><td>F1 over pixels at the calibrated pixel threshold. The threshold is fitted by **Calibrate decision thresholds on the training split**, so without it this stays unmeasured for anomaly models; segmentation models need no threshold and report it from their mask.</td></tr>
     <tr><td>mIoU</td><td>Mean intersection-over-union of predicted and ground-truth masks (segmentation).</td></tr>
     <tr><td>Dice</td><td>Dice coefficient of predicted and ground-truth masks.</td></tr>
     <tr><td>PRO score</td><td>Per-region overlap up to a maximum false-positive rate; strict on microscopic and connected defect regions.</td></tr>
@@ -737,7 +739,7 @@ Please follow the steps below to perform benchmarking:
 
 -  **Configure Dataset and Sampling Parameters:** Select the **Dataset**, **Texture / pattern**, and **Sample regime (test split)** you wish to test.
 - **Select Models and Metrics:** Check the model(s) to be evaluated and select your desired evaluation metrics.
-- **Configure Advanced Options (Optional):** Check **Include profiling**, **Include resolution sweep**, or select a **Cross-domain degradation target dataset** as needed.
+- **Configure Advanced Options (Optional):** Check **Include profiling**, **Include resolution sweep**, **Calibrate decision thresholds on the training split**, or select a **Cross-domain degradation target dataset** as needed.
 - **Run Benchmark:** Once all settings are configured, click **Run benchmark** and wait for the system to generate results.
 
 Check the Results:

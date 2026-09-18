@@ -374,7 +374,7 @@ class UltralyticsAdapter(ModelAdapter):
         if artifact is not None and self._loaded_from != artifact.path:
             self.load_weights(artifact.path)
 
-        cfg = dict(config or {})
+        cfg = prediction_kwargs(config)
         if cfg.pop("tta_mode", None) == "flip_multiscale":
             cfg["augment"] = True
         tiling = cfg.pop("tiling", False)
@@ -515,6 +515,33 @@ class UltralyticsAdapter(ModelAdapter):
             return resolve_variant(self.name)
         except KeyError:
             return str(self.name)
+
+
+def prediction_kwargs(config: dict[str, Any] | None) -> dict[str, Any]:
+    """The subset of a shared predict config that `ultralytics` accepts.
+
+    `ultralytics` validates its keyword arguments and raises
+    `SyntaxError: '<key>' is not a valid YOLO argument` for anything it does
+    not define, so the backend-agnostic config `run_experiment` builds for an
+    evaluation cannot be splatted straight through:
+
+    * `raw_anomaly` is an anomalib-only flag (the stored-normalization switch);
+      `ultralytics` has no notion of it and must never see it;
+    * `score_threshold` is the *generic* name for the confidence floor
+      (`EVALUATION_CONFIDENCE`), and `ultralytics`' own name for the same
+      quantity is `conf` — translated rather than dropped, so an evaluation
+      gets its low floor either way.
+
+    Everything else passes through untouched: a caller's `conf`, `iou`,
+    `imgsz`, `max_det`, `device`, ... are all real ultralytics keys, and a
+    typo among them should still fail loudly.
+    """
+
+    kwargs = dict(config or {})
+    kwargs.pop("raw_anomaly", None)
+    if "score_threshold" in kwargs:
+        kwargs.setdefault("conf", kwargs.pop("score_threshold"))
+    return kwargs
 
 
 def _box_iou(first: list[float], second: list[float]) -> float:

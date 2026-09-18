@@ -194,6 +194,15 @@ class ValSpec:
     max_pixels: int = 1_000_000
     max_aupro_images: int = 50
     seed: int = 0
+    # `AnomalyPipeline.evaluate` forwards these straight to
+    # `AnomalyEvaluator(...)`; without them a run crashed at the evaluation
+    # step with `AttributeError: 'ValSpec' object has no attribute
+    # 'image_threshold'` -- the evaluator grew the parameters and only
+    # anomalib's spec was updated. `tests/test_pipeline_contract.py` now pins
+    # the whole set against the evaluator's signature.
+    image_threshold: float | None = None
+    pixel_threshold: float | None = None
+    allow_oracle_threshold: bool = False
 
 
 @dataclass

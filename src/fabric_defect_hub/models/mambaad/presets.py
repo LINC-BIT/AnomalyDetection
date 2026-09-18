@@ -89,6 +89,13 @@ DEFAULT_TRAIN_KWARGS: dict[str, Any] = {
     # `lr_min = lr/100`. Expressed here as fractions of `total_iters`.
     "decay_at": 0.8,
     "decay_rate": 0.1,
+    # "fp32" | "bf16" | "fp16" — mixed precision for the training forward only
+    # (prediction stays fp32). On a CUDA host bf16 roughly halves activation
+    # memory and is several times faster on A100/H100-class tensor cores, which
+    # matters here because one activation at batch 16 / 256 px is already 2 GiB
+    # (`_out_of_memory_hint` prints that arithmetic when a run does OOM). fp16
+    # needs a GradScaler; bf16 does not.
+    "precision": "fp32",
 }
 
 

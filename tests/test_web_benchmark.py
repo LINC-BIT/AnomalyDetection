@@ -25,7 +25,12 @@ import torch.nn as nn
 from fabric_defect_hub.core.registry import register_dataset, register_model
 from fabric_defect_hub.core.types import Annotations, Prediction, Sample
 from fabric_defect_hub.datasets.base import DatasetAdapter
-from fabric_defect_hub.models.base import ExportedArtifact, ModelAdapter, ModelCapabilities
+from fabric_defect_hub.models.base import (
+    Artifact,
+    ExportedArtifact,
+    ModelAdapter,
+    ModelCapabilities,
+)
 from fabric_defect_hub.application import benchmark as web_benchmark
 
 MODEL_LABEL = "Fake Model"
@@ -195,6 +200,77 @@ def test_run_benchmark_with_profiling_adds_overhead_metrics_and_scores(monkeypat
     assert row[columns.index("fps")] > 0
     assert row[columns.index("overhead_score")] != ""
     assert row[columns.index("composite_score")] != ""
+
+
+def test_calibrating_thresholds_fills_the_thresholded_image_metrics(monkeypatch, tmp_path):
+    """Anomaly models report `image_auroc` and nothing else by default: the
+    evaluator will not pick its own threshold on the split it reports on.
+    Ticking the calibration box scores the dataset's *training* split first,
+    fits the threshold there, and hands it to the test-split evaluation --
+    which is what makes image F1 / precision / recall appear at all."""
+
+    _install_fake_catalog(monkeypatch, tmp_path)
+
+    *_, (columns, rows, status, scored) = web_benchmark.run_benchmark(
+        "Fake Dataset", "All textures", "Full-shot", [MODEL_LABEL],
+        run_log_path=None, calibrate_thresholds=True,
+    )
+
+    for metric in ("image_threshold", "image_f1", "image_precision", "image_recall"):
+        assert metric in columns, metric
+    row = rows[0]
+    assert row[columns.index("image_f1")] != ""
+    assert row[columns.index("image_threshold")] != ""
+    assert "calibrated on" in status
+
+
+def test_calibration_is_off_unless_asked_for(monkeypatch, tmp_path):
+    """It costs a second inference pass and moves the reported numbers, so a
+    plain run must not start measuring thresholded metrics behind the
+    operator's back."""
+
+    _install_fake_catalog(monkeypatch, tmp_path)
+
+    *_, (columns, rows, status, scored) = web_benchmark.run_benchmark(
+        "Fake Dataset", "All textures", "Full-shot", [MODEL_LABEL],
+        run_log_path=None,
+    )
+
+    for metric in ("image_threshold", "image_f1", "image_precision", "image_recall"):
+        assert metric not in columns, metric
+    assert "calibrated on" not in status
+
+
+def test_a_single_class_calibration_split_is_a_note_not_a_row_failure(monkeypatch, tmp_path):
+    """MVTec AD and the flat-folder datasets train on normal images only, so
+    their training split cannot separate the two classes. That forfeits the
+    thresholded columns and says so -- it must never cost the model its
+    accuracy row."""
+
+    _install_fake_catalog(monkeypatch, tmp_path)
+
+    def load_samples_by_split(self):
+        anomalous = self.split != "train"  # training split: normal-only
+        return [
+            Sample(
+                id=f"{self.split}-{i:04d}", image_path=f"{self.root}/{i:04d}.jpg", task="anomaly",
+                annotations=Annotations(is_anomalous=anomalous and bool(i % 2)),
+            )
+            for i in range(4)
+        ]
+
+    monkeypatch.setattr(_FakeWebBenchDataset, "load_samples", load_samples_by_split)
+
+    *_, (columns, rows, status, scored) = web_benchmark.run_benchmark(
+        "Fake Dataset", "All textures", "Full-shot", [MODEL_LABEL],
+        run_log_path=None, calibrate_thresholds=True,
+    )
+
+    assert rows[0][columns.index("model")] == MODEL_LABEL
+    assert "image_auroc" in columns
+    assert "image_f1" not in columns
+    assert "only one class" in status
+    assert "threshold calibration skipped" not in status
 
 
 def test_run_benchmark_keeps_accuracy_and_measures_natively_when_export_is_unsupported(monkeypatch, tmp_path):
@@ -536,8 +612,11 @@ def test_spawned_worker_gets_the_payload_on_stdin(monkeypatch, tmp_path):
         recorded["kwargs"] = kwargs
         return _RecordingProcess()
 
+    from fabric_defect_hub.core.processes import WorkerRegistry, child_dies_with_parent
+
+    registry = WorkerRegistry("test")
+    monkeypatch.setattr(web_benchmark, "_BENCHMARK_WORKERS", registry)
     monkeypatch.setattr(web_benchmark.subprocess, "Popen", fake_popen)
-    monkeypatch.setattr(web_benchmark, "_LIVE_WORKERS", set())
     process = web_benchmark._spawn_worker(
         {"model_label": "M"}, tmp_path / "result.json", {"PATH": "/usr/bin"}
     )
@@ -547,29 +626,31 @@ def test_spawned_worker_gets_the_payload_on_stdin(monkeypatch, tmp_path):
         assert json.loads(recorded["payload"])["model_label"] == "M"
         assert recorded["closed"] is True
         if sys.platform.startswith("linux"):
-            assert recorded["kwargs"]["preexec_fn"] is web_benchmark._child_setup
-        assert process in web_benchmark._LIVE_WORKERS
+            assert recorded["kwargs"]["preexec_fn"] is child_dies_with_parent
+        assert process in registry.live()
     finally:
-        web_benchmark._LIVE_WORKERS.discard(process)
+        registry.forget(process)
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="uses /bin/sleep")
-def test_terminating_the_batch_stops_in_flight_workers():
+def test_terminating_the_batch_stops_in_flight_workers(monkeypatch):
     """A stranded worker keeps a GPU until it finishes on its own."""
 
+    from fabric_defect_hub.core.processes import WorkerRegistry
+
+    registry = WorkerRegistry("test")
+    monkeypatch.setattr(web_benchmark, "_BENCHMARK_WORKERS", registry)
     sleeper = web_benchmark.subprocess.Popen(["sleep", "60"])
-    with web_benchmark._LIVE_WORKERS_LOCK:
-        web_benchmark._LIVE_WORKERS.add(sleeper)
+    registry.track(sleeper)
     try:
         stopped = web_benchmark.terminate_benchmark_workers(grace_seconds=5.0)
 
         assert stopped == 1
         assert sleeper.poll() is not None
-        assert sleeper not in web_benchmark._LIVE_WORKERS
+        assert sleeper not in registry.live()
     finally:
         sleeper.kill()
-        with web_benchmark._LIVE_WORKERS_LOCK:
-            web_benchmark._LIVE_WORKERS.discard(sleeper)
+        registry.forget(sleeper)
 
 
 def test_fast_exit_stops_workers_before_uvicorn_shuts_down(monkeypatch):
@@ -577,15 +658,21 @@ def test_fast_exit_stops_workers_before_uvicorn_shuts_down(monkeypatch):
     benchmark request, and that request waits for a model that can take
     minutes — so the workers have to die first."""
 
+    import signal
+
+    from fabric_defect_hub.core.processes import WorkerRegistry
+
     order: list[str] = []
-    fake_uvicorn = SimpleNamespace(Server=type("Server", (), {"handle_exit": lambda self, sig, frame: order.append("uvicorn")}))
+    registry = WorkerRegistry("test")
+    monkeypatch.setattr(registry, "terminate_all", lambda *args, **kwargs: order.append("workers") or 2)
+    monkeypatch.setattr(web_benchmark, "_BENCHMARK_WORKERS", registry)
+    fake_uvicorn = SimpleNamespace(
+        Server=type("Server", (), {"handle_exit": lambda self, sig, frame: order.append("uvicorn")})
+    )
     monkeypatch.setitem(sys.modules, "uvicorn", fake_uvicorn)
-    monkeypatch.setattr(web_benchmark, "_fast_exit_installed", False)
-    monkeypatch.setattr(web_benchmark, "terminate_benchmark_workers",
-                        lambda *args, **kwargs: order.append("workers") or 2)
 
     assert web_benchmark.install_fast_exit() is True
-    fake_uvicorn.Server.handle_exit(object(), web_benchmark.signal.SIGINT, None)
+    fake_uvicorn.Server.handle_exit(object(), signal.SIGINT, None)
 
     assert order == ["workers", "uvicorn"]
 
@@ -594,21 +681,25 @@ def test_fast_exit_wraps_the_handler_uvicorn_actually_registers(monkeypatch):
     """The wrapper has to land on the real `uvicorn.Server.handle_exit`, because
     that is the callable uvicorn installs as its SIGINT handler."""
 
+    import signal
+
+    from fabric_defect_hub.core.processes import WorkerRegistry
+
     uvicorn = pytest.importorskip("uvicorn")
     original = uvicorn.Server.handle_exit
-    monkeypatch.setattr(web_benchmark, "_fast_exit_installed", False)
-    monkeypatch.setattr(web_benchmark, "terminate_benchmark_workers", lambda *a, **k: 0)
+    registry = WorkerRegistry("test")
+    monkeypatch.setattr(web_benchmark, "_BENCHMARK_WORKERS", registry)
     monkeypatch.setattr(uvicorn.Server, "handle_exit", original)
     try:
         assert web_benchmark.install_fast_exit() is True
         assert uvicorn.Server.handle_exit is not original
 
         server = SimpleNamespace(should_exit=False, force_exit=False, _captured_signals=[])
-        uvicorn.Server.handle_exit(server, web_benchmark.signal.SIGINT, None)
+        uvicorn.Server.handle_exit(server, signal.SIGINT, None)
 
         # Ctrl+C still does what uvicorn does with it (start the graceful path).
         assert server.should_exit is True
-        assert server._captured_signals == [web_benchmark.signal.SIGINT]
+        assert server._captured_signals == [signal.SIGINT]
     finally:
         uvicorn.Server.handle_exit = original
 
@@ -651,6 +742,36 @@ def test_profiler_prefers_the_export_that_detection_models_can_actually_produce(
     assert setup[2] == "torchscript"
 
 
+def test_a_preferred_export_that_fails_falls_through_to_the_next(monkeypatch, tmp_path):
+    """DETR's real shape: `torch.jit.script` refuses it (a training-only helper
+    indexes a tensor with `"boxes"`), while `torch.export` traces it in
+    seconds. Losing the whole overhead row and the resolution slope because the
+    *first* preference failed is not a property of the model."""
+
+    class _OnlyExportProgramWorks(_FakeWebBenchModel):
+        def capabilities(self):
+            return ModelCapabilities(
+                tasks=("anomaly",), prediction_fields=("anomaly_score",),
+                export_targets=("torchscript", "exported_program"),
+            )
+
+        def export(self, artifact, target, config=None):
+            if target == "torchscript":
+                raise RuntimeError("import statements aren't supported")
+            path = tmp_path / f"model.{target}"
+            path.write_bytes(b"x")
+            return ExportedArtifact(path=str(path), target=target)
+
+    setup, exported, failures = web_benchmark._export_for_profiling(
+        _OnlyExportProgramWorks(), None, "cpu"
+    )
+
+    assert setup is not None
+    assert setup[2] == "exported_program"
+    assert exported.target == "exported_program"
+    assert failures == ["torchscript: RuntimeError"]
+
+
 def test_profiling_falls_back_to_native_when_the_export_fails(monkeypatch):
     """WinCLIP's ONNX export hits an operator the exporter cannot represent;
     measuring the adapter directly beats dropping the row's overhead columns."""
@@ -673,9 +794,16 @@ def test_a_fixed_shape_export_is_not_applicable_rather_than_failed(monkeypatch):
     """A model with no profiler-compatible export, or a fixed-shape one, cannot
     have a resolution slope — that is information, not a failure."""
 
-    monkeypatch.setattr(web_benchmark, "_profile_setup", lambda model, device: None)
-    with pytest.raises(web_benchmark.MetricNotApplicable):
+    # No target exported at all: the reason has to name them rather than
+    # surface a raw traceback (Cascade R-CNN's real shape — TorchScript,
+    # ONNX and torch.export all reject it).
+    monkeypatch.setattr(
+        web_benchmark, "_export_for_profiling",
+        lambda model, artifact, device: (None, None, ["torchscript: RuntimeError", "onnx: RuntimeError"]),
+    )
+    with pytest.raises(web_benchmark.MetricNotApplicable) as nothing_exported:
         web_benchmark._resolution_sweep(_FakeWebBenchModel(), None, "cpu")
+    assert "torchscript: RuntimeError" in str(nothing_exported.value)
 
     class _Export:
         path = "/tmp/does-not-matter"
@@ -686,11 +814,15 @@ def test_a_fixed_shape_export_is_not_applicable_rather_than_failed(monkeypatch):
             return _Export()
 
     monkeypatch.setattr(
-        web_benchmark, "_profile_setup",
-        lambda model, device: (SimpleNamespace(profile=lambda *a, **k: {}), web_benchmark.ProfileConfig(
-            device=device, engine="pytorch", precision="fp32", input_size=(64, 64),
-            input_style="batched", warmup_runs=1, measured_runs=1, power_mode="disabled",
-        ), "torchscript"),
+        web_benchmark, "_export_for_profiling",
+        lambda model, artifact, device: (
+            (SimpleNamespace(profile=lambda *a, **k: {}), web_benchmark.ProfileConfig(
+                device=device, engine="pytorch", precision="fp32", input_size=(64, 64),
+                input_style="batched", warmup_runs=1, measured_runs=1, power_mode="disabled",
+            ), "torchscript"),
+            _Export(),
+            [],
+        ),
     )
     monkeypatch.setattr("fabric_defect_hub.profiling.sweeps.resolution_scaling", lambda *a, **k: {})
     with pytest.raises(web_benchmark.MetricNotApplicable) as caught:
@@ -717,3 +849,98 @@ def test_a_metric_that_cannot_exist_is_a_note_not_a_warning(monkeypatch, tmp_pat
     assert rows, "the model is still scored"
     assert "ℹ️" in status and "fixed-shape" in status
     assert "⚠️" not in status
+
+
+def test_the_complete_row_is_persisted_so_a_compute_table_can_be_audited(monkeypatch, tmp_path):
+    """The run log carries accuracy only: `fps`, the latency percentiles and the
+    memory numbers are added to the row *after* `run_experiment` has already
+    written its record. Only the UI's memory had them, so every compute table
+    had to be transcribed off the screen — which is how a resolution slope ends
+    up filed under LMEI and an aggregate FPS cell ends up holding the
+    instantaneous mean. `row_log_path` puts the whole row, and the reason a
+    metric is missing, in a file."""
+
+    _install_fake_catalog(monkeypatch, tmp_path)
+    row_log = tmp_path / "benchmark_rows.jsonl"
+
+    *_, (columns, rows, status, scored) = web_benchmark.run_benchmark(
+        "Fake Dataset", "All textures", "Full-shot", [MODEL_LABEL],
+        include_profiling=True, run_log_path=None, row_log_path=str(row_log),
+    )
+
+    record = json.loads(row_log.read_text(encoding="utf-8").strip())
+    assert record["model"] == MODEL_LABEL
+    assert record["dataset"] == "Fake Dataset"
+    assert record["status"] == "ok"
+    assert record["selection"]["include_profiling"] is True
+    assert record["samples"] == 4
+    # The overhead metrics the accuracy-only run log cannot carry.
+    assert record["metrics"]["fps"] > 0
+    assert record["metrics"]["latency_ms_mean"] > 0
+    assert record["metrics"]["model"] == MODEL_LABEL
+    # A blank cell in a report has its reason beside it.
+    assert isinstance(record["warnings"], list)
+    assert record["provenance"]["timestamp_utc"]
+
+
+def test_the_row_log_is_opt_out(monkeypatch, tmp_path):
+    """A caller that passes `row_log_path=None` (the accuracy-only CLI paths)
+    must not have a second file written behind its back."""
+
+    _install_fake_catalog(monkeypatch, tmp_path)
+    row_log = tmp_path / "benchmark_rows.jsonl"
+
+    web_benchmark.run_benchmark(
+        "Fake Dataset", "All textures", "Full-shot", [MODEL_LABEL],
+        run_log_path=None, row_log_path=None,
+    )
+
+    assert not row_log.exists()
+
+
+def test_native_profiling_reports_the_memory_it_actually_sampled(monkeypatch, tmp_path):
+    """The native path used to take one RSS reading *after* the measured loop
+    and publish it as "Memory peak" — not a peak of anything — and to report a
+    hard 0.0 MB when psutil was missing, which reads as "measured, and tiny".
+    It also labelled the same RSS quantity `host_process` while the ONNX
+    profiler called it `whole_process_resident_set`."""
+
+    _install_fake_catalog(monkeypatch, tmp_path)
+    checkpoint = tmp_path / "fake.ckpt"
+    checkpoint.write_bytes(b"c" * 4096)
+    model = web_benchmark.load_model("fake-backend-webbench", "fake-backend-webbench-model")
+    samples = [
+        Sample(id="s0", image_path="s0.jpg", task="anomaly", annotations=Annotations(is_anomalous=True))
+    ]
+
+    metrics = web_benchmark._native_profile_model(
+        model, Artifact(path=str(checkpoint), backend="fake-backend-webbench"), samples, "cpu"
+    )
+
+    assert metrics["memory_measurement_kind"] == "process_rss"
+    assert metrics["memory_measurement_scope"] == "whole_process_resident_set"
+    assert metrics["memory_cross_engine_comparable"] is False
+    assert metrics["peak_memory_mb"] >= metrics["avg_memory_mb"] > 0
+    # README's "Model size" is the trained artifact, and the native path could
+    # not report it at all before.
+    assert metrics["model_size_mb"] == checkpoint.stat().st_size / (1024 * 1024)
+
+
+def test_native_profiling_without_psutil_reports_no_memory(monkeypatch, tmp_path):
+    """No instrument means no measurement — not a zero."""
+
+    _install_fake_catalog(monkeypatch, tmp_path)
+    monkeypatch.setattr(web_benchmark, "_rss_sampler", lambda: None)
+    model = web_benchmark.load_model("fake-backend-webbench", "fake-backend-webbench-model")
+    samples = [
+        Sample(id="s0", image_path="s0.jpg", task="anomaly", annotations=Annotations(is_anomalous=True))
+    ]
+
+    metrics = web_benchmark._native_profile_model(
+        model, Artifact(path=str(tmp_path / "missing.ckpt"), backend="fake-backend-webbench"),
+        samples, "cpu",
+    )
+
+    assert "peak_memory_mb" not in metrics
+    assert "avg_memory_mb" not in metrics
+    assert "model_size_mb" not in metrics

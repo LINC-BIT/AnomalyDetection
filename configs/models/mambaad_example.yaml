@@ -86,6 +86,14 @@ train:
   decay_rate: 0.1         # ...by this factor, floored at lr/100
   num_workers: 0
   device: null             # null = auto-detect (cuda > mps > cpu); or "cuda", "cpu", "mps"
+  precision: fp32          # fp32 | bf16 | fp16 -- training forward only (prediction stays fp32).
+                           # On a CUDA host bf16 halves activation memory and is several times
+                           # faster on A100/H100 tensor cores: one activation at batch 16 / 256 px
+                           # is 16*512*256*256*4 = 2 GiB, and the decoder keeps several per Hilbert
+                           # direction, so the fp32 default needs ~73 GiB. bf16 brings that to
+                           # roughly half, which is how batch 16 fits again:
+                           #   adh train MambaAD --set train.precision=bf16
+                           # fp16 also works but needs loss scaling (handled internally).
 
 # ---- Validation: predict() + AnomalyEvaluator (not a native .validate()) ----
 val:

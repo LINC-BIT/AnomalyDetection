@@ -144,3 +144,45 @@ def test_launch_injects_the_application_stylesheet(monkeypatch):
     assert captured_kwargs["allowed_paths"] == [
         f"/external/{label}" for label in app_module.DATASET_CATALOG
     ]
+
+
+def _capture_launch_kwargs(monkeypatch, **launch_kwargs):
+    captured: dict = {}
+
+    class FakeApp:
+        def launch(self, **kwargs):
+            captured.update(kwargs)
+            return "launched"
+
+    monkeypatch.setattr(app_module, "create_app", lambda: FakeApp())
+    app_module.launch(server_port=7860, **launch_kwargs)
+    return captured
+
+
+def test_launch_installs_a_clipboard_fallback_for_insecure_origins(monkeypatch):
+    """`navigator.clipboard` is undefined on `http://<host>:6008` (the origin
+    this UI is actually opened at — only localhost and https count as secure),
+    and Gradio's copy buttons call it with no fallback: the benchmark tables'
+    copy button then throws and silently copies nothing. `launch()` has to
+    ship the `execCommand` fallback in `<head>`, before Gradio captures the
+    property."""
+
+    head = _capture_launch_kwargs(monkeypatch)["head"]
+    assert "<script>" in head
+    # It redefines the property on the prototype, so the bundle's own
+    # `navigator.clipboard.writeText(...)` call resolves to the shim.
+    assert "Navigator.prototype" in head
+    assert '"clipboard"' in head
+    assert "writeText" in head
+    assert "execCommand" in head
+    # The shim must defer to the browser whenever it does have a clipboard,
+    # so a secure origin keeps the real implementation.
+    assert "nativeClipboard" in head
+
+
+def test_launch_keeps_a_caller_supplied_head(monkeypatch):
+    """A caller that passes its own `head=` must not have it overwritten."""
+
+    head = _capture_launch_kwargs(monkeypatch, head="<script>mine</script>")["head"]
+    assert head == "<script>mine</script>"
+

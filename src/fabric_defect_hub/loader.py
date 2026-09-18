@@ -11,8 +11,9 @@ from fabric_defect_hub.core.execution import model_execution
 from fabric_defect_hub.core.registry import get_dataset_cls, get_model_cls
 from fabric_defect_hub.core.serialization import save_experiment_result, save_predictions
 from fabric_defect_hub.core.types import DatasetInfo, ExperimentResult, ModelInfo, RuntimeInfo
+from fabric_defect_hub.evaluation.base import EVALUATION_CONFIDENCE
 from fabric_defect_hub.datasets.base import DatasetAdapter
-from fabric_defect_hub.models.base import Artifact, ModelAdapter
+from fabric_defect_hub.models.base import Artifact, ModelAdapter, checkpoint_size_mb
 from fabric_defect_hub.reporting import append_run_log
 
 # Backend package import paths, used to lazily register model/dataset
@@ -147,6 +148,7 @@ def run_experiment(
     export_target: str | None = None,
     export_config: dict[str, Any] | None = None,
     run_log_path: str | None = None,
+    raw_anomaly_scores: bool = False,
 ) -> ExperimentResult:
 
     samples = dataset.load_samples()
@@ -165,6 +167,22 @@ def run_experiment(
     predict_config: dict[str, Any] = {"device": runtime.device}
     if model_info.backend == "ultralytics":
         predict_config["imgsz"] = runtime.input_size[0]
+    if evaluator is not None and model_info.task in ("detection", "instance_segmentation"):
+        # Both keys, because each detector backend reads its own name for the
+        # same floor (`score_threshold` for torchvision, `conf` for
+        # ultralytics) and ignores the other. Segmentation models are
+        # deliberately excluded: their `score_threshold` binarizes the
+        # predicted mask, so lowering it would report an all-positive mask.
+        predict_config["score_threshold"] = EVALUATION_CONFIDENCE
+        predict_config["conf"] = EVALUATION_CONFIDENCE
+    if raw_anomaly_scores:
+        # Anomaly backends otherwise return the checkpoint's stored
+        # normalization of their score/map, which saturates to a constant
+        # when the raw error exceeds the stored range — see
+        # `models.anomalib.adapter._raw_anomaly_predictions`. An evaluation
+        # needs the model's own ranking. Backends without that notion
+        # ignore the flag.
+        predict_config["raw_anomaly"] = True
 
     # Check if sliding-window tiling strategy is enabled on dataset
     #
@@ -228,7 +246,13 @@ def run_experiment(
         if not export_path.is_file():
             raise FileNotFoundError(f"exported model does not exist: {export_path}")
         profile_metrics = profiler.profile(exported, profile_config)
-        profile_metrics["model_size_mb"] = export_path.stat().st_size / (1024 * 1024)
+        # `model_size_mb` is the checkpoint (README's "trained artifact"), the
+        # export's own size is a different number and a different key; see
+        # `models.base.checkpoint_size_mb`.
+        profile_metrics["exported_model_size_mb"] = export_path.stat().st_size / (1024 * 1024)
+        size_mb = checkpoint_size_mb(active_artifact)
+        if size_mb is not None:
+            profile_metrics["model_size_mb"] = size_mb
         metrics.update(profile_metrics)
         runtime = profiler.runtime_info(profile_config)
         artifacts[f"model_{export_target}"] = str(export_path)
