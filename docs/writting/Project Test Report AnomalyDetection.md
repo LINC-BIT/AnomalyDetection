@@ -66,13 +66,13 @@ Both platforms were evaluated using the following identical configuration:
 | Input size | 640 × 640 |
 | Precision | fp32 |
 | Test Metrics | [Image Level, Pixel Level, Instance Level, Overhead](../../README.md#33-supported-metrics) |
-| Total Evaluated Models | 19 |
+| Total Evaluated Model Configurations | 19 |
 
 </div>
 
 <br>
 
-Representative metrics are reported below. For full details, see [results for Small Machine](./results_small_machine.md) and [results for Full Machine](./results_full_gpu_server.md).
+Representative metrics are reported below. The count is 19 unique model configurations, not 19 entries in every table: 10 anomaly models, 6 detection models, and 3 segmentation models. Each configuration appears in the table(s) for metrics its output supports; for example, GANomaly is included in image-level, compute, and memory results but cannot appear in a pixel-localization table because it has no spatial anomaly map. For full details, see [results for Small Machine](./results_small_machine.md) and [results for Full Machine](./results_full_gpu_server.md).
 
 #### 2.2.1 Technical Metrics: Image Level
 
@@ -147,7 +147,6 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 | :---: | :---: | :---: | :---: | :---: |
 | Dinomaly | 0.7452 | 0.6029 | 0.1470 | 0.0574 |
 | EfficientAD | 0.6072 | 0.4814 | 0.1035 | 0.0287 |
-| GANomaly | — | — | — | — |
 | MoECLIP | 0.9039 | 0.8374 | 0.5447 | 0.3983 |
 | PaDiM | 0.7559 | 0.7117 | 0.1282 | 0.0528 |
 | PatchCore | 0.6730 | 0.5925 | 0.0841 | 0.0373 |
@@ -168,7 +167,6 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 | :---: | :---: | :---: | :---: | :---: |
 | Dinomaly | 0.9805 | 0.8895 | 0.4247 | 0.6293 |
 | EfficientAD | 0.7863 | 0.5437 | 0.4814 | 0.5549 |
-| GANomaly | — | — | — | — |
 | MoECLIP | 0.9857 | 0.9701 | 0.6733 | 0.7006 |
 | PaDiM | 0.9521 | 0.9192 | 0.1658 | 0.3531 |
 | PatchCore | 0.9833 | 0.9136 | 0.4005 | 0.6259 |
@@ -181,7 +179,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 
 <br>
 
-`Pixel AUPRO` and `Pixel PRO` are the same metric under two names, and the Small Machine run did not measure `Pixel IoU`.
+`Pixel AUPRO` and `Pixel PRO` are the same metric under two names, and the Small Machine run did not measure `Pixel IoU`. These tables contain the 9 anomaly models that emit per-pixel maps; GANomaly remains part of the 19 evaluated configurations and is reported in the image-level and overhead tables, but is omitted here because it produces no per-pixel anomaly map.
 
 #### 2.2.3 Technical Metrics: Instance Level
 
@@ -200,14 +198,14 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 
 <div align="center" style="width: 100%; overflow-x: auto;">
 
-| Model | AP50 | AP | AP75 | Precision | Recall | F1 | TP | FP | FN |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| Cascade R-CNN | 0.6232 | 0.3267 | — | 0.6327 | 0.6813 | 0.6561 | 124 | 72 | 58 |
-| DETR | 0.0000 | 0.0000 | — | 0.0000 | 0.0000 | 0.0000 | 0 | 0 | 182 |
-| Faster R-CNN | 0.6247 | 0.3185 | — | 0.5478 | 0.6923 | 0.6117 | 126 | 104 | 56 |
-| YOLO11n | 0.4555 | 0.2316 | — | 0.9091 | 0.3297 | 0.4839 | 60 | 6 | 122 |
-| YOLOv8n | 0.4595 | 0.2227 | — | 0.8571 | 0.3626 | 0.5097 | 66 | 11 | 116 |
-| YOLOv8s | 0.4332 | 0.1991 | — | 0.9286 | 0.2143 | 0.3482 | 39 | 3 | 143 |
+| Model | AP50 | AP | Precision | Recall | F1 | TP | FP | FN |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| Cascade R-CNN | 0.6232 | 0.3267 | 0.6327 | 0.6813 | 0.6561 | 124 | 72 | 58 |
+| DETR | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0 | 0 | 182 |
+| Faster R-CNN | 0.6247 | 0.3185 | 0.5478 | 0.6923 | 0.6117 | 126 | 104 | 56 |
+| YOLO11n | 0.4555 | 0.2316 | 0.9091 | 0.3297 | 0.4839 | 60 | 6 | 122 |
+| YOLOv8n | 0.4595 | 0.2227 | 0.8571 | 0.3626 | 0.5097 | 66 | 11 | 116 |
+| YOLOv8s | 0.4332 | 0.1991 | 0.9286 | 0.2143 | 0.3482 | 39 | 3 | 143 |
 
 </div>
 
@@ -220,7 +218,7 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 | Model | AP50 | AP | AP75 | Precision | Recall | F1 | TP | FP | FN |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Cascade R-CNN | 0.6428 | 0.3333 | 0.3042 | 0.6327 | 0.6813 | 0.6561 | 124 | 72 | 58 |
-| DETR | 0.0022 | 0.0011 | 0.0001 | 0.0000 | 0.0000 | 0.0000 | — | — | 182 |
+| DETR | 0.0022 | 0.0011 | 0.0001 | 0.0000 | 0.0000 | 0.0000 | 0 | 0 | 182 |
 | Faster R-CNN | 0.6623 | 0.3321 | 0.3014 | 0.5502 | 0.6923 | 0.6131 | 126 | 103 | 56 |
 | YOLO11n | 0.5754 | 0.2846 | 0.2583 | 0.9091 | 0.3297 | 0.4839 | 60 | 6 | 122 |
 | YOLOv8n | 0.5861 | 0.2721 | 0.2130 | 0.8571 | 0.3626 | 0.5097 | 66 | 11 | 116 |
@@ -230,7 +228,7 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 
 <br>
 
-Precision, Recall, F1 and TP/FP/FN are taken at confidence threshold 0.25. The Small Machine run did not measure `AP75`. Supervised segmentation reproduces in the same way: on the Small Machine the masks score UNet++ 0.6833 / DeepLabV3+ 0.6479 / Mask R-CNN 0.7539 (Dice), and on the Full Machine the same models score 0.6833 / 0.6477 / 0.7242 (Mask AP50), i.e. the same metric under two names.
+Precision, Recall, F1 and TP/FP/FN are taken at confidence threshold 0.25. The Small Machine did not measure AP75, so that column is omitted. A standalone `adh evaluate` run on the available DETR checkpoint independently confirmed `TP=0` and `FP=0`. Supervised segmentation reproduces in the same way: on the Small Machine the masks score UNet++ 0.6833 / DeepLabV3+ 0.6479 / Mask R-CNN 0.7539 (Dice), and on the Full Machine the same models score 0.6833 / 0.6477 / 0.7242 (Mask AP50), i.e. the same metric under two names.
 
 #### 2.2.4 Overhead Metrics: Compute
 
@@ -258,9 +256,9 @@ This part evaluates the compute metrics defined by [README §3.3.5](../../README
 | STFPM | 22.00 | 45.44 ms | 7.38 | 1 |
 | SuperSimpleNet | 2.40 | 417.01 ms | 96.70 | 0 |
 | UNet++ | 119.22 | 100.19 ms | 250.23 | 0 |
-| YOLO11n | 20.83 | 48.01 ms | — | 0 |
+| YOLO11n | 20.83 | 48.01 ms | 6.44 | 0 |
 | YOLOv8n | 181.69 | 5.50 ms | 8.19 | 0 |
-| YOLOv8s | 11.51 | 86.89 ms | — | 0 |
+| YOLOv8s | 11.51 | 86.89 ms | 28.65 | 0 |
 
 </div>
 
@@ -316,9 +314,9 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 | STFPM | 5.57 | 2767.25 |
 | SuperSimpleNet | 33.72 | 1035.28 |
 | UNet++ | 53.97 | 1190.22 |
-| YOLO11n | — | 2176.80 |
+| YOLO11n | 2.59 | 2176.80 |
 | YOLOv8n | 3.01 | 1095.68 |
-| YOLOv8s | — | 2056.80 |
+| YOLOv8s | 11.14 | 2056.80 |
 
 </div>
 
