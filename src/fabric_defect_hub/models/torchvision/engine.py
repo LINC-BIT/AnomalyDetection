@@ -32,14 +32,48 @@ class EpochLog:
     val_metrics: dict[str, float] = field(default_factory=dict)
 
 
-def build_optimizer(model, name: str, lr: float, momentum: float, weight_decay: float):
+def build_optimizer(
+    model,
+    name: str,
+    lr: float,
+    momentum: float,
+    weight_decay: float,
+    backbone_lr: float | None = None,
+):
+    """The optimizer, with the pretrained backbone on its own learning rate.
+
+    `backbone_lr`, when given, splits the trainable parameters into
+    `[everything else, backbone]` and gives the backbone a smaller step — the
+    DETR recipe (1e-4 head / 1e-5 backbone) and the usual cure for a fine-tune
+    that sits at ~0 mAP because 1e-4 is destroying the pretrained features.
+    Groups are ordered head-first so `param_groups[0]["lr"]` — the number the
+    epoch log reports — stays the headline learning rate.
+
+    A single group is returned when `backbone_lr` is `None` or equal to `lr`,
+    which keeps every existing model's optimizer (and its resumable state
+    dict) byte-for-byte what it was. That matters: PyTorch refuses to load a
+    one-group optimizer state into a two-group optimizer, so switching an
+    in-flight run to a split rate has to restart rather than resume.
+    """
+
     import torch
 
-    params = [p for p in model.parameters() if p.requires_grad]
+    trainable = [p for p in model.parameters() if p.requires_grad]
+    if backbone_lr is None or backbone_lr == lr:
+        groups: list[dict] = [{"params": trainable, "lr": lr}]
+    else:
+        backbone = [p for n, p in model.named_parameters() if p.requires_grad and n.startswith("backbone.")]
+        backbone_ids = {id(p) for p in backbone}
+        head = [p for p in trainable if id(p) not in backbone_ids]
+        if not backbone:
+            groups = [{"params": trainable, "lr": lr}]
+        else:
+            groups = [{"params": head, "lr": lr}, {"params": backbone, "lr": backbone_lr}]
+
     if name == "sgd":
-        return torch.optim.SGD(params, lr=lr, momentum=momentum, weight_decay=weight_decay)
+        return torch.optim.SGD(groups, lr=lr, momentum=momentum, weight_decay=weight_decay)
     if name == "adamw":
-        return torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)
+        return torch.optim.AdamW(groups, lr=lr, weight_decay=weight_decay)
     raise ValueError(f"unknown optimizer {name!r}; expected 'sgd' or 'adamw'.")
 
 
@@ -257,6 +291,7 @@ def run_training(
     patience: int,
     with_masks: bool,
     amp: bool = False,
+    backbone_lr: float | None = None,
     resume_state: dict[str, Any] | None = None,
     on_epoch_end: Callable[[EpochLog, Any, Any, float, bool], None] | None = None,
     task: str = "detect",
@@ -284,7 +319,7 @@ def run_training(
 
     import torch
 
-    optimizer = build_optimizer(model, optimizer_name, lr, momentum, weight_decay)
+    optimizer = build_optimizer(model, optimizer_name, lr, momentum, weight_decay, backbone_lr)
     scheduler = build_lr_scheduler(optimizer, lr_scheduler_name, epochs, step_size, gamma)
 
     start_epoch = 0

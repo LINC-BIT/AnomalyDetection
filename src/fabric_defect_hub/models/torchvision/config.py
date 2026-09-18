@@ -102,6 +102,13 @@ class TrainSpec:
         scheduler state, epoch count and best val-mAP included), instead of
         starting again from `weights`/`pretrained`/scratch. Silently falls
         back to a fresh run if no `last.pt` exists yet.
+    `lr`/`backbone_lr`: the head's learning rate, and optionally a separate
+        one for the pretrained backbone. Detecting heads want a larger step
+        than the features they sit on: DETR's published recipe is AdamW with
+        lr 1e-4 for the transformer/heads and 1e-5 for the ResNet backbone,
+        and running both at 1e-4 is the usual way a fine-tune of a pretrained
+        detector stalls near zero mAP. Left `None`, every trainable parameter
+        shares `lr` (the previous behaviour, and what the other variants use).
     """
 
     enabled: bool = True
@@ -109,6 +116,7 @@ class TrainSpec:
     batch_size: int | None = None
     optimizer: str | None = None
     lr: float | None = None
+    backbone_lr: float | None = None
     momentum: float | None = None
     weight_decay: float | None = None
     lr_scheduler: str | None = None

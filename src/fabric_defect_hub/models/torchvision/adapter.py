@@ -401,6 +401,7 @@ class TorchvisionAdapter(ModelAdapter):
             patience=cfg.get("patience", 8),
             with_masks=with_masks,
             amp=cfg.get("amp", False),
+            backbone_lr=cfg.get("backbone_lr"),
             resume_state=resume_state,
             on_epoch_end=on_epoch_end,
             task=task,

@@ -1019,6 +1019,16 @@ class HungarianMatcher(nn.Module):
                 cost_giou = -generalized_box_iou(out_bbox_xyxy, tgt_bbox_xyxy)
 
                 C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou
+                # A degenerate box — zero width or height, which ZJU-Leaper's
+                # 1-pixel-tall sliver annotations become once `cxcywh` is
+                # converted to `xyxy`, and which an early DETR prediction can
+                # collapse into — makes `box_iou`/`generalized_box_iou` divide
+                # by a zero area and return NaN. scipy then rejects the *whole*
+                # cost matrix ("matrix contains invalid numeric entries"),
+                # which killed a 300-epoch retrain at epoch 57 (2026-09-18).
+                # A large finite cost leaves those pairs unmatched, which is
+                # what a box with no area deserves, and the epoch survives.
+                C = torch.nan_to_num(C, nan=1e8, posinf=1e8, neginf=-1e8)
                 C = C.cpu()
 
                 src_ind, tgt_ind = linear_sum_assignment(C.numpy())
