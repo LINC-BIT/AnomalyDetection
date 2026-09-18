@@ -51,9 +51,27 @@ This section starts with setting up the environment following the [Environment S
 
 This process presents only the execution results obtained on the Full Machine.
 
-[TODO] add the images and data.
+Following Steps 1 to 4, the target model was selected and loaded:
+
+<p align="center">
+  <img src="../../docs/images/img_1.png" alt="Example Image" width="90%" />
+</p>
+
+Following Step 5, the image to be evaluated was selected and loaded:
+
+<p align="center">
+  <img src="../../docs/images/img_2.png" alt="Example Image" width="90%" />
+</p>
+
+Following Step 6, anomaly detection was executed successfully. The resulting output confirms that the platform and its configuration are working correctly, so the remaining tests can be performed.
+
+<p align="center">
+  <img src="../../docs/images/img_3.png" alt="Example Image" width="90%" />
+</p>
 
 ### 2.2 Technical and Overhead Metrics
+
+Following the instructions in [README §4.1.3 Benchmarking](../../README.md#413-benchmarking), the complete benchmark suite was run on both machines. The resulting data are reported below.
 
 Both platforms were evaluated using the following identical configuration:
 
