@@ -51,7 +51,7 @@ We provide the trained checkpoints on textile datasets for the AnomalyDetection 
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#51-start-the-web-front-end">5.1 Start the web front-end</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#52-run-anomaly-detection-example">5.2 Run Anomaly Detection Example</a><br>
 <a href="#6-extensibility">6. Extensibility</a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#61-example-add-a-dataset">6.1 Example: add a dataset</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#61-example-add-a-small-anomaly-dataset">6.1 Example: add a small anomaly dataset</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#62-example-add-a-model-backend">6.2 Example: add a model backend</a><br>
 
 ## 1. Introduction
@@ -236,7 +236,7 @@ Three of the registered datasets have an automated download; the rest are staged
   </tbody>
 </table>
 
-Without further flags each of these downloads the whole dataset. Three details decide whether it lands where the platform looks for it:
+Without further flags each of these downloads the whole dataset. MVTec AD is downloaded from the public [`Voxel51/mvtec-ad`](https://huggingface.co/datasets/Voxel51/mvtec-ad) repository; no gated-dataset registration is required. Three details decide whether it lands where the platform looks for it:
 
 - `--category <name>` fetches a single category, for MVTec AD and VisA only.
 - Category names are the dataset's own — `bottle`, `cable`, `capsule`, … for MVTec AD; `candle`, `capsules`, `pcb1`, … for VisA. Each dataset's page lists them: [MVTec AD](https://www.mvtec.com/company/research/datasets/mvtec-ad), [VisA](https://github.com/amazon-science/spot-diff), [ZJU-Leaper](https://huggingface.co/datasets/AnupamaBandara/ZLU_Leaper).
@@ -1014,7 +1014,7 @@ The corresponding anomaly heat map of the image will be displayed on the right s
 
 Extension follows registration rather than modification: the command line, the web front-end, the evaluator and the profiler resolve every component through the same registries and capability declarations, so a new dataset, model backend, or application domain is introduced without a change to any consumer.
 
-The two worked examples below are intentionally concrete. The dataset example uses a small, single-category slice of the Hugging Face copy of MVTec AD, so it also documents the path to take when a useful dataset is not one of the built-in downloaders. The model example shows how to add a YOLO 26 variant while keeping the existing Ultralytics integration.
+The two worked examples below are intentionally concrete. The dataset example creates a small, independent `Bottle` copy from an already staged MVTec AD dataset, and the model example shows how to add a YOLO 26 variant while keeping the existing Ultralytics integration.
 
 <table align="center">
   <thead>
@@ -1031,132 +1031,34 @@ The two worked examples below are intentionally concrete. The dataset example us
   </tbody>
 </table>
 
-### 6.1 Example: add a dataset from Hugging Face
+### 6.1 Example: add a small anomaly dataset
 
-We provide a small Hugging Face example: the `bottle` category from [`anomalib/mvtec-ad`](https://huggingface.co/datasets/anomalib/mvtec-ad). From the repository root, run the following commands to download and stage it under `datasets/general/HF Bottle AD`:
+For demonstration, this step copies the `bottle` category from the `MVTec AD` dataset as a new independent dataset.
 
 ```bash
-pip install -U huggingface_hub
-python - <<'PY'
-from pathlib import Path
-from huggingface_hub import snapshot_download
-
-root = Path("datasets/general/HF Bottle AD")
-snapshot_download(
-    repo_id="anomalib/mvtec-ad",
-    repo_type="dataset",
-    local_dir=root,
-    allow_patterns=["bottle/**"],
-    ignore_patterns=["**/*.json", "**/*.md"],
-)
-print(f"Downloaded to {root.resolve()}")
-PY
-
-# MVTec AD is published as train/good and test/<defect>. Normalize the
-# selected category to this project's flat-folder adapter contract.
-python - <<'PY'
-from pathlib import Path
-import shutil
-
-root = Path("datasets/general/HF Bottle AD")
-source = root / "bottle"
-for split in ("train", "test"):
-    for src in (source / split).iterdir():
-        if not src.is_dir():
-            continue
-        name = "good" if src.name == "good" else src.name
-        dst = root / name
-        dst.mkdir(exist_ok=True)
-        for image in src.iterdir():
-            shutil.copy2(image, dst / image.name)
-shutil.rmtree(source)
-PY
+python tools/copy_mvtec_bottle.py
 ```
 
-After normalization, the adapter expects:
+The script preserves the standard MVTec AD layout:
 
 ```text
-datasets/general/HF Bottle AD/
-├── good/                 # normal images used for one-class training
-├── crack/                # defect type, test only
-└── contamination/       # another defect type, test only
+datasets/general/Bottle/bottle/
+├── train/good/               # normal training images
+├── test/<defect>/             # normal and anomalous test images
+└── ground_truth/<defect>/     # pixel-level masks
 ```
 
-Create `src/fabric_defect_hub/datasets/hf_bottle_ad.py`:
-
-```python
-# src/fabric_defect_hub/datasets/hf_bottle_ad.py
-from fabric_defect_hub.core.registry import register_dataset
-from fabric_defect_hub.datasets.flat_folder import FlatFolderAnomalyDataset
-
-
-@register_dataset("hf-bottle-ad")
-class HFBottleADDataset(FlatFolderAnomalyDataset):
-    """`good/` (normal) plus one folder per defect type."""
-
-    name = "hf-bottle-ad"
-    NORMAL_DIRNAME = "good"
-```
-
-Edit `src/fabric_defect_hub/datasets/__init__.py` and add this import:
-
-```python
-from fabric_defect_hub.datasets.hf_bottle_ad import HFBottleADDataset
-```
-
-```python
-# Add this declaration to src/fabric_defect_hub/core/dataset_capabilities.py.
-# Keep it with the other register_capabilities(...) calls.
-register_capabilities(
-    "hf-bottle-ad",
-    default_root="datasets/general/HF Bottle AD",
-    roles={"anomaly_train"},
-    tasks=("anomaly",),
-    domain="general",
-)
-```
-
-```python
-# Add this entry to DATASET_CATALOG in src/fabric_defect_hub/application/workspace.py.
-DATASET_CATALOG = {
-    ...
-    "HF Bottle AD": {
-        "name": "hf-bottle-ad",
-        "env": "HF_BOTTLE_AD_ROOT",
-        "slice_kwarg": None,   # no texture/class subdivision
-        "task": "anomaly",
-    },
-}
-```
-
-Create `configs/datasets/hf_bottle_patchcore.yaml`:
-
-```yaml
-model:
-  name: PatchCore
-data:
-  dataset: hf-bottle-ad
-  dataset_root: datasets/general/HF Bottle AD
-  train_selection: {split: train, use_defect: false, task: anomaly, seed: 0}
-  test_selection: {split: test, use_defect: true, defect_ratio: 0.5, task: anomaly, seed: 0}
-train:
-  enabled: true
-  extra: {coreset_sampling_ratio: 0.1}
-  epochs: 1
-val: {enabled: true, output_dir: artifacts/anomaly_maps/hf-bottle-ad}
-checkpoint:
-  name: patchcore_hf_bottle_ad
-  registry_dir: general/artifacts/models
-```
-
-From the repository root, verify the registration and run the example:
+Verify the copied data and run the existing MVTec AD PatchCore smoke test against the copied root:
 
 ```bash
 adh doctor
-adh train configs/datasets/hf_bottle_patchcore.yaml --dataset hf-bottle-ad --mode test --no-publish
+adh train general/configs/models/anomalib.yaml \
+  --variant PatchCore \
+  --dataset-root datasets/general/Bottle \
+  --category bottle \
+  --mode test \
+  --no-publish
 ```
-
-This general-domain example is intentionally excluded from `fabric-train`.
 
 ### 6.2 Example: add a YOLO 26 model
 

@@ -1,0 +1,30 @@
+HTTP/2 200 
+access-control-allow-origin: https://hf-mirror.com
+access-control-expose-headers: X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash
+access-control-max-age: 86400
+alt-svc: h3=":443"; ma=2592000
+cf-cache-status: MISS
+cf-ray: a3d08255cbf8a5d6-NRT
+content-type: application/json; charset=utf-8
+cross-origin-opener-policy: same-origin
+date: Fri, 18 Sep 2026 12:56:10 GMT
+etag: W/"2f31-5rTg8PQyeUJksByqRGN2fpOn4yk"
+link: <https://huggingface.co/api/datasets/Voxel51/mvtec-ad/tree/main?expand=true&recursive=true&limit=50&cursor=ZXlKbWFXeGxYMjVoYldVaU9pSmtZWFJoTDJSaGRHRmZOVElpTENKMGNtVmxYMjlwWkNJNklqZGlabU5tTVRGall6Z3dZbVJqWXpGa09UWmxaalpqTXpobE1ERmhaall6TkRnNFkySTRNRFlpZlE9PTo1MA%3D%3D>; rel="next"
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+ratelimit: "api";r=496;t=6
+ratelimit-policy: "fixed window";"api";q=500;w=300
+referrer-policy: strict-origin-when-cross-origin
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=960rgkzJilz5z95AqB%2FtZbx2ZniWhQ45ThUeuKbw3vvoMv%2F10h6JcOTdexB431HP92sYbbLckV%2BDwmmUgulmr6pTXfKsVg2eKXaelLbL7ONaGf4lWjbzy6gF%2Bfl6VRncUSyLZV1JAOA%3D"}]}
+server: cloudflare
+strict-transport-security: max-age=31536000
+vary: Origin, Accept-Encoding
+via: 2.0 Caddy
+via: 2.0 Caddy
+via: 2.0 Caddy
+via: 1.1 7412d2bd99b25704f1e81abd128287b4.cloudfront.net (CloudFront)
+x-amz-cf-id: f1hW1pFKFx1uqlLXX-Ab1wKSSXPqHWsZULxO_bKuAcPoNFTXmhEoFQ==
+x-amz-cf-pop: NRT12-P2
+x-cache: Miss from cloudfront
+x-powered-by: huggingface-moon
+x-request-id: Root=1-6aad34ea-661186814f0693203dac1774
+

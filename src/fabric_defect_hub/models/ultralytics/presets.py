@@ -44,6 +44,7 @@ MODEL_VARIANTS: dict[str, dict[str, str]] = {
     "yolov8n": {"checkpoint": "yolov8n.pt", "architecture": "yolov8n.yaml"},
     "yolov8s": {"checkpoint": "yolov8s.pt", "architecture": "yolov8s.yaml"},
     "yolo11n": {"checkpoint": "yolo11n.pt", "architecture": "yolo11n.yaml"},
+    "yolo26n": {"checkpoint": "yolo26n.pt", "architecture": "yolo26n.yaml"},
     FABRICMAMBA_VARIANT: {
         "checkpoint": "fabricmamba_n.yaml",
         "architecture": "fabricmamba_n.yaml",
@@ -62,6 +63,7 @@ VARIANT_ALIASES: dict[str, str] = {
     "yolov11n": "yolo11n",
     "v11n": "yolo11n",
     "11n": "yolo11n",
+    "yolo26n": "yolo26n",
     "fabricmamba": FABRICMAMBA_VARIANT,
     "fabric-mamba": FABRICMAMBA_VARIANT,
     "fabricmamba_n": FABRICMAMBA_VARIANT,

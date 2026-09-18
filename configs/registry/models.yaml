@@ -12,6 +12,10 @@ models:
   - {id: yolov8n, backend: ultralytics, variant: yolov8n, task: detection, config: ultralytics_example.yaml, label: "YOLOv8n · ZJU-Leaper", method: YOLO, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
   - {id: yolov8s, backend: ultralytics, variant: yolov8s, task: detection, config: ultralytics_example.yaml, label: "YOLOv8s · ZJU-Leaper", method: YOLO, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
   - {id: yolo11n, backend: ultralytics, variant: yolo11n, task: detection, config: ultralytics_example.yaml, label: "YOLO11n · ZJU-Leaper", method: YOLO, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
+  - {id: yolo26n, backend: ultralytics, variant: yolo26n, task: detection,
+     config: ultralytics_yolo26_example.yaml, label: "YOLO26n · ZJU-Leaper",
+     method: YOLO26, trained_on: [zju-leaper], training_split: train,
+     domain: textile, source: local_trained_artifact}
   - {id: fasterrcnn_resnet50_fpn, backend: torchvision, variant: fasterrcnn_resnet50_fpn, task: detection, config: torchvision_example.yaml, label: "Faster R-CNN · ZJU-Leaper", method: Faster R-CNN, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
   - {id: cascadercnn_resnet50_fpn, backend: torchvision, variant: cascadercnn_resnet50_fpn, task: detection, config: torchvision_example.yaml, label: "Cascade R-CNN · ZJU-Leaper", method: Cascade R-CNN, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}
   - {id: detr_resnet50, backend: torchvision, variant: detr_resnet50, task: detection, config: torchvision_example.yaml, label: "DETR · ZJU-Leaper", method: DETR, trained_on: [zju-leaper], domain: textile, source: local_trained_artifact}

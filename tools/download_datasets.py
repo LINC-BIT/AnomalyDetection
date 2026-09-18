@@ -20,6 +20,19 @@ def main() -> int:
     args = parser.parse_args()
     args.root.mkdir(parents=True, exist_ok=True)
 
+    if args.dataset == "mvtec-ad":
+        from huggingface_hub import snapshot_download
+
+        patterns = [f"{args.category}/**"] if args.category else None
+        snapshot_download(
+            repo_id="Voxel51/mvtec-ad",
+            repo_type="dataset",
+            local_dir=args.root,
+            allow_patterns=patterns,
+        )
+        print(f"Downloaded Voxel51/mvtec-ad to {args.root}")
+        return 0
+
     if args.dataset == "zju-leaper":
         from huggingface_hub import snapshot_download
 
@@ -33,7 +46,7 @@ def main() -> int:
 
     from anomalib.data import MVTecAD, Visa
 
-    cls = MVTecAD if args.dataset == "mvtec-ad" else Visa
+    cls = Visa
     kwargs = {"root": args.root}
     if args.category:
         kwargs["category"] = args.category

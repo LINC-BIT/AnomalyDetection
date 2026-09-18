@@ -19,7 +19,13 @@ from fabric_defect_hub.models.ultralytics.presets import (
 
 
 def test_variant_resolution_and_aliases():
-    assert set(list_supported_variants()) == {"yolov8n", "yolov8s", "yolo11n", "fabricmamba"}
+    assert set(list_supported_variants()) == {
+        "yolov8n",
+        "yolov8s",
+        "yolo11n",
+        "yolo26n",
+        "fabricmamba",
+    }
     assert resolve_variant("YOLOv8s") == "yolov8s"
     assert resolve_variant("v11n") == "yolo11n"
     assert resolve_variant("yolo11n.pt") == "yolo11n"

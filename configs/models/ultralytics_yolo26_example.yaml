@@ -1,0 +1,29 @@
+# ============================================================================
+# YOLO 26 experiment config (README §6.2 example).
+#
+# Adds the `yolo26n` variant on top of the existing Ultralytics backend: the
+# architecture ships with ultralytics 8.4.x, so only a preset entry was
+# needed. Everything else is the standard Ultralytics lifecycle.
+# ============================================================================
+
+model:
+  variant: yolo26n
+  pretrained: true
+  task: detect
+
+data:
+  dataset: zju-leaper
+  train_selection: {split: train, task: detection}
+  val_selection: {split: test, task: detection}
+
+train:
+  enabled: true
+  epochs: 1
+  imgsz: 640
+  batch: 2
+
+val: {enabled: true}
+
+checkpoint:
+  name: yolo26n_zju_leaper
+  registry_dir: textile/artifacts/models

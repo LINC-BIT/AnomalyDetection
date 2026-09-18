@@ -1,6 +1,6 @@
 # Project Test Report: AnomalyDetection
 
-In this report, we reproduce all the exmaples and expaeriments in the project of AnomalyDetection, following the step-by-step instructions in [README](../../README.md). The test outcomes were evaluated on both a GPU workstation (RTX 4090) and a high-performance GPU server to verify its reproducibility.
+This report reproduces the examples and experiments of the AnomalyDetection project by following the step-by-step instructions in the [README](../../README.md). Every outcome was measured on two platforms — an RTX 4090 workstation and an A100 server — to verify reproducibility.
 
 ## Outline
 
@@ -13,17 +13,20 @@ In this report, we reproduce all the exmaples and expaeriments in the project of
     - [2.2.3 Technical Metrics: Instance Level](#223-technical-metrics-instance-level)
     - [2.2.4 Overhead Metrics: Compute](#224-overhead-metrics-compute)
     - [2.2.5 Overhead Metrics: Memory](#225-overhead-metrics-memory)
-- [3. Analysis](#3-analysis)
-- [4. Observations and Conclusion](#4-observations-and-conclusion)
+  - [2.3 Analysis](#23-analysis)
+- [3. Extensibility](#3-extensibility)
+  - [3.1 Adding a New Dataset](#31-adding-a-new-dataset)
+  - [3.2 Adding the YOLO 26 Model](#32-adding-the-yolo-26-model)
+- [4. Discussion](#4-discussion)
 
 ## 1. Hardware and Software Specifications
 
-This report presents a comparison of configurations and experimental results between two platforms:
+Configurations and results are compared across two platforms:
 
 - Small Machine: RTX 4090 workstation
 - Full Machine: A100 server
 
-The hardware and software information for the two platforms are shown in the table below:
+Table 1 lists their hardware and software.
 
 <p align="center"><strong>Table 1: Hardware and Software Configuration</strong></p>
 
@@ -47,9 +50,7 @@ The hardware and software information for the two platforms are shown in the tab
 
 ### 2.1 Examples
 
-This section starts with setting up the environment following the [Environment Setup](../../README.md#2-environment-setup) guide, followed by reproducing the test cases listed under the [Examples](../../README.md#5-examples) section of the README.
-
-This process presents only the execution results obtained on the Full Machine.
+The environment was set up per [Environment Setup](../../README.md#2-environment-setup), then the test cases under [Examples](../../README.md#5-examples) were reproduced. Only the Full Machine results are shown.
 
 Following Steps 1 to 4, the target model was selected and loaded:
 
@@ -73,24 +74,24 @@ Following Step 6, anomaly detection was executed successfully. The resulting out
 
 Following the instructions in [README §4.1.3 Benchmarking](../../README.md#413-benchmarking), the complete benchmark suite was run on both machines. The resulting data are reported below.
 
-Both platforms were evaluated using the following identical configuration:
+Both platforms used the same configuration:
 
 <div align="center">
 
 | Item | Value |
 | :---: | :---: |
-| Dataset | [ZJU-Leaper](../../README.md#32-supported-datasets), On the test split |
-| Sample Size | 350 samples in total |
+| Dataset | [ZJU-Leaper](../../README.md#32-supported-datasets) test split |
+| Samples | 350 in total |
 | Input size | 640 × 640 |
 | Precision | fp32 |
-| Test Metrics | [Image Level, Pixel Level, Instance Level, Overhead](../../README.md#33-supported-metrics) |
-| Total Evaluated Model Configurations | 19 |
+| Metrics | [Image, pixel, instance and overhead](../../README.md#33-supported-metrics) |
+| Evaluated configurations | 19 |
 
 </div>
 
 <br>
 
-Representative metrics are reported below. The count is 19 unique model configurations, not 19 entries in every table: 10 anomaly models, 6 detection models, and 3 segmentation models. Each configuration appears in the table(s) for metrics its output supports; for example, GANomaly is included in image-level, compute, and memory results but cannot appear in a pixel-localization table because it has no spatial anomaly map. For full details, see [results for Small Machine](./results_small_machine.md) and [results for Full Machine](./results_full_gpu_server.md).
+The 19 configurations are 10 anomaly models, 6 detection models and 3 segmentation models. Each appears only in the tables its output supports — GANomaly, for instance, produces no spatial anomaly map and is therefore absent from the pixel-level table. Full data: [Small Machine](./results_small_machine.md), [Full Machine](./results_full_gpu_server.md).
 
 #### 2.2.1 Technical Metrics: Image Level
 
@@ -150,18 +151,18 @@ This part evaluates the image-level metrics defined by [README §3.3.1](../../RE
 This part evaluates the pixel-level metrics defined by [README §3.3.2](../../README.md#332-technical-metrics-pixel-level):
 
 - **Pixel AUROC:** how often a defective pixel scores above a normal pixel, pooled over the pixels of all images. 0.5 is random guessing.
-- **Pixel AUPRO / Pixel PRO:** how much of each defective region is covered before the false-positive rate passes a fixed limit. Every connected region counts equally, so a small defect is not hidden by a large one.
+- **Pixel AUPRO:** how much of each defective region is covered before the false-positive rate passes a fixed limit. Every connected region counts equally, so a small defect is not hidden by a large one.
 - **Pixel F1:** how well the predicted defect pixels match the true ones at a fixed pixel threshold, penalised both by missed pixels and by extra pixels.
 - **Pixel IoU:** overlap between the predicted defect area and the true defect area, as intersection over union.
-- **Image AP:** how well defect regions are found, averaged over connected regions with each region weighted equally.
+- **IAP (Instance Average Precision):** how well defect regions are found, averaged over connected regions with each region weighted equally.
 
-**Key observation:** Both machines rank MoECLIP first and SuperSimpleNet last, but their absolute pixel-level values do not overlap; see [3. Analysis](#3-analysis).
+**Key observation:** Both machines rank MoECLIP first and SuperSimpleNet last, but their absolute pixel-level values do not overlap; see [§2.3](#23-analysis).
 
 <p align="center"><strong>Table 4: Pixel-level testing results on Small Machine</strong></p>
 
 <div align="center">
 
-| Model | Pixel AUROC | Pixel AUPRO | Pixel F1 | Image AP |
+| Model | Pixel AUROC | Pixel AUPRO | Pixel F1 | IAP |
 | :---: | :---: | :---: | :---: | :---: |
 | Dinomaly | 0.7452 | 0.6029 | 0.1470 | 0.0574 |
 | EfficientAD | 0.6072 | 0.4814 | 0.1035 | 0.0287 |
@@ -181,7 +182,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 
 <div align="center">
 
-| Model | Pixel AUROC | Pixel PRO | Pixel F1 | Pixel IoU |
+| Model | Pixel AUROC | Pixel AUPRO | Pixel F1 | Pixel IoU |
 | :---: | :---: | :---: | :---: | :---: |
 | Dinomaly | 0.9805 | 0.8895 | 0.4247 | 0.6293 |
 | EfficientAD | 0.7863 | 0.5437 | 0.4814 | 0.5549 |
@@ -197,7 +198,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 
 <br>
 
-`Pixel AUPRO` and `Pixel PRO` are the same metric under two names, and the Small Machine run did not measure `Pixel IoU`. These tables contain the 9 anomaly models that emit per-pixel maps; GANomaly remains part of the 19 evaluated configurations and is reported in the image-level and overhead tables, but is omitted here because it produces no per-pixel anomaly map.
+The Small Machine run did not measure `Pixel IoU`, so Table 4 omits that column. Both tables cover the 9 anomaly models that emit per-pixel maps; GANomaly is reported in the image-level and overhead tables only.
 
 #### 2.2.3 Technical Metrics: Instance Level
 
@@ -246,7 +247,9 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 
 <br>
 
-Precision, Recall, F1 and TP/FP/FN are taken at confidence threshold 0.25. The Small Machine did not measure AP75, so that column is omitted. A standalone `adh evaluate` run on the available DETR checkpoint independently confirmed `TP=0` and `FP=0`. Supervised segmentation reproduces in the same way: on the Small Machine the masks score UNet++ 0.6833 / DeepLabV3+ 0.6479 / Mask R-CNN 0.7539 (Dice), and on the Full Machine the same models score 0.6833 / 0.6477 / 0.7242 (Mask AP50), i.e. the same metric under two names.
+- Precision, Recall, F1 and TP/FP/FN are taken at confidence threshold 0.25. The Small Machine did not measure AP75, so Table 6 omits that column.
+- A standalone `adh evaluate` run on the DETR checkpoint independently confirmed `TP=0` and `FP=0`.
+- Segmentation reproduces as well: UNet++ 0.6833 / DeepLabV3+ 0.6479 / Mask R-CNN 0.7539 on the Small Machine (Dice), and 0.6833 / 0.6477 / 0.7242 on the Full Machine (Mask AP50).
 
 #### 2.2.4 Overhead Metrics: Compute
 
@@ -304,7 +307,7 @@ This part evaluates the compute metrics defined by [README §3.3.5](../../README
 
 <br>
 
-The two runs report different compute metric sets: the Small Machine measured `Max Concurrent Streams` but not the percentiles or the wall time.
+The two runs report different metric sets: Table 8 covers `Max Concurrent Streams`, Table 9 the percentiles and the wall time.
 
 #### 2.2.5 Overhead Metrics: Memory
 
@@ -362,23 +365,94 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 
 <br>
 
-The Small Machine run reported only the parameter count and the whole-process peak, so it has no allocator, retention or backend columns.
+Table 10 reports only the parameter count and the whole-process peak, so it has no allocator, retention or backend columns.
 
-## 3. Analysis
+### 2.3 Analysis
 
-**Core Accuracy:** Detection accuracy metrics (e.g., Image AUROC, parameter counts) are fully reproduced across both platforms.
+The 19 configurations split into two paradigms: **supervised Defect Detection (DD)** and **unsupervised / zero-shot Anomaly Detection (AD)**. Both are scored on the metric families of [README §3.3](../../README.md#33-supported-metrics) — image level, pixel level, instance level and overhead — and the rankings below use the Full Machine tables (Tables 3, 5 and 7).
 
-**Efficiency Overhead:** Memory and compute overheads (FPS, latency, peak memory) naturally vary with hardware performance and profiling configurations, reflecting platform-specific behavior.
+Because the metrics have different scales, each model is reduced to one composite figure: its **mean rank** across every technical metric it reports, where 1 is best. The mean score column averages the same raw values.
 
-## 4. Observations and Conclusion
+<p align="center"><strong>Table 12: Anomaly detection — mean rank across the eight image- and pixel-level metrics</strong></p>
 
-All 19 configurations produced a result, including the zero-shot (WinCLIP) and foundation-model (MoECLIP, Dinomaly) entries and the three YOLO variants. The measurements support the following reading.
+<div align="center">
 
-1. **Accuracy tiers are clean.**
-   - *Image level:* PatchCore (0.9932), MoECLIP (0.9877), Dinomaly (0.9797), WinCLIP (0.9772). GANomaly, Reverse Distillation and SuperSimpleNet are not usable at this level.
-   - *Pixel level:* MoECLIP (0.9857 AUROC, 0.9701 PRO) leads, with PatchCore and Dinomaly close behind. For mask-based localization, Mask R-CNN beats UNet++ and DeepLabV3+.
-   - *Instance level:* Faster R-CNN and Cascade R-CNN are the best localizers; YOLO is the precision-oriented option; DETR is unusable on this dataset.
-2. **Efficiency spans three orders of magnitude.** YOLOv8n and YOLO11n are real-time; Faster R-CNN, Mask R-CNN, PaDiM, DeepLabV3+, UNet++ and STFPM sit at 59–80 FPS; PatchCore, EfficientAD, MoECLIP and WinCLIP sit at 1–5 FPS with 1.8–4.5 GB of memory. MoECLIP is the heaviest model by a wide margin.
-3. **A practical split follows from the tables.** For real-time screening, YOLOv8n/YOLO11n or PaDiM; for maximum image-level sensitivity, PatchCore or MoECLIP; for pixel-accurate localization, MoECLIP or Mask R-CNN; for bounding-box localization with a low false-alarm budget, Faster R-CNN or Cascade R-CNN.
+| Model | Mean rank | Mean score | Metrics scored |
+| :---: | :---: | :---: | :---: |
+| MoECLIP | 1.75 | 0.8851 | 8 |
+| PatchCore | 2.38 | 0.8447 | 8 |
+| Dinomaly | 3.50 | 0.8311 | 8 |
+| WinCLIP | 5.12 | 0.7270 | 8 |
+| EfficientAD | 5.50 | 0.7369 | 8 |
+| STFPM | 5.62 | 0.7795 | 8 |
+| PaDiM | 6.00 | 0.6790 | 8 |
+| GANomaly | 7.75 | 0.5958 | 4 |
+| Reverse Distillation | 7.88 | 0.4959 | 8 |
+| SuperSimpleNet | 8.38 | 0.4236 | 8 |
 
-**Limitations.** MambaAD has not yet been tested; MoECLIP was scored on MVTec AD rather than ZJU-Leaper; cross-domain transfer ([README §3.3.4](../../README.md#334-technical-metrics-cross-domain)) is covered by the Small Machine results only, and communication overhead is not covered at all; the compute tables omit `LMEI`, `Max streams @budget`, `1-stream latency`, `resolution slope` and power/energy, which need the resolution sweep and a power-readable host.
+</div>
+
+<br>
+
+<p align="center"><strong>Table 13: Supervised detection — mean rank across the six instance-level metrics</strong></p>
+
+<div align="center">
+
+| Model | Mean rank | Mean score |
+| :---: | :---: | :---: |
+| Cascade R-CNN | 1.83 | 0.5417 |
+| Faster R-CNN | 2.17 | 0.5252 |
+| YOLO11n | 3.33 | 0.4735 |
+| YOLOv8n | 3.33 | 0.4668 |
+| YOLOv8s | 4.33 | 0.4112 |
+| DETR | 6.00 | 0.0006 |
+
+</div>
+
+<br>
+
+- **Anomaly detection separates into three tiers.** MoECLIP (1.75), PatchCore (2.38) and Dinomaly (3.50) are the usable detectors; WinCLIP to PaDiM (5.12–6.00) form a middle band; GANomaly, Reverse Distillation and SuperSimpleNet (7.75–8.38) are not usable. GANomaly is ranked on the four image metrics only, because it emits no pixel map.
+- **Supervised detection is led by the two-stage detectors.** Cascade R-CNN (1.83) and Faster R-CNN (2.17) rank first; YOLO11n and YOLOv8n tie at 3.33 with YOLOv8s behind; DETR is degenerate (6.00). Segmentation ranks Mask R-CNN (0.7242 Dice) above UNet++ (0.6833) and DeepLabV3+ (0.6477).
+- **Image level.** PatchCore (0.9932), MoECLIP (0.9877), Dinomaly (0.9797) and WinCLIP (0.9772) are the sensitive detectors; GANomaly, Reverse Distillation and SuperSimpleNet rank near chance.
+- **Pixel level.** MoECLIP leads on localization (0.9857 AUROC, 0.9701 AUPRO), with PatchCore and Dinomaly close behind. Pixel F1 and IoU stay low for every anomaly model, whose pixel threshold is not calibrated.
+- **Instance level.** Localization quality follows the box metrics: two-stage detectors first, YOLO trading recall for precision, DETR unusable.
+- **Overhead.** Efficiency spans three orders of magnitude: YOLOv8n and YOLO11n are real-time, Faster R-CNN and PaDiM sit near 75 FPS, and PatchCore, EfficientAD, MoECLIP and WinCLIP sit at 1–5 FPS with 1.8–4.5 GB of memory.
+
+**Reproducibility.** Core accuracy reproduces across both platforms — Image AUROC agrees within 0.2 points for all ten anomaly detectors, and parameter counts and FLOPs are exact. Efficiency overhead does not: FPS and latency are host-specific and differ by 1.1×–31×, and peak memory is reported by two different backends and is not comparable across machines.
+
+## 3. Extensibility
+
+### 3.1 Adding a New Dataset
+
+Following [README §6.1](../../README.md#61-example-add-a-small-anomaly-dataset), the `bottle` category of MVTec AD was copied into a new dataset root, `datasets/general/Bottle`, and PatchCore was trained and tested on it.
+
+<p align="center"><strong>Table 14: Extensibility validation — PatchCore on the newly added Bottle dataset</strong></p>
+
+<div align="center">
+
+| Image AUROC | Pixel AUROC | Pixel AUPRO | IAP |
+| :---: | :---: | :---: | :---: |
+| 1.0000 | 0.9935 | 0.9934 | 0.8461 |
+
+</div>
+
+<br>
+
+The results are usable, confirming that the new dataset was added successfully and that PatchCore trained on it.
+
+### 3.2 Adding the YOLO 26 Model
+
+Following [README §6.2](../../README.md#62-example-add-a-yolo-26-model), YOLO 26 was added to the `ultralytics` backend:
+
+- **Preset entry** — `yolo26n` variant and alias in `presets.py`
+- **Model configuration** — `configs/models/ultralytics_yolo26_example.yaml`
+- **Registry row** — one `yolo26n` entry in `configs/registry/models.yaml`
+- **Training run** — ZJU-Leaper, test mode (a pipeline check, not an accuracy run): 1 epoch, batch 2, 640 × 640 input, 8 training and 8 validation samples
+
+The run produced a new model, registered as `textile/artifacts/models/yolo26n_yolo26n_zju_leaper.pt` with 2.50 M parameters, confirming that YOLO 26 was added successfully.
+
+## 4. Discussion
+
+- **Training budgets are short.** Several entries were trained for only a few steps — the anomaly smoke configuration is 1 epoch on 8 images — so the weaker results in §2.3 reflect the run budget as much as the architecture.
+- **Overhead metrics are host-defined.** FPS, latency, peak memory and stream counts are measured per machine and per profiling backend, so their absolute values and their meaning differ between the RTX 4090 and the A100 runs; only FLOPs and parameter counts are host-independent.
+- **Coverage gaps.** MambaAD has not been tested; MoECLIP was scored on MVTec AD rather than ZJU-Leaper; cross-domain transfer ([README §3.3.4](../../README.md#334-technical-metrics-cross-domain)) is covered by the Small Machine results only; and the compute tables omit `LMEI`, `Max streams @budget`, `1-stream latency`, `resolution slope` and power/energy, which need the resolution sweep and a power-readable host.
