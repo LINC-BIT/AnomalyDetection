@@ -36,6 +36,50 @@ def test_detr_resnet50_compilation():
     assert "loss_giou" in losses
 
 
+def test_detr_losses_use_weight_dict():
+    """`SetCriterion` must return `weight_dict`-scaled losses.
+
+    `engine.train_one_epoch` only sums the dict the criterion returns, so
+    returning the raw components silently trained `loss_bbox`/`loss_giou` at
+    weight 1 instead of DETR's 5/2. With 100 queries and ~1.7 objects per
+    ZJU-Leaper image that let the classification term dominate and the decoder
+    collapse onto one constant box for every query and image — the failure
+    behind the published `detr_resnet50.pt` (mAP 0.005, constant prediction).
+    """
+
+    from fabric_defect_hub.models.torchvision.presets import HungarianMatcher, SetCriterion
+
+    torch.manual_seed(0)
+    outputs = {
+        "pred_logits": torch.randn(2, 5, 3),
+        "pred_boxes": torch.rand(2, 5, 4),
+    }
+    targets = [
+        {"labels": torch.tensor([1]), "boxes": torch.tensor([[0.5, 0.5, 0.2, 0.2]])},
+        {
+            "labels": torch.tensor([1, 2]),
+            "boxes": torch.tensor([[0.2, 0.3, 0.1, 0.1], [0.7, 0.7, 0.3, 0.3]]),
+        },
+    ]
+
+    def criterion(weight_dict):
+        return SetCriterion(
+            num_classes=3,
+            matcher=HungarianMatcher(cost_class=1.0, cost_bbox=5.0, cost_giou=2.0),
+            weight_dict=weight_dict,
+            eos_coef=0.1,
+            losses=["labels", "boxes"],
+        )
+
+    reference = {"loss_ce": 1.0, "loss_bbox": 5.0, "loss_giou": 2.0}
+    weighted = criterion(reference)(outputs, targets)
+    raw = criterion({key: 1.0 for key in reference})(outputs, targets)
+
+    for key, weight in reference.items():
+        assert key in weighted
+        assert float(weighted[key]) == pytest.approx(weight * float(raw[key]), rel=1e-5)
+
+
 def test_detr_vgg16_compilation():
     model = build_model(
         name="detr_vgg16",

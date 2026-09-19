@@ -1,0 +1,98 @@
+# ============================================================================
+# DETR (ResNet-50 backbone) retrain on ZJU-Leaper pattern 1-4 — in-domain.
+#
+# Why this file exists
+# --------------------
+# The previous run (`runs/retrain_detr_100`, published as
+# `textile/artifacts/models/published/detr_resnet50.pt`) collapsed. Measured on
+# the published weights: every one of the 100 queries predicted the *same* box
+# `[60, 52, 427, 462]` with score 0.005 for every image — 0/30 hits at IoU>=0.5
+# even on training images — giving mAP 0.005 / mAP@50 0.010 against Faster
+# R-CNN's 0.625 / 0.312 mAP@50 on the same split.
+#
+# Root causes addressed here (see `models/torchvision/presets.py`):
+#   1. `SetCriterion` returned *unweighted* losses, so `loss_bbox`/`loss_giou`
+#      were optimised at weight 1 instead of DETR's 5/2. Fixed in the criterion.
+#   2. DETR defaults ran for 100 epochs at the COCO 800/1333 resize. ZJU-Leaper
+#      is 512x512, so 800 was pure upscaling; and DETR needs its published
+#      ~300-epoch schedule. Both are set below.
+#   3. Note there is no pretrained DETR to load: torchvision ships no DETR and
+#      the official COCO checkpoint is unreachable from this environment, so
+#      only the ResNet-50 backbone is pretrained (ImageNet) and the transformer
+#      trains from scratch. Expect a much weaker detector than Faster R-CNN /
+#      YOLO; this config exists to show DETR actually learns at all.
+#
+# Note on artifacts: `checkpoint.name: detr_resnet50` means a successful run
+# overwrites the registered `textile/artifacts/models/detr_resnet50_detr_resnet50.pt`
+# and the `published/detr_resnet50.pt` slot that the collapsed weights currently
+# occupy — which is the intent. The collapsed bytes are not lost: they remain in
+# `runs/retrain_detr_100/detr_resnet50/best.pt` (md5 9620f67d5e2d920f087487f0122214df).
+#
+# Usage (configuration-driven, no CLI flags):
+#     python -c "
+#     from fabric_defect_hub.models.torchvision import run_from_yaml
+#     result = run_from_yaml('configs/models/torchvision_detr.yaml')
+#     print(result.metrics, result.published_path)"
+# ============================================================================
+
+model:
+  variant: detr_resnet50
+  pretrained: true                 # ImageNet ResNet-50 backbone; transformer is random-init
+  offline: false
+  trainable_backbone_layers: 3
+  min_size: 512                    # native ZJU-Leaper resolution (was 800 = 1.56x upscale)
+  max_size: 640
+
+data:
+  dataset: zju-leaper
+  dataset_root: datasets/textile/ZJU-Leaper
+  class_names: ["defect"]
+  train_selection:
+    split: train
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: null              # full in-domain set: 7932 normal + 2625 defect
+    defect_ratio: 0.5
+    task: detection
+    seed: 0
+  val_selection:
+    split: test
+    pattern: [pattern1, pattern2, pattern3, pattern4]
+    num_samples: 500
+    defect_ratio: 0.5
+    task: detection
+    seed: 0
+
+train:
+  enabled: true
+  epochs: 300                      # DETR's published schedule (presets._DETR_TRAIN_DEFAULTS)
+  batch_size: 16                   # DETR's reference total batch size; an A100-80GB takes it easily
+  optimizer: adamw                 # DETR recipe: AdamW, head 1e-4 / backbone 1e-5
+  lr: 0.0001
+  backbone_lr: 0.00001
+  weight_decay: 0.0005
+  lr_scheduler: cosine
+  warmup_epochs: 1
+  grad_clip_norm: 5.0
+  patience: 0                      # no mAP early stop: DETR mAP sits at ~0 for tens of epochs
+  num_workers: 8                   # 128-core host; drop to 0 on macOS
+  # device: cuda                   # omit to auto-select cuda > mps > cpu
+
+val:
+  enabled: true
+  batch_size: 16
+  num_workers: 8
+
+predict:
+  score_threshold: 0.5
+  max_detections: 100
+
+export:
+  enabled: false
+  formats: [exported_program]
+  opset: 17
+
+checkpoint:
+  run_dir: runs/retrain_detr_fixed
+  name: detr_resnet50
+  registry_dir: textile/artifacts/models
+  save_every_epoch: false

@@ -16,7 +16,9 @@ from fabric_defect_hub.catalog import (
 
 
 def test_canonical_models_include_textile_and_general_entries():
-    assert len(CANONICAL_MODELS) == 29
+    # 30 since `yolo26n` was appended to configs/registry/models.yaml in 09b52ea;
+    # this count was left at 29 there, so the assertion was stale at HEAD.
+    assert len(CANONICAL_MODELS) == 30
     assert {model.domain for model in CANONICAL_MODELS} == {"textile", "general"}
 
 

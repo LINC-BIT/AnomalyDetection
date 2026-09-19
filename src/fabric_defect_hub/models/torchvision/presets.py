@@ -249,11 +249,32 @@ COMMON_FABRIC_TRAIN_DEFAULTS: dict[str, Any] = {
     "color_jitter": {"brightness": 0.2, "contrast": 0.2, "saturation": 0.1, "hue": 0.02},
 }
 
+# DETR is a randomly-initialised transformer sitting on an ImageNet ResNet
+# backbone: torchvision ships no DETR implementation and the official COCO
+# `detr_resnet50` checkpoint is not reachable from this environment (no
+# github.com / huggingface.co), so only the backbone can be pretrained. It
+# therefore follows the *published DETR schedule* rather than the 30-epoch SGD
+# fabric default — AdamW with a split LR (transformer/heads 1e-4, backbone
+# 1e-5) for 300 epochs. `patience: 0` disables mAP early stopping on purpose:
+# DETR's val mAP sits at ~0 for the first tens of epochs, so any patience
+# would stop the run long before the queries have differentiated.
+_DETR_TRAIN_DEFAULTS: dict[str, Any] = {
+    "epochs": 300,
+    "batch_size": 8,
+    "optimizer": "adamw",
+    "lr": 0.0001,
+    "backbone_lr": 0.00001,
+    "patience": 0,
+}
+
 VARIANT_TRAIN_OVERRIDES: dict[str, dict[str, Any]] = {
     "fasterrcnn_resnet50_fpn": {},
     "fasterrcnn_resnet50_fpn_v2": {"lr": 0.0015},  # v2 head is heavier; slightly gentler LR
     "maskrcnn_resnet50_fpn": {"batch_size": 2},  # masks triple memory use per image
     "maskrcnn_resnet50_fpn_v2": {"batch_size": 2, "lr": 0.0015},
+    "detr_resnet50": dict(_DETR_TRAIN_DEFAULTS),
+    "detr_vgg16": dict(_DETR_TRAIN_DEFAULTS),
+    "detr_shufflenet_v2_x1_0": dict(_DETR_TRAIN_DEFAULTS),
 }
 
 
@@ -1094,7 +1115,15 @@ class SetCriterion(nn.Module):
                 losses.update(self.loss_labels(outputs, targets, indices, num_boxes))
             elif loss_name == "boxes":
                 losses.update(self.loss_boxes(outputs, targets, indices, num_boxes))
-        return losses
+        # `weight_dict` is DETR's loss weighting (ce 1 / bbox 5 / giou 2) and
+        # has to be applied *here*: `engine.train_one_epoch` just sums whatever
+        # this returns, so returning the raw components trained every term at
+        # weight 1. With 100 queries and only ~1.7 objects per ZJU-Leaper image
+        # that let the classification term dominate and the decoder collapse
+        # onto one constant box for every query and every image (the published
+        # `detr_resnet50.pt` predicts `[60, 52, 427, 462]` with score 0.005 on
+        # every input) — see tests/test_detr.py::test_detr_losses_use_weight_dict.
+        return {k: v * self.weight_dict[k] for k, v in losses.items() if k in self.weight_dict}
 
 
 class MLP(nn.Module):
