@@ -91,7 +91,7 @@ Both platforms used the same configuration:
 
 <br>
 
-The 19 configurations are 10 anomaly models, 6 detection models and 3 segmentation models. Each appears only in the tables its output supports — GANomaly, for instance, produces no spatial anomaly map and is therefore absent from the pixel-level table. Full data: [Small Machine](./results_small_machine.md), [Full Machine](./results_full_gpu_server.md).
+19 configurations: 10 anomaly (AD), 6 detection (DD), 3 segmentation (SEG). Each appears in every table its output supports; the Full Machine tables carry all of them — image 16, pixel 12, instance 6, compute and memory 19. Full data: [Small Machine](./results_small_machine.md), [Full Machine](./results_full_gpu_server.md).
 
 #### 2.2.1 Technical Metrics: Image Level
 
@@ -102,7 +102,7 @@ This part evaluates the image-level metrics defined by [README §3.3.1](../../RE
 - **Image Recall:** of the truly defective images, the share that is flagged.
 - **Image F1:** one score that balances Precision against Recall, and drops if either of them is poor.
 
-**Key observation:** The two machines agree on Image AUROC to within **<span style="color:#0070C0">0.2 points</span>** for all ten anomaly detectors, while the thresholded metrics, which depend on the calibration of the decision threshold, drift by up to 4.4 points.
+**Key observation:** Image AUROC agrees within **<span style="color:#0070C0">0.2 points</span>** across the two machines for all ten anomaly models; the thresholded metrics drift by up to 4.4 points. The Full Machine's detection models rank highest on this axis — YOLO11n / YOLOv8n 0.9965.
 
 <p align="center"><strong>Table 2: Image-level testing results on Small Machine</strong></p>
 
@@ -131,8 +131,11 @@ This part evaluates the image-level metrics defined by [README §3.3.1](../../RE
 
 | Model | Image AUROC | Image F1 | Image Precision | Image Recall |
 | :---: | :---: | :---: | :---: | :---: |
+| Cascade R-CNN | 0.9598 | 0.9510 | 0.9798 | 0.9238 |
+| DETR | 0.6489 | 0.0000 | 0.0000 | 0.0000 |
 | Dinomaly | 0.9797 | 0.9151 | 0.9065 | 0.9238 |
 | EfficientAD | 0.9501 | 0.8557 | 0.9326 | 0.7905 |
+| Faster R-CNN | 0.9919 | 0.9561 | 0.9800 | 0.9333 |
 | GANomaly | 0.6548 | 0.4802 | 0.3244 | 0.9238 |
 | MoECLIP | 0.9877 | 0.9209 | 0.9000 | 0.9429 |
 | PaDiM | 0.8284 | 0.7138 | 0.5854 | 0.9143 |
@@ -141,10 +144,15 @@ This part evaluates the image-level metrics defined by [README §3.3.1](../../RE
 | STFPM | 0.9497 | 0.8458 | 0.8854 | 0.8095 |
 | SuperSimpleNet | 0.5852 | 0.4598 | 0.3003 | 0.9810 |
 | WinCLIP | 0.9772 | 0.8584 | 0.8017 | 0.9238 |
+| YOLO11n | 0.9965 | 0.7500 | 1.0000 | 0.6000 |
+| YOLOv8n | 0.9965 | 0.7273 | 1.0000 | 0.5714 |
+| YOLOv8s | 0.9934 | 0.5315 | 1.0000 | 0.3619 |
 
 </div>
 
 <br>
+
+Table 3 lists **all 16 Full Machine models that emit an image-level score**: 10 anomaly + 6 detection.
 
 #### 2.2.2 Technical Metrics: Pixel Level
 
@@ -198,7 +206,23 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 
 <br>
 
-The Small Machine run did not measure `Pixel IoU`, so Table 4 omits that column. Both tables cover the 9 anomaly models that emit per-pixel maps; GANomaly is reported in the image-level and overhead tables only.
+All 9 Full Machine models that emit a per-pixel anomaly map.
+
+<p align="center"><strong>Table 6: Pixel-level segmentation mask metrics (both machines)</strong></p>
+
+<div align="center">
+
+| Model | Dice (Small) | mIoU (Small) | Dice (Full) | mIoU (Full) |
+| :---: | :---: | :---: | :---: | :---: |
+| Mask R-CNN | 0.7539 | 0.6285 | 0.7242 | 0.5993 |
+| UNet++ | 0.6833 | 0.5614 | 0.6833 | 0.5613 |
+| DeepLabV3+ | 0.6479 | 0.5133 | 0.6477 | 0.5132 |
+
+</div>
+
+<br>
+
+The 3 segmentation models — the other pixel-level producers.
 
 #### 2.2.3 Technical Metrics: Instance Level
 
@@ -213,7 +237,7 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 
 **Key observation:** The thresholded **<span style="color:#0070C0">F1 reproduces exactly</span>** across the two machines, while AP50 is higher on the Full Machine.
 
-<p align="center"><strong>Table 6: Instance-level testing results on Small Machine</strong></p>
+<p align="center"><strong>Table 7: Instance-level testing results on Small Machine</strong></p>
 
 <div align="center" style="width: 100%; overflow-x: auto;">
 
@@ -230,7 +254,7 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 
 <br>
 
-<p align="center"><strong>Table 7: Instance-level testing results on Full Machine</strong></p>
+<p align="center"><strong>Table 8: Instance-level testing results on Full Machine</strong></p>
 
 <div align="center" style="width: 100%; overflow-x: auto;">
 
@@ -247,67 +271,73 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 
 <br>
 
-- Precision, Recall, F1 and TP/FP/FN are taken at confidence threshold 0.25. The Small Machine did not measure AP75, so Table 6 omits that column.
+- Precision, Recall, F1 and TP/FP/FN are taken at confidence threshold 0.25. The Small Machine did not measure AP75, so Table 7 omits that column.
 - A standalone `adh evaluate` run on the DETR checkpoint independently confirmed `TP=0` and `FP=0`.
-- Segmentation reproduces as well: UNet++ 0.6833 / DeepLabV3+ 0.6479 / Mask R-CNN 0.7539 on the Small Machine (Dice), and 0.6833 / 0.6477 / 0.7242 on the Full Machine (Mask AP50).
 
 #### 2.2.4 Overhead Metrics: Compute
 
 This part evaluates the compute metrics defined by [README §3.3.5](../../README.md#335-overhead-metrics-compute):
 
-- **FPS (mean / p95):** images processed per second. The p95 is the speed that 95% of frames still reach, so it exposes occasional slow frames.
+- **FPS:** images processed per second.
 - **Latency mean / p95 / p99:** time to process one image, in milliseconds. p95 and p99 describe the slowest frames rather than the average.
 - **FLOPs (G):** arithmetic work of one forward pass, in billions of operations. It is fixed by the architecture, so it is the same on any machine.
 - **Wall-time:** total seconds the scored run took, accuracy pass included.
-- **Max concurrent streams:** how many video streams can run at once while every frame still meets the latency budget.
 
 **Key observation:** **<span style="color:#0070C0">FLOPs reproduce</span>** for every model measured twice, while FPS and latency are host-specific and differ by 1.1×–31×.
 
-<p align="center"><strong>Table 8: Compute overhead testing results on Small Machine</strong></p>
+<p align="center"><strong>Table 9: Compute overhead testing results on Small Machine</strong></p>
 
 <div align="center" style="width: 100%; overflow-x: auto;">
 
-| Model | FPS | Latency mean | FLOPs (G) | Max Concurrent Streams |
-| :---: | :---: | :---: | :---: | :---: |
-| EfficientAD | 3.37 | 296.57 ms | 75.91 | 0 |
-| Faster R-CNN | 7.81 | 128.08 ms | 268.98 | 0 |
-| GANomaly | 10.63 | 94.08 ms | 16.54 | 0 |
-| PaDiM | 31.69 | 31.56 ms | 3.69 | 2 |
-| PatchCore | 1.39 | 719.00 ms | 24.14 | 0 |
-| STFPM | 22.00 | 45.44 ms | 7.38 | 1 |
-| SuperSimpleNet | 2.40 | 417.01 ms | 96.70 | 0 |
-| UNet++ | 119.22 | 100.19 ms | 250.23 | 0 |
-| YOLO11n | 20.83 | 48.01 ms | 6.44 | 0 |
-| YOLOv8n | 181.69 | 5.50 ms | 8.19 | 0 |
-| YOLOv8s | 11.51 | 86.89 ms | 28.65 | 0 |
+| Model | FPS | Latency mean | FLOPs (G) |
+| :---: | :---: | :---: | :---: |
+| EfficientAD | 3.37 | 296.57 ms | 75.91 |
+| Faster R-CNN | 7.81 | 128.08 ms | 268.98 |
+| GANomaly | 10.63 | 94.08 ms | 16.54 |
+| PaDiM | 31.69 | 31.56 ms | 3.69 |
+| PatchCore | 1.39 | 719.00 ms | 24.14 |
+| STFPM | 22.00 | 45.44 ms | 7.38 |
+| SuperSimpleNet | 2.40 | 417.01 ms | 96.70 |
+| UNet++ | 119.22 | 100.19 ms | 250.23 |
+| YOLO11n | 20.83 | 48.01 ms | 6.44 |
+| YOLOv8n | 181.69 | 5.50 ms | 8.19 |
+| YOLOv8s | 11.51 | 86.89 ms | 28.65 |
 
 </div>
 
 <br>
 
-<p align="center"><strong>Table 9: Compute overhead testing results on Full Machine</strong></p>
+<p align="center"><strong>Table 10: Compute overhead testing results on Full Machine</strong></p>
 
 <div align="center" style="width: 100%; overflow-x: auto;">
 
-| Model | FPS (mean) | FPS (p95) | Latency mean | Latency p95 | Latency p99 | FLOPs (G) | Wall-time |
+| Model | FPS | Latency mean | Latency p50 | Latency p95 | Latency p99 | FLOPs (G) | Wall-time |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| EfficientAD | 3.72 | 3.85 | 268.96 ms | 324.86 ms | 354.60 ms | 75.9065 | 60.7 s |
-| Faster R-CNN | 60.42 | 60.67 | 16.55 ms | 18.27 ms | 19.72 ms | 268.9822 | 21.6 s |
-| GANomaly | 34.85 | 34.92 | 28.69 ms | 30.37 ms | 33.46 ms | 33.0444 | 51.4 s |
-| PaDiM | 77.32 | 77.41 | 12.93 ms | 13.51 ms | 13.82 ms | 3.6884 | 43.3 s |
-| PatchCore | 4.42 | 4.54 | 226.31 ms | 309.07 ms | 312.48 ms | 24.1408 | 88.3 s |
-| STFPM | 74.77 | 81.69 | 13.37 ms | 21.89 ms | 24.02 ms | 7.3767 | 88.5 s |
-| SuperSimpleNet | 17.38 | 17.44 | 57.53 ms | 61.21 ms | 71.03 ms | 96.7028 | 93.0 s |
-| UNet++ | 79.54 | 90.78 | 12.57 ms | 19.50 ms | 30.95 ms | 250.2320 | 68.4 s |
-| YOLO11n | 308.48 | 310.60 | 3.24 ms | 3.45 ms | 3.47 ms | 6.4406 | 11.9 s |
-| YOLOv8n | 432.21 | 437.37 | 2.31 ms | 2.64 ms | 2.68 ms | 14.9008 | 11.4 s |
-| YOLOv8s | 355.33 | 355.92 | 2.81 ms | 2.95 ms | 3.24 ms | 6.9886 | 11.9 s |
+| Cascade R-CNN | 0.82 | 1222.08 ms | 1223.76 ms | 1444.89 ms | 1444.89 ms | 408.0209 | 44.4 s |
+| DETR | 56.58 | 17.67 ms | 17.27 ms | 19.12 ms | 19.18 ms | 186.0145 | 46.0 s |
+| DeepLabV3+ | 80.34 | 12.45 ms | 10.80 ms | 11.66 ms | 40.82 ms | 572.1205 | 66.4 s |
+| Dinomaly | 29.74 | 33.63 ms | 30.01 ms | 63.34 ms | 63.34 ms | 273.0566 | 37.4 s |
+| EfficientAD | 3.72 | 268.96 ms | 277.75 ms | 324.86 ms | 354.60 ms | 75.9065 | 60.7 s |
+| Faster R-CNN | 60.42 | 16.55 ms | 16.06 ms | 18.27 ms | 19.72 ms | 268.9822 | 21.6 s |
+| GANomaly | 34.85 | 28.69 ms | 28.32 ms | 30.37 ms | 33.46 ms | 33.0444 | 51.4 s |
+| Mask R-CNN | 59.08 | 16.93 ms | 17.61 ms | 18.46 ms | 18.75 ms | 277.0023 | 512.4 s |
+| MoECLIP | 5.02 | 199.15 ms | 211.75 ms | 221.62 ms | 221.62 ms | 2241.5497 | 131.4 s |
+| PaDiM | 77.32 | 12.93 ms | 12.96 ms | 13.51 ms | 13.82 ms | 3.6884 | 43.3 s |
+| PatchCore | 4.42 | 226.31 ms | 227.70 ms | 309.07 ms | 312.48 ms | 24.1408 | 88.3 s |
+| Reverse Distillation | 7.90 | 126.64 ms | 145.05 ms | 215.47 ms | 266.32 ms | 67.8974 | 63.3 s |
+| STFPM | 74.77 | 13.37 ms | 13.56 ms | 21.89 ms | 24.02 ms | 7.3767 | 88.5 s |
+| SuperSimpleNet | 17.38 | 57.53 ms | 56.90 ms | 61.21 ms | 71.03 ms | 96.7028 | 93.0 s |
+| UNet++ | 79.54 | 12.57 ms | 10.22 ms | 19.50 ms | 30.95 ms | 250.2320 | 68.4 s |
+| WinCLIP | 1.00 | 1004.65 ms | 1015.57 ms | 1080.09 ms | 1080.09 ms | 446.7010 | 590.6 s |
+| YOLO11n | 308.48 | 3.24 ms | 3.36 ms | 3.45 ms | 3.47 ms | 6.4406 | 11.9 s |
+| YOLOv8n | 432.21 | 2.31 ms | 2.49 ms | 2.64 ms | 2.68 ms | 14.9008 | 11.4 s |
+| YOLOv8s | 355.33 | 2.81 ms | 2.79 ms | 2.95 ms | 3.24 ms | 6.9886 | 11.9 s |
 
 </div>
 
 <br>
 
-The two runs report different metric sets: Table 8 covers `Max Concurrent Streams`, Table 9 the percentiles and the wall time.
+All 19 Full Machine configurations. Table 9 (Small) lists the 11 models that machine profiled; Table 11 adds the memory columns for the same runs.
 
 #### 2.2.5 Overhead Metrics: Memory
 
@@ -317,15 +347,14 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 - **Peak memory:** the most memory used at once during the run.
 - **Allocator peak:** the same peak as seen by the CUDA allocator, which leaves out the Python interpreter and its libraries.
 - **Retained / extra:** memory still held after the run, which is what a long-running service keeps resident.
-- **Memory backend:** the counter that produced the peak — whole-process resident set (`process_rss`) or CUDA allocator (`device_allocator`). The two are not on the same scale.
 
-**Key observation:** **<span style="color:#0070C0">Parameters reproduce</span>** for every model measured twice, while peak memory is reported by two different backends and is not comparable across the two machines.
+**Key observation:** **<span style="color:#0070C0">Parameters reproduce</span>** for every model measured twice, while peak memory is not comparable across the two machines.
 
-<p align="center"><strong>Table 10: Memory overhead testing results on Small Machine</strong></p>
+<p align="center"><strong>Table 11: Memory overhead testing results on Small Machine</strong></p>
 
 <div align="center">
 
-| Model | Parameters (M) | Peak Memory (MB) |
+| Model | Parameters (M) | Peak memory (MB) |
 | :---: | :---: | :---: |
 | EfficientAD | 8.06 | 1001.19 |
 | Faster R-CNN | 41.35 | 610.70 |
@@ -343,58 +372,66 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 
 <br>
 
-<p align="center"><strong>Table 11: Memory overhead testing results on Full Machine</strong></p>
+<p align="center"><strong>Table 12: Memory overhead testing results on Full Machine</strong></p>
 
 <div align="center" style="width: 100%; overflow-x: auto;">
 
-| Model | Parameters (M) | Peak memory (MB) | Allocator peak (MB) | Retained / extra (MB) | Memory backend |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| EfficientAD | 8.0586 | 1869.2 | 1869.2 | 71.72 | process_rss |
-| Faster R-CNN | 41.3523 | 588.9 | 588.9 | 314.74 | device_allocator |
-| GANomaly | 188.6895 | 3044.3 | 3044.3 | 2159.62 | process_rss |
-| PaDiM | 2.7828 | 2247.4 | 2247.4 | 168.49 | process_rss |
-| PatchCore | 24.8625 | 4505.1 | 4505.0 | 455.11 | process_rss |
-| STFPM | 5.5656 | 1879.1 | 1879.0 | 31.97 | process_rss |
-| SuperSimpleNet | 33.7194 | 2365.4 | 2365.4 | 196.50 | process_rss |
-| UNet++ | 26.1934 | 535.0 | 535.0 | 200.05 | device_allocator |
-| YOLO11n | 2.5900 | 65.5 | 65.5 | 5.23 | device_allocator |
-| YOLOv8n | 3.0110 | 46.5 | 46.5 | 5.97 | device_allocator |
-| YOLOv8s | 11.1360 | 121.5 | 121.5 | 21.48 | device_allocator |
+| Model | Parameters (M) | Peak memory (MB) | Allocator peak (MB) | Retained / extra (MB) |
+| :---: | :---: | :---: | :---: | :---: |
+| Cascade R-CNN | 69.1641 | 2281.1 | 2265.3 | 526.94 |
+| DETR | 44.3878 | 690.0 | 690.0 | 329.89 |
+| DeepLabV3+ | 40.3470 | 603.9 | 603.9 | 308.18 |
+| Dinomaly | 148.0090 | 1755.4 | 1755.4 | 564.71 |
+| EfficientAD | 8.0586 | 1869.2 | 1869.2 | 71.72 |
+| Faster R-CNN | 41.3523 | 588.9 | 588.9 | 314.74 |
+| GANomaly | 188.6895 | 3044.3 | 3044.3 | 2159.62 |
+| Mask R-CNN | 43.9755 | 608.9 | 608.9 | 334.76 |
+| MoECLIP | 433.5619 | 3538.5 | 3538.4 | 18.35 |
+| PaDiM | 2.7828 | 2247.4 | 2247.4 | 168.49 |
+| PatchCore | 24.8625 | 4505.1 | 4505.0 | 455.11 |
+| Reverse Distillation | 89.0023 | 3004.1 | 3004.1 | 765.57 |
+| STFPM | 5.5656 | 1879.1 | 1879.0 | 31.97 |
+| SuperSimpleNet | 33.7194 | 2365.4 | 2365.4 | 196.50 |
+| UNet++ | 26.1934 | 535.0 | 535.0 | 200.05 |
+| WinCLIP | 208.3773 | 4254.8 | 4248.6 | 0.00 |
+| YOLO11n | 2.5900 | 65.5 | 65.5 | 5.23 |
+| YOLOv8n | 3.0110 | 46.5 | 46.5 | 5.97 |
+| YOLOv8s | 11.1360 | 121.5 | 121.5 | 21.48 |
 
 </div>
 
 <br>
 
-Table 10 reports only the parameter count and the whole-process peak, so it has no allocator, retention or backend columns.
+All 19 Full Machine configurations. Table 11 lists the 11 models the Small Machine profiled.
 
 ### 2.3 Analysis
 
-The 19 configurations split into two paradigms: **supervised Defect Detection (DD)** and **unsupervised / zero-shot Anomaly Detection (AD)**. Both are scored on the metric families of [README §3.3](../../README.md#33-supported-metrics) — image level, pixel level, instance level and overhead — and the rankings below use the Full Machine tables (Tables 3, 5 and 7).
+The 19 configurations split into two paradigms: **supervised Defect Detection (DD)** and **unsupervised / zero-shot Anomaly Detection (AD)**. Both are scored on the metric families of [README §3.3](../../README.md#33-supported-metrics) — image level, pixel level, instance level and overhead — and the rankings below use the Full Machine tables (Tables 3, 5 and 8).
 
 Because the metrics have different scales, each model is reduced to one composite figure: its **mean rank** across every technical metric it reports, where 1 is best. The mean score column averages the same raw values.
 
-<p align="center"><strong>Table 12: Anomaly detection — mean rank across the eight image- and pixel-level metrics</strong></p>
+<p align="center"><strong>Table 13: Anomaly detection — mean rank across the eight image- and pixel-level metrics</strong></p>
 
 <div align="center">
 
-| Model | Mean rank | Mean score | Metrics scored |
-| :---: | :---: | :---: | :---: |
-| MoECLIP | 1.75 | 0.8851 | 8 |
-| PatchCore | 2.38 | 0.8447 | 8 |
-| Dinomaly | 3.50 | 0.8311 | 8 |
-| WinCLIP | 5.12 | 0.7270 | 8 |
-| EfficientAD | 5.50 | 0.7369 | 8 |
-| STFPM | 5.62 | 0.7795 | 8 |
-| PaDiM | 6.00 | 0.6790 | 8 |
-| GANomaly | 7.75 | 0.5958 | 4 |
-| Reverse Distillation | 7.88 | 0.4959 | 8 |
-| SuperSimpleNet | 8.38 | 0.4236 | 8 |
+| Model | Mean rank | Mean score |
+| :---: | :---: | :---: |
+| MoECLIP | 1.75 | 0.8851 |
+| PatchCore | 2.38 | 0.8447 |
+| Dinomaly | 3.50 | 0.8311 |
+| WinCLIP | 5.12 | 0.7270 |
+| EfficientAD | 5.50 | 0.7369 |
+| STFPM | 5.62 | 0.7795 |
+| PaDiM | 6.00 | 0.6790 |
+| GANomaly | 7.75 | 0.5958 |
+| Reverse Distillation | 7.88 | 0.4959 |
+| SuperSimpleNet | 8.38 | 0.4236 |
 
 </div>
 
 <br>
 
-<p align="center"><strong>Table 13: Supervised detection — mean rank across the six instance-level metrics</strong></p>
+<p align="center"><strong>Table 14: Supervised detection — mean rank across the six instance-level metrics</strong></p>
 
 <div align="center">
 
@@ -411,14 +448,14 @@ Because the metrics have different scales, each model is reduced to one composit
 
 <br>
 
-- **Anomaly detection separates into three tiers.** MoECLIP (1.75), PatchCore (2.38) and Dinomaly (3.50) are the usable detectors; WinCLIP to PaDiM (5.12–6.00) form a middle band; GANomaly, Reverse Distillation and SuperSimpleNet (7.75–8.38) are not usable. GANomaly is ranked on the four image metrics only, because it emits no pixel map.
-- **Supervised detection is led by the two-stage detectors.** Cascade R-CNN (1.83) and Faster R-CNN (2.17) rank first; YOLO11n and YOLOv8n tie at 3.33 with YOLOv8s behind; DETR is degenerate (6.00). Segmentation ranks Mask R-CNN (0.7242 Dice) above UNet++ (0.6833) and DeepLabV3+ (0.6477).
-- **Image level.** PatchCore (0.9932), MoECLIP (0.9877), Dinomaly (0.9797) and WinCLIP (0.9772) are the sensitive detectors; GANomaly, Reverse Distillation and SuperSimpleNet rank near chance.
-- **Pixel level.** MoECLIP leads on localization (0.9857 AUROC, 0.9701 AUPRO), with PatchCore and Dinomaly close behind. Pixel F1 and IoU stay low for every anomaly model, whose pixel threshold is not calibrated.
-- **Instance level.** Localization quality follows the box metrics: two-stage detectors first, YOLO trading recall for precision, DETR unusable.
-- **Overhead.** Efficiency spans three orders of magnitude: YOLOv8n and YOLO11n are real-time, Faster R-CNN and PaDiM sit near 75 FPS, and PatchCore, EfficientAD, MoECLIP and WinCLIP sit at 1–5 FPS with 1.8–4.5 GB of memory.
+- **Anomaly (AD).** Three tiers: MoECLIP 1.75, PatchCore 2.38, Dinomaly 3.50 usable; WinCLIP–PaDiM 5.12–6.00 middle; GANomaly, Reverse Distillation, SuperSimpleNet 7.75–8.38 near chance. GANomaly is ranked on image metrics only.
+- **Detection (DD).** Cascade R-CNN 1.83 and Faster R-CNN 2.17 lead; YOLO11n / YOLOv8n tie at 3.33, YOLOv8s 4.33; DETR degenerate at 6.00.
+- **Segmentation (SEG).** Mask R-CNN 0.7242 > UNet++ 0.6833 > DeepLabV3+ 0.6477 (`Dice`).
+- **Image level.** PatchCore 0.9932, MoECLIP 0.9877, Dinomaly 0.9797 and WinCLIP 0.9772 lead the anomaly models; the Full Machine's YOLO11n / YOLOv8n (0.9965) top the whole run.
+- **Pixel level.** MoECLIP leads localization (0.9857 AUROC / 0.9701 AUPRO); Pixel F1 and IoU stay low because the pixel threshold is not calibrated.
+- **Overhead.** 0.82–432 FPS across 19 models: YOLO real-time, Cascade R-CNN and WinCLIP ≈ 1 FPS.
 
-**Reproducibility.** Core accuracy reproduces across both platforms — Image AUROC agrees within 0.2 points for all ten anomaly detectors, and parameter counts and FLOPs are exact. Efficiency overhead does not: FPS and latency are host-specific and differ by 1.1×–31×, and peak memory is reported by two different backends and is not comparable across machines.
+**Reproducibility.** Image AUROC within 0.2 points, parameter counts and FLOPs exact. FPS and latency are host-specific (1.1×–31×), and peak memory is not comparable across machines.
 
 ## 3. Extensibility
 
@@ -426,7 +463,7 @@ Because the metrics have different scales, each model is reduced to one composit
 
 Following [README §6.1](../../README.md#61-example-add-a-small-anomaly-dataset), the `bottle` category of MVTec AD was copied into a new dataset root, `datasets/general/Bottle`, and PatchCore was trained and tested on it.
 
-<p align="center"><strong>Table 14: Extensibility validation — PatchCore on the newly added Bottle dataset</strong></p>
+<p align="center"><strong>Table 15: Extensibility validation — PatchCore on the newly added Bottle dataset</strong></p>
 
 <div align="center">
 
@@ -454,5 +491,5 @@ The run produced a new model, registered as `textile/artifacts/models/yolo26n_yo
 ## 4. Discussion
 
 - **Training budgets are short.** Several entries were trained for only a few steps — the anomaly smoke configuration is 1 epoch on 8 images — so the weaker results in §2.3 reflect the run budget as much as the architecture.
-- **Overhead metrics are host-defined.** FPS, latency, peak memory and stream counts are measured per machine and per profiling backend, so their absolute values and their meaning differ between the RTX 4090 and the A100 runs; only FLOPs and parameter counts are host-independent.
-- **Coverage gaps.** MambaAD has not been tested; MoECLIP was scored on MVTec AD rather than ZJU-Leaper; cross-domain transfer ([README §3.3.4](../../README.md#334-technical-metrics-cross-domain)) is covered by the Small Machine results only; and the compute tables omit `LMEI`, `Max streams @budget`, `1-stream latency`, `resolution slope` and power/energy, which need the resolution sweep and a power-readable host.
+- **Overhead metrics are host-defined.** FPS, latency and peak memory are measured per machine, so their values differ between the RTX 4090 and the A100 runs; only FLOPs and parameter counts are host-independent.
+- **Coverage gaps.** MambaAD untested; MoECLIP scored on MVTec AD rather than ZJU-Leaper; cross-domain ([README §3.3.4](../../README.md#334-technical-metrics-cross-domain)) covered on the Small Machine only; `LMEI`, `Max streams @budget`, `1-stream latency`, `resolution slope` and power/energy not produced.
