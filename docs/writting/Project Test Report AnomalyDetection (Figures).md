@@ -86,8 +86,6 @@ The evaluated configuration:
 
 <br>
 
-
-
 #### 2.2.1 Technical Metrics: Image Level
 
 This part evaluates the image-level metrics defined by [README §3.3.1](../../README.md#331-technical-metrics-image-level):
