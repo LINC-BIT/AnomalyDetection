@@ -95,7 +95,7 @@ This part evaluates the image-level metrics defined by [README §3.3.1](../../RE
 - **Image Recall:** the share of truly defective images that are flagged.
 - **Image F1:** the balance of precision and recall in one number; it drops when either is poor.
 
-**Key observation:** The detection models top this axis — YOLO11n and YOLOv8n both at 0.9965 — but the thresholded metrics separate them sharply: each reports precision 1.000 and recall 0.600 / 0.571, so their F1 falls to 0.750 / 0.727. Among the anomaly models PatchCore leads at 0.9932, and GANomaly, Reverse Distillation and SuperSimpleNet sit near chance at 0.65 / 0.62 / 0.59.
+**Key observation:** The detection models lead this axis: YOLO11n and YOLOv8n both reach 0.9965 AUROC. Their precision is 1.000, but recall is only 0.600 and 0.571, so their F1 scores fall to 0.750 and 0.727. Among anomaly models, PatchCore leads at 0.9932, while GANomaly, Reverse Distillation, and SuperSimpleNet are close to chance (0.65, 0.62, and 0.59).
 
 <p align="center"><strong>Figure 1: Image-level metrics on the A100 server</strong></p>
 
@@ -138,7 +138,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 - **Pixel IoU:** the intersection over union between the predicted defect area and the true defect area.
 - **IAP (Instance Average Precision):** the average precision over connected defect regions, with every region weighted equally.
 
-**Key observation:** MoECLIP leads localization by a wide margin (0.9857 AUROC / 0.9701 AUPRO) and SuperSimpleNet is last (0.4547 / 0.5033). Pixel F1 and mIoU stay low across the board — the best is MoECLIP at 0.6733 — because the pixel threshold is not calibrated on this run; AUROC and AUPRO need no threshold and are therefore the more informative columns here.
+**Key observation:** MoECLIP leads localization by a wide margin (0.9857 AUROC and 0.9701 AUPRO), while SuperSimpleNet ranks last (0.4547 and 0.5033). Pixel F1 and mIoU remain low because the pixel threshold was not calibrated in this run. AUROC and AUPRO do not require a threshold and are therefore more informative here.
 
 <p align="center"><strong>Figure 4: Pixel-level metrics on the A100 server</strong></p>
 
@@ -150,7 +150,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 
 <br>
 
-<sub>All 9 models that emit a per-pixel anomaly map.</sub>
+<sub>The figure includes all nine models that emit a per-pixel anomaly map.</sub>
 
 <br>
 
@@ -165,7 +165,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 <br>
 
 
-The 3 segmentation models are the other pixel-level producers; their Pixel F1 and mIoU are the last two bar styles in Figure 4. They report no threshold-free pixel metric, because their output is a binary mask rather than a score map.
+The three segmentation models are the other pixel-level producers; their Pixel F1 and mIoU are the last two bar styles in Figure 4. They report no threshold-free pixel metric because their output is a binary mask rather than a score map.
 
 #### 2.2.3 Technical Metrics: Instance Level
 
@@ -178,7 +178,7 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 - **F1:** the balance of box precision and recall in one number.
 - **TP / FP / FN:** the underlying counts, namely defects found, spurious boxes and defects missed.
 
-**Key observation:** The detectors divide into two groups. The YOLO variants are the most precise (0.857–0.929) and the least complete (recall 0.214–0.363); the two R-CNN detectors are the reverse (precision 0.550 / 0.633, recall 0.692 / 0.681), and Cascade R-CNN takes the best AP50 (0.6428) and F1 (0.6561). DETR finds nothing at all — TP 0, FP 0, FN 182, the whole test split.
+**Key observation:** The detectors form two groups. YOLO variants are precise (0.857–0.929) but miss many defects (recall 0.214–0.363). The two R-CNN detectors have higher recall (0.692 and 0.681) but lower precision (0.550 and 0.633). Cascade R-CNN has the best AP50 (0.6428) and F1 (0.6561). DETR finds no evaluated defect (TP 0, FP 0, FN 182).
 
 <p align="center"><strong>Figure 6: Instance-level detection metrics on the A100 server</strong></p>
 
@@ -222,7 +222,7 @@ This part evaluates the compute metrics defined by [README §3.3.5](../../README
 - **FLOPs (G):** the arithmetic work of one forward pass, in billions of operations. Fixed by the architecture, so identical on any machine.
 - **Wall-time:** the total seconds the scored run took, accuracy pass included.
 
-**Key observation:** Throughput spans more than three orders of magnitude on one machine: YOLOv8n reaches 432 FPS and Cascade R-CNN 0.82 FPS. FLOPs do not predict it — YOLOv8s does less arithmetic than YOLOv8n (6.99 G against 14.90 G) and still runs slower (355 against 432 FPS), so architecture and memory traffic matter as much as the operation count.
+**Key observation:** Throughput spans more than three orders of magnitude on this machine: YOLOv8n reaches 432 FPS, while Cascade R-CNN reaches 0.82 FPS. FLOPs alone do not predict speed. YOLOv8s uses fewer FLOPs than YOLOv8n (6.99 G versus 14.90 G) but is slower (355 versus 432 FPS), showing that architecture and memory traffic also matter.
 
 <p align="center"><strong>Figure 9: Compute cost on the A100 server</strong></p>
 
@@ -254,7 +254,7 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 - **Allocator peak:** the same peak measured by the CUDA allocator, which excludes the Python interpreter and its libraries.
 - **Retained / extra:** the memory still held after the run, which a long-running service keeps resident.
 
-**Key observation:** Peak memory spans two orders of magnitude on one run — YOLOv8n at 46.5 MB against PatchCore at 4505 MB. The two instruments are not interchangeable: whole-process RSS includes the weights, the CUDA context and host copies, while the CUDA allocator counts GPU tensor memory only, which is why Figure 11 gives them separate axes.
+**Key observation:** Peak memory spans two orders of magnitude in this run: YOLOv8n uses 46.5 MB, compared with 4505 MB for PatchCore. The two measurements are not interchangeable. Whole-process RSS includes weights, the CUDA context, and host copies; the CUDA allocator counts GPU tensor memory only. Figure 11 therefore uses separate axes.
 
 <p align="center"><strong>Figure 11: Peak memory by measurement instrument</strong></p>
 
@@ -279,11 +279,9 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 
 ### 2.3 Analysis
 
-The 19 configurations split into two paradigms: **supervised Defect Detection (DD)** and **unsupervised / zero-shot Anomaly Detection (AD)**. Both are scored on the metric families of [README §3.3](../../README.md#33-supported-metrics) — image level, pixel level, instance level and overhead — and the rankings below use the results (Figures 1, 4 and 6).
+The 19 configurations cover three model groups: **anomaly detection (AD)**, **object detection (DD)**, and **segmentation (SEG)**. They are compared on the metric families in [README §3.3](../../README.md#33-supported-metrics): image level, pixel level, instance level, and overhead. Figure 13 reports separate technical, memory, and compute ranks; models are compared only with models that report the same metrics.
 
-Because the dimensions have different scales, each model is reduced to three independent ranks — accuracy, memory and compute — as Figure 13 shows. Ranks are computed within a paradigm, so a model is only ever compared with models measured on the same metrics.
-
-<p align="center"><strong>Figure 13: Three-dimension rank</strong></p>
+<p align="center"><strong>Figure 13: Three-dimensional ranking</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/10_ranking.png" alt="Three-dimension rank" width="100%" />
@@ -294,12 +292,21 @@ Because the dimensions have different scales, each model is reduced to three ind
 <br>
 
 
-- **Anomaly and segmentation (AD).** Mask R-CNN leads the combined order at 3.33, but only on the strength of its technical rank: 1st on accuracy, 3rd on memory, 6th on compute. The three dimensions disagree sharply for most models — MoECLIP is 2nd on technical and 12th on memory, PaDiM is 1st on compute and 10th on technical, and WinCLIP and Reverse Distillation come last overall. A single blended position would hide exactly that, which is why Figure 13 shows one bar per dimension rather than one number.
-- **Detection (DD).** YOLO11n leads at 2.33, ahead of YOLOv8n (2.67), YOLOv8s (3.00), Faster R-CNN (3.33) and Cascade R-CNN (3.67). Cascade R-CNN is the most accurate of the five and the slowest; YOLOv8s is the reverse. DETR is absent from the panel because its instance metrics are degenerate — see Figure 6.
-- **Segmentation (SEG).** Mask R-CNN 0.7242 > UNet++ 0.6833 > DeepLabV3+ 0.6477 (Pixel F1).
-- **Image level.** PatchCore 0.9932, MoECLIP 0.9877, Dinomaly 0.9797 and WinCLIP 0.9772 lead the anomaly models; the YOLO11n / YOLOv8n pair (0.9965) tops the whole run.
-- **Pixel level.** MoECLIP leads localization (0.9857 AUROC / 0.9701 AUPRO). Pixel F1 and mIoU stay low because the pixel threshold is not calibrated.
-- **Overhead.** 0.82–432 FPS across 19 models: YOLO real-time, Cascade R-CNN and WinCLIP ≈ 1 FPS.
+- **PatchCore:** strongest anomaly image score (AUROC 0.9932) and good localization; its weakness is very high memory use.
+- **MoECLIP:** best pixel localization (AUROC 0.9857, AUPRO 0.9701) and strong image-level performance; it is memory-intensive and not the fastest option.
+- **Dinomaly:** balanced image- and pixel-level results; it does not lead either metric family.
+- **EfficientAD:** moderate image-level performance with relatively low overhead; its pixel localization trails the leading anomaly models.
+- **PaDiM:** relatively low compute cost; its image and pixel scores are weaker than the leading anomaly models.
+- **STFPM:** balanced image-level precision and recall with solid pixel AUROC; its pixel F1 remains modest.
+- **WinCLIP:** strong image-level ranking with modest accuracy elsewhere; its throughput is close to 1 FPS.
+- **GANomaly, Reverse Distillation, and SuperSimpleNet:** lower image-level performance; SuperSimpleNet also has the weakest pixel localization.
+- **YOLO11n and YOLOv8n:** highest image AUROC (0.9965), high precision, and real-time throughput; their recall is limited, so they miss some defects.
+- **YOLOv8s:** maintains high precision but is slower and has lower recall than the smaller YOLO variants.
+- **Faster R-CNN and Cascade R-CNN:** higher recall and better instance completeness than YOLO; they require substantially more compute, and Cascade R-CNN is the slowest detector.
+- **DETR:** produces no valid detection at the evaluation threshold and is therefore unsuitable for this test configuration.
+- **Mask R-CNN, UNet++, and DeepLabV3+:** provide binary segmentation masks. Mask R-CNN has the best Pixel F1 (0.7242), followed by UNet++ (0.6833) and DeepLabV3+ (0.6477); their output does not support threshold-free pixel curves.
+
+Overall, the choice depends on the deployment goal: YOLO11n or YOLOv8n for fast, precise screening; R-CNN models when recall is more important; MoECLIP for pixel localization; and PatchCore when image-level anomaly ranking is the priority.
 
 **Scope.** Every number here describes this host. Parameter counts and FLOPs are fixed by the architecture and transfer to any machine; FPS, latency and peak memory do not.
 
