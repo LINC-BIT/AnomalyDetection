@@ -97,10 +97,10 @@ Both platforms used the same configuration:
 
 This part evaluates the image-level metrics defined by [README §3.3.1](../../README.md#331-technical-metrics-image-level):
 
-- **Image AUROC:** how often a defective image scores above a normal one. 0.5 is random guessing, 1.0 is perfect, and it needs no decision threshold.
-- **Image Precision:** of the images flagged as defective, the share that really are defective.
-- **Image Recall:** of the truly defective images, the share that is flagged.
-- **Image F1:** one score that balances Precision against Recall, and drops if either of them is poor.
+- **Image AUROC:** the probability that a defective image is ranked above a normal one. 0.5 is random guessing, 1.0 is perfect, and no decision threshold is needed.
+- **Image Precision:** the share of images flagged as defective that really are defective.
+- **Image Recall:** the share of truly defective images that are flagged.
+- **Image F1:** the balance of precision and recall in one number; it drops when either is poor.
 
 **Key observation:** Image AUROC agrees within **<span style="color:#0070C0">0.2 points</span>** across the two machines for all ten anomaly models; the thresholded metrics drift by up to 4.4 points. The Full Machine's detection models rank highest on this axis — YOLO11n / YOLOv8n 0.9965.
 
@@ -158,11 +158,11 @@ Table 3 lists **all 16 Full Machine models that emit an image-level score**: 10 
 
 This part evaluates the pixel-level metrics defined by [README §3.3.2](../../README.md#332-technical-metrics-pixel-level):
 
-- **Pixel AUROC:** how often a defective pixel scores above a normal pixel, pooled over the pixels of all images. 0.5 is random guessing.
-- **Pixel AUPRO:** how much of each defective region is covered before the false-positive rate passes a fixed limit. Every connected region counts equally, so a small defect is not hidden by a large one.
-- **Pixel F1:** how well the predicted defect pixels match the true ones at a fixed pixel threshold, penalised both by missed pixels and by extra pixels.
-- **Pixel IoU:** overlap between the predicted defect area and the true defect area, as intersection over union.
-- **IAP (Instance Average Precision):** how well defect regions are found, averaged over connected regions with each region weighted equally.
+- **Pixel AUROC:** the probability that a defective pixel is ranked above a normal one, pooled over the pixels of all images. 0.5 is random guessing.
+- **Pixel AUPRO:** the share of each defective region that is covered before the false-positive rate reaches a fixed limit. Every region counts equally, so a small defect is not hidden by a large one.
+- **Pixel F1:** the match between predicted and true defect pixels at a fixed pixel threshold, penalised by missed pixels and by extra pixels.
+- **Pixel IoU:** the intersection over union between the predicted defect area and the true defect area.
+- **IAP (Instance Average Precision):** the average precision over connected defect regions, with every region weighted equally.
 
 **Key observation:** Both machines rank MoECLIP first and SuperSimpleNet last, but their absolute pixel-level values do not overlap; see [§2.3](#23-analysis).
 
@@ -228,12 +228,12 @@ The 3 segmentation models — the other pixel-level producers.
 
 This part evaluates the instance-level metrics defined by [README §3.3.3](../../README.md#333-technical-metrics-instance-level):
 
-- **AP:** how well the detected boxes follow the precision–recall trade-off, averaged over IoU thresholds 0.50–0.95 (COCO style). Higher is better.
-- **AP50 / AP75:** the same measure at one IoU threshold. 0.50 accepts a loosely placed box, 0.75 demands a tight one. IoU is the overlap between a predicted box and the true box.
-- **Precision:** of the boxes reported as defects, the share that overlaps a real defect (IoU ≥ 0.50).
-- **Recall:** of the real defects, the share that a reported box covers.
-- **F1:** one score that balances box Precision against box Recall.
-- **TP / FP / FN:** the counts behind those numbers — correctly found defects, spurious boxes, and missed defects.
+- **AP:** box precision–recall quality averaged over IoU thresholds 0.50–0.95 (COCO style); higher is better.
+- **AP50 / AP75:** AP at a single IoU threshold. 0.50 accepts a loosely placed box, 0.75 demands a tight one, where IoU is the overlap between a predicted box and the true box.
+- **Precision:** the share of reported boxes that overlap a real defect (IoU ≥ 0.50).
+- **Recall:** the share of real defects covered by a reported box.
+- **F1:** the balance of box precision and recall in one number.
+- **TP / FP / FN:** the underlying counts, namely defects found, spurious boxes and defects missed.
 
 **Key observation:** The thresholded **<span style="color:#0070C0">F1 reproduces exactly</span>** across the two machines, while AP50 is higher on the Full Machine.
 
@@ -279,9 +279,9 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 This part evaluates the compute metrics defined by [README §3.3.5](../../README.md#335-overhead-metrics-compute):
 
 - **FPS:** images processed per second.
-- **Latency mean / p95 / p99:** time to process one image, in milliseconds. p95 and p99 describe the slowest frames rather than the average.
-- **FLOPs (G):** arithmetic work of one forward pass, in billions of operations. It is fixed by the architecture, so it is the same on any machine.
-- **Wall-time:** total seconds the scored run took, accuracy pass included.
+- **Latency mean / p95 / p99:** the time to process one image, in milliseconds; p95 and p99 describe the slowest frames rather than the average.
+- **FLOPs (G):** the arithmetic work of one forward pass, in billions of operations. Fixed by the architecture, so identical on any machine.
+- **Wall-time:** the total seconds the scored run took, accuracy pass included.
 
 **Key observation:** **<span style="color:#0070C0">FLOPs reproduce</span>** for every model measured twice, while FPS and latency are host-specific and differ by 1.1×–31×.
 
@@ -343,10 +343,10 @@ All 19 Full Machine configurations. Table 9 (Small) lists the 11 models that mac
 
 This part evaluates the memory metrics defined by [README §3.3.6](../../README.md#336-overhead-metrics-memory):
 
-- **Parameters (M):** number of learned weights, in millions. Fixed by the architecture, so it is the same on any machine.
+- **Parameters (M):** the number of learned weights, in millions. Fixed by the architecture, so identical on any machine.
 - **Peak memory:** the most memory used at once during the run.
-- **Allocator peak:** the same peak as seen by the CUDA allocator, which leaves out the Python interpreter and its libraries.
-- **Retained / extra:** memory still held after the run, which is what a long-running service keeps resident.
+- **Allocator peak:** the same peak measured by the CUDA allocator, which excludes the Python interpreter and its libraries.
+- **Retained / extra:** the memory still held after the run, which a long-running service keeps resident.
 
 **Key observation:** **<span style="color:#0070C0">Parameters reproduce</span>** for every model measured twice, while peak memory is not comparable across the two machines.
 

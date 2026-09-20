@@ -1,6 +1,9 @@
 <h1 align="center">AnomalyDetection</h1>
 
-**Test Report**: We provide a test report on differernt paltforms for this project ([Project Test Report AnomalyDetection](docs/writting/Project%20Test%20Report%20AnomalyDetection.md))
+**Test Reports**: Two versions of the test report are provided for this project, one presenting every result as a figure and one keeping the raw tables:
+
+1. **The report with figures** — single platform, every result presented as a figure: [Project Test Report AnomalyDetection (Figures)](<docs/writting/Project Test Report AnomalyDetection (Figures).md>)
+2. **The report with raw data** — every metric as a table, measured on two platforms: [Project Test Report AnomalyDetection](<docs/writting/Project Test Report AnomalyDetection.md>)
 
 **Published checkpoints**:
 We provide the trained checkpoints on textile datasets for the AnomalyDetection models:

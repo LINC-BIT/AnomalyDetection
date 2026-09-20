@@ -12,11 +12,13 @@ import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import replace
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
 from fabric_defect_hub.core.execution import model_execution, model_tracing
 from fabric_defect_hub.core.processes import WorkerRegistry, terminate_process
+from fabric_defect_hub.core.provenance import collect_provenance
 from fabric_defect_hub.core.registry import get_profiler_cls
 from fabric_defect_hub.core.types import ModelInfo, RuntimeInfo
 from fabric_defect_hub.models.base import checkpoint_size_mb
@@ -52,6 +54,14 @@ DEFAULT_RUN_LOG_PATH = "runs/leaderboard_log.jsonl"
 # literally the instantaneous mean). A `-` in a report now has a record
 # behind it, and the reason for a missing metric travels in `warnings`.
 DEFAULT_BENCHMARK_ROW_LOG = "runs/benchmark_rows.jsonl"
+# One dated JSON per benchmark run, holding every row it scored — technical and
+# overhead metrics in the same object, exactly as the workers produced them.
+#
+# The JSONL above is append-only across runs, so it accumulates several rows per
+# model and every reader has to re-group by commit and de-duplicate before it can
+# draw anything. This directory is the record a plot or a report should read: one
+# file, one run, self-describing, and "the latest" is a filename sort.
+BENCHMARK_SNAPSHOT_ROOT = "runs/benchmark_snapshots"
 BENCHMARK_ANOMALY_MAP_ROOT = "artifacts/runtime/anomaly_maps/benchmark"
 # How many samples the opt-in threshold calibration pass draws from the
 # dataset's *train* split. The F1-optimal threshold is one order statistic out
@@ -718,6 +728,92 @@ def _cross_domain_probe(
     return evaluator_for_task(dataset_task).evaluate(samples, predictions)
 
 
+# Keys that describe the row, not the measurement. Everything else a worker
+# returns is a metric and belongs under `metrics`, which is the shape the row log
+# and the figures both read.
+_ROW_LEVEL_KEYS = frozenset({
+    "model", "dataset", "experiment_id", "status", "samples",
+    "selection", "provenance", "metrics", "warnings", "notes",
+})
+
+
+def write_benchmark_snapshot(
+    rows: list[dict[str, Any]],
+    *,
+    dataset_label: str,
+    texture_label: str,
+    shot_mode: str,
+    include_profiling: bool = False,
+    include_resolution_sweep: bool = False,
+    calibrate_thresholds: bool = False,
+    root: str | Path = BENCHMARK_SNAPSHOT_ROOT,
+) -> Path | None:
+    """Write one dated JSON holding every row this run scored. Returns its path.
+
+    This is the file plotting and reporting should read. It carries the *whole*
+    row — technical metrics, overhead metrics, `selection`, `provenance`,
+    `warnings` — under one timestamp, so a figure never has to reconstruct
+    "which 19 rows belong together" from the append-only log. Skipped when the
+    run produced nothing, so a failed sweep does not leave an empty snapshot
+    that then sorts as the newest one.
+
+    A worker hands the parent its metrics **flat** (`{"model": ..., "fps": ...}`),
+    because the parent only ever renders them; the row log nests them under
+    `metrics` and adds `provenance` on the worker side. The snapshot has to end
+    up in that same nested shape or the figures, which read `row["metrics"]` and
+    `row["provenance"]`, cannot use it — so flat rows are wrapped here, and a row
+    that is already a full record is passed through untouched.
+    """
+
+    if not rows:
+        return None
+
+    created = datetime.now(timezone.utc)
+    provenance = collect_provenance()
+    selection = {
+        "texture": [texture_label] if isinstance(texture_label, str) else texture_label,
+        "shot_mode": shot_mode,
+        "include_profiling": include_profiling,
+        "include_resolution_sweep": include_resolution_sweep,
+        "calibrate_thresholds": calibrate_thresholds,
+    }
+    records = []
+    for row in rows:
+        if isinstance(row.get("metrics"), dict) and isinstance(row.get("provenance"), dict):
+            records.append(row)
+            continue
+        records.append({
+            "experiment_id": row.get("experiment_id") or f"benchmark-{row.get('model', '')}",
+            "model": row.get("model"),
+            "dataset": dataset_label,
+            "selection": selection,
+            "status": row.get("status", "ok"),
+            "samples": row.get("samples"),
+            "metrics": {key: value for key, value in row.items() if key not in _ROW_LEVEL_KEYS},
+            "warnings": list(row.get("warnings") or []),
+            "notes": list(row.get("notes") or []),
+            "provenance": provenance,
+        })
+
+    payload = {
+        "schema_version": 1,
+        "created_utc": created.isoformat(),
+        "dataset": dataset_label,
+        "texture": texture_label,
+        "shot_mode": shot_mode,
+        "model_count": len(records),
+        "models": [record.get("model") for record in records],
+        "rows": records,
+    }
+    directory = Path(root)
+    directory.mkdir(parents=True, exist_ok=True)
+    # Timestamp first so a filename sort is a time sort; the commit is in every
+    # row's provenance, so it does not need to be in the name as well.
+    path = directory / f"{created.strftime('%Y%m%dT%H%M%SZ')}.json"
+    path.write_text(json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8")
+    return path
+
+
 def run_benchmark(
     dataset_label: str,
     texture_label: str,
@@ -934,6 +1030,21 @@ def run_benchmark(
             rows, sample_count, shot_mode, errors, status_line(index, model_label), lang,
             technical_weight, overhead_weight, notes,
         )
+
+    # One dated JSON for the run, written after the last model so it holds every
+    # row at once. Plotting and reporting read this instead of re-grouping the
+    # append-only log; see `BENCHMARK_SNAPSHOT_ROOT`.
+    snapshot_path = write_benchmark_snapshot(
+        rows,
+        dataset_label=dataset_label,
+        texture_label=texture_label,
+        shot_mode=shot_mode,
+        include_profiling=include_profiling,
+        include_resolution_sweep=include_resolution_sweep,
+        calibrate_thresholds=calibrate_thresholds,
+    )
+    if snapshot_path is not None:
+        notes.append(f"snapshot: {snapshot_path}")
 
     yield _render(
         rows, sample_count, shot_mode, errors, lang=lang, technical_weight=technical_weight,

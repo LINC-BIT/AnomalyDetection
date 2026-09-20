@@ -54,6 +54,29 @@ from fabric_defect_hub.models.torchvision.presets import (
 )
 
 
+def _save_anomaly_map(score_map, maps_dir: Path | None, sample_id: str) -> str | None:
+    """Persist one continuous score map and return its path, or `None`.
+
+    Same convention as the anomaly backends (`<output_dir>/<sample id>.npy`,
+    squeezed to 2-D), because `Prediction.anomaly_map` has to mean one thing
+    whichever backend produced it: `AnomalyEvaluator` loads it by path to
+    derive the threshold-free pixel metrics.
+    """
+
+    if maps_dir is None:
+        return None
+
+    import numpy as np
+
+    map_path = maps_dir / f"{sample_id}.npy"
+    # `sample_id` is an opaque identifier, not guaranteed to be a single path
+    # segment — MVTecAD-style ids ("category/defect/stem") need subdirectories
+    # to exist before `np.save` can write there.
+    map_path.parent.mkdir(parents=True, exist_ok=True)
+    np.save(map_path, np.squeeze(np.asarray(score_map, dtype="float32")))
+    return str(map_path)
+
+
 @register_model("torchvision")
 class TorchvisionAdapter(ModelAdapter):
     """Full-lifecycle wrapper around `torchvision.models.detection.{faster,mask}_rcnn`.
@@ -237,7 +260,7 @@ class TorchvisionAdapter(ModelAdapter):
         if task == "instance_segmentation":
             return ModelCapabilities(
                 tasks=("instance_segmentation",),
-                prediction_fields=("boxes", "labels", "scores", "masks"),
+                prediction_fields=("boxes", "labels", "scores", "masks", "anomaly_score", "anomaly_map"),
                 required_annotations=("masks", "labels"),
                 export_targets=("exported_program", "torchscript", "onnx"),
                 # `engine.run_training` wraps the forward in `torch.autocast`
@@ -248,7 +271,7 @@ class TorchvisionAdapter(ModelAdapter):
             )
         return ModelCapabilities(
             tasks=("segmentation",),
-            prediction_fields=("masks", "labels", "scores"),
+            prediction_fields=("masks", "labels", "scores", "anomaly_score", "anomaly_map"),
             required_annotations=("masks",),
             export_targets=("exported_program", "torchscript", "onnx"),
             supports_amp=True,
@@ -581,9 +604,14 @@ class TorchvisionAdapter(ModelAdapter):
         output_dir: str | None = None,
         config: dict[str, Any] | None = None,
     ) -> list[Prediction]:
-        """Run inference over `samples`. `output_dir` is part of the uniform
-        `ModelAdapter.predict` signature and unused here: box/mask output goes
-        into the returned `Prediction`s, not to disk. `config` overrides `score_threshold`
+        """Run inference over `samples`. `output_dir`, when given, receives each
+        sample's continuous score map as a `.npy` file: segmentation models
+        persist the sigmoid probability map, instance-segmentation models the
+        per-pixel max over their instance masks. That map is the only thing the
+        threshold-free pixel metrics (AUROC/AUPRO/IAP) can be computed from, so
+        a run that skips it can report overlap metrics only. Box/mask output
+        still goes into the returned `Prediction`s rather than to disk.
+        `config` overrides `score_threshold`
         (default 0.5), `max_detections` (default 100), `nms_iou_threshold`
         (None = rely solely on the model's own built-in per-class NMS at its
         default IoU; a value applies one more class-aware NMS pass on top,
@@ -594,6 +622,7 @@ class TorchvisionAdapter(ModelAdapter):
         weights are loaded first.
         """
 
+        import numpy as np
         import torch
         from torchvision.ops import batched_nms
 
@@ -605,6 +634,9 @@ class TorchvisionAdapter(ModelAdapter):
         max_detections = cfg.get("max_detections", 100)
         nms_iou_threshold = cfg.get("nms_iou_threshold")
         with_masks = uses_masks(self.name)
+        maps_dir = Path(output_dir) if output_dir is not None else None
+        if maps_dir is not None:
+            maps_dir.mkdir(parents=True, exist_ok=True)
         id_to_label = {v: k for k, v in (self._class_map or {}).items()}
 
         predict_device = self._device
@@ -640,8 +672,19 @@ class TorchvisionAdapter(ModelAdapter):
                     logits = self.model(image.unsqueeze(0).to(predict_device))
                     probs = torch.sigmoid(logits)[0]
                     binary_mask = (probs > score_threshold).squeeze(0).cpu().numpy().tolist()
+                    # The continuous probability map is what the threshold-free
+                    # pixel metrics (AUROC/AUPRO/IAP) are derived from. Keeping
+                    # only `binary_mask` made those three underivable for every
+                    # segmentation model, so the map is persisted here exactly
+                    # as the anomaly backends persist theirs.
+                    score_map = probs.squeeze(0).detach().cpu().numpy().astype("float32")
                     predictions.append(
-                        Prediction(sample_id=sample.id, masks=[binary_mask])
+                        Prediction(
+                            sample_id=sample.id,
+                            masks=[binary_mask],
+                            anomaly_map=_save_anomaly_map(score_map, maps_dir, sample.id),
+                            anomaly_score=float(score_map.max()),
+                        )
                     )
                 else:
                     output = self.model([image.to(predict_device)])[0]
@@ -664,17 +707,35 @@ class TorchvisionAdapter(ModelAdapter):
                         for c in labels_id[:max_detections].detach().cpu().tolist()
                     ]
                     masks = None
+                    score_map = None
                     if masks_full is not None:
+                        kept = masks_full[:max_detections]
                         masks = (
-                            (masks_full[:max_detections] > 0.5)
+                            (kept > 0.5)
                             .squeeze(1)
                             .detach()
                             .cpu()
                             .numpy()
                             .tolist()
                         )
+                        # Per-instance masks are already probabilities, so the
+                        # image's continuous defect map is their per-pixel max.
+                        # Without it an instance-segmentation model has masks
+                        # only, and no threshold-free pixel metric.
+                        if kept.shape[0]:
+                            score_map = kept.amax(dim=0).squeeze(0).detach().cpu().numpy().astype("float32")
+                        else:
+                            score_map = np.zeros(tuple(image.shape[-2:]), dtype="float32")
                     predictions.append(
-                        Prediction(sample_id=sample.id, boxes=boxes_list, labels=labels, scores=scores_list, masks=masks)
+                        Prediction(
+                            sample_id=sample.id,
+                            boxes=boxes_list,
+                            labels=labels,
+                            scores=scores_list,
+                            masks=masks,
+                            anomaly_map=_save_anomaly_map(score_map, maps_dir, sample.id) if score_map is not None else None,
+                            anomaly_score=float(score_map.max()) if score_map is not None else None,
+                        )
                     )
 
         if requested_device is not None:

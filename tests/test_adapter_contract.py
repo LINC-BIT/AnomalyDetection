@@ -122,6 +122,32 @@ def test_detection_backends_fill_boxes(backend):
     assert caps.fills("boxes") and caps.fills("scores")
 
 
+def test_mask_backends_declare_the_map_their_pixel_metrics_need():
+    """A backend that outputs masks must be asked to persist the score map.
+
+    `loader.run_experiment` only forwards `output_dir` to a model whose
+    capability fills `anomaly_map`. Without the declaration the torchvision
+    mask backends kept the binarised mask and dropped the continuous
+    probability map, so `pixel_auroc` / `pixel_aupro` / `iap` were underivable
+    for UNet++, DeepLabV3+ and Mask R-CNN and those rows reported overlap
+    metrics only.
+    """
+
+    from fabric_defect_hub.models.torchvision.adapter import TorchvisionAdapter
+
+    for variant in ("unetplusplus_resnet34", "deeplabv3plus_resnet50", "maskrcnn_resnet50_fpn"):
+        caps = TorchvisionAdapter(name=variant).capabilities()
+        assert caps.fills("masks"), variant
+        assert caps.fills("anomaly_map"), f"{variant} would persist no score map"
+        # The image-level score has to travel with the map: `collect_pairs`
+        # skips a sample whose score is unusable, taking its pixels with it.
+        assert caps.fills("anomaly_score"), variant
+
+    # Detection-only variants stay as they were — no map, nothing to sweep.
+    detection = TorchvisionAdapter(name="fasterrcnn_resnet50_fpn").capabilities()
+    assert not detection.fills("anomaly_map")
+
+
 @pytest.mark.parametrize("backend", INSTALLED_BACKENDS)
 def test_every_backend_declares_a_known_export_input_style(backend):
     """The shape an exported module wants (`batched` vs `list`) has to be

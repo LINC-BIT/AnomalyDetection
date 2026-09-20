@@ -26,6 +26,7 @@ from typing import Any
 
 from fabric_defect_hub.core.registry import register_evaluator
 from fabric_defect_hub.core.types import Prediction, Sample
+from fabric_defect_hub.evaluation.anomaly import DEFAULT_MAX_AUPRO_IMAGES, DEFAULT_MAX_PIXELS
 from fabric_defect_hub.evaluation.base import Evaluator
 
 
@@ -64,7 +65,7 @@ class SegmentationEvaluator(Evaluator):
             f1s.append(_pixel_f1(gt_mask, pred_mask))
 
         if not ious:
-            return {}
+            return _pixel_ranking_metrics(samples, predictions)
 
         metrics = {
             "miou": sum(ious) / len(ious),
@@ -74,7 +75,57 @@ class SegmentationEvaluator(Evaluator):
         }
         if skipped_empty:
             metrics["num_skipped_empty"] = float(skipped_empty)
+        # Overlap metrics need one binary mask; the ranking metrics need the
+        # continuous map. A backend that persisted one reports both.
+        metrics.update(_pixel_ranking_metrics(samples, predictions))
         return metrics
+
+
+def _pixel_ranking_metrics(
+    samples: list[Sample],
+    predictions: list[Prediction],
+    *,
+    max_pixels: int = DEFAULT_MAX_PIXELS,
+    max_aupro_images: int = DEFAULT_MAX_AUPRO_IMAGES,
+    seed: int = 0,
+) -> dict[str, float]:
+    """Threshold-free pixel metrics, for models that persisted a score map.
+
+    `miou` / `dice` / `pixel_f1` are thresholded overlap metrics: one binary
+    mask is enough. `pixel_auroc` / `pixel_aupro` / `iap` sweep a threshold
+    over a *continuous* map, so a model that binarises its probability map at
+    prediction time and drops it can never report them — which is exactly why
+    segmentation rows used to carry overlap metrics only.
+
+    Computed by the same routine `AnomalyEvaluator` uses, so a segmentation
+    map and an anomaly map are scored identically. The ground truth comes from
+    the segmentation convention (`annotations.masks`, unioned) rather than the
+    anomaly one (`annotations.anomaly_mask`). `pixel_f1` is never emitted here:
+    with no calibrated threshold it would be an oracle number, and the overlap
+    pass above already reports it.
+    """
+
+    import numpy as np
+
+    from fabric_defect_hub.evaluation.anomaly import _pixel_level_metrics
+
+    pred_by_id = {prediction.sample_id: prediction for prediction in predictions}
+    pixel_pairs: list[tuple[Any, Any]] = []
+    for sample in samples:
+        prediction = pred_by_id.get(sample.id)
+        if prediction is None or not prediction.anomaly_map:
+            continue
+        pred_map = np.squeeze(np.load(prediction.anomaly_map))
+        if pred_map.ndim != 2 or not np.isfinite(pred_map).all():
+            continue
+        gt_mask = _load_binary_mask(sample.annotations.masks or sample.annotations.anomaly_mask)
+        if gt_mask is None:
+            continue
+        pixel_pairs.append((_resize_like(gt_mask, pred_map.shape).astype(np.uint8), pred_map.astype(np.float32)))
+
+    if not pixel_pairs:
+        return {}
+    return _pixel_level_metrics(pixel_pairs, max_pixels, max_aupro_images, seed)
 
 
 def _load_binary_mask(raw: Any):

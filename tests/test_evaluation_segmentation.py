@@ -159,3 +159,69 @@ def test_evaluator_excludes_both_empty_masks_from_average():
     prediction = Prediction(sample_id="normal", masks=empty)
 
     assert SegmentationEvaluator().evaluate([sample], [prediction]) == {}
+
+
+def _persist_map(tmp_path, name, array):
+    path = tmp_path / f"{name}.npy"
+    np.save(path, np.asarray(array, dtype="float32"))
+    return str(path)
+
+
+def test_evaluator_reports_ranking_metrics_when_a_map_is_persisted(tmp_path):
+    """A persisted continuous map is what makes AUROC/AUPRO/IAP derivable.
+
+    Regression guard: the torchvision adapter used to binarise the predicted
+    probability map and throw the continuous one away, so every segmentation
+    row reported overlap metrics only and had no pixel AUROC to show.
+    """
+
+    from PIL import Image
+
+    gt = np.zeros((8, 8), dtype=np.uint8)
+    gt[2:4, 2:4] = 255
+    gt_path = tmp_path / "defect.png"
+    Image.fromarray(gt).save(gt_path)
+
+    normal_map = np.full((8, 8), 0.01, dtype=np.float32)
+    defect_map = np.full((8, 8), 0.01, dtype=np.float32)
+    defect_map[2:4, 2:4] = 0.9
+
+    samples = [
+        Sample(id="defect", image_path="d.jpg", task="segmentation", annotations=Annotations(masks=[str(gt_path)])),
+        Sample(id="normal", image_path="n.jpg", task="segmentation", annotations=Annotations(masks=[np.zeros((8, 8), dtype=np.uint8)])),
+    ]
+    predictions = [
+        Prediction(
+            sample_id="defect", masks=(defect_map > 0.5).tolist(),
+            anomaly_map=_persist_map(tmp_path, "defect", defect_map), anomaly_score=0.9,
+        ),
+        Prediction(
+            sample_id="normal", masks=np.zeros((8, 8), dtype=bool).tolist(),
+            anomaly_map=_persist_map(tmp_path, "normal", normal_map), anomaly_score=0.01,
+        ),
+    ]
+
+    metrics = SegmentationEvaluator().evaluate(samples, predictions)
+
+    # The overlap family still comes from the masks ...
+    assert metrics["miou"] == 1.0
+    assert metrics["dice"] == 1.0
+    assert metrics["pixel_f1"] == 1.0
+    # ... and the ranking family is now derived from the map.
+    assert metrics["pixel_auroc"] == 1.0
+    assert 0.0 <= metrics["pixel_aupro"] <= 1.0
+    assert 0.0 <= metrics["iap"] <= 1.0
+
+
+def test_evaluator_reports_overlap_metrics_only_without_a_map():
+    """No map, no ranking metrics — the gap must not be papered over."""
+
+    mask = [[True, True], [False, False]]
+    sample = Sample(id="a", image_path="a.jpg", task="segmentation", annotations=Annotations(masks=[mask]))
+    prediction = Prediction(sample_id="a", masks=mask)
+
+    metrics = SegmentationEvaluator().evaluate([sample], [prediction])
+    assert metrics["miou"] == 1.0
+    assert "pixel_auroc" not in metrics
+    assert "pixel_aupro" not in metrics
+    assert "iap" not in metrics
