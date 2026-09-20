@@ -4,20 +4,22 @@ This report reproduces the examples and experiments of the AnomalyDetection proj
 
 ## Outline
 
-- [1. Hardware and Software Specification](#1-hardware-and-software-specification)
-- [2. Evaluation Reproduction](#2-evaluation-reproduction)
-  - [2.1 Examples](#21-examples)
-  - [2.2 Technical and Overhead Metrics](#22-technical-and-overhead-metrics)
-    - [2.2.1 Technical Metrics: Image Level](#221-technical-metrics-image-level)
-    - [2.2.2 Technical Metrics: Pixel Level](#222-technical-metrics-pixel-level)
-    - [2.2.3 Technical Metrics: Instance Level](#223-technical-metrics-instance-level)
-    - [2.2.4 Overhead Metrics: Compute](#224-overhead-metrics-compute)
-    - [2.2.5 Overhead Metrics: Memory](#225-overhead-metrics-memory)
-  - [2.3 Analysis](#23-analysis)
-- [3. Extensibility](#3-extensibility)
-  - [3.1 Adding a New Dataset](#31-adding-a-new-dataset)
-  - [3.2 Adding the YOLO 26 Model](#32-adding-the-yolo-26-model)
-- [4. Discussion](#4-discussion)
+- [Project Test Report: AnomalyDetection](#project-test-report-anomalydetection)
+  - [Outline](#outline)
+  - [1. Hardware and Software Specification](#1-hardware-and-software-specification)
+  - [2. Evaluation Reproduction](#2-evaluation-reproduction)
+    - [2.1 Examples](#21-examples)
+    - [2.2 Technical and Overhead Metrics](#22-technical-and-overhead-metrics)
+      - [2.2.1 Technical Metrics: Image Level](#221-technical-metrics-image-level)
+      - [2.2.2 Technical Metrics: Pixel Level](#222-technical-metrics-pixel-level)
+      - [2.2.3 Technical Metrics: Instance Level](#223-technical-metrics-instance-level)
+      - [2.2.4 Overhead Metrics: Compute](#224-overhead-metrics-compute)
+      - [2.2.5 Overhead Metrics: Memory](#225-overhead-metrics-memory)
+    - [2.3 Analysis](#23-analysis)
+  - [3. Extensibility](#3-extensibility)
+    - [3.1 Adding a New Dataset](#31-adding-a-new-dataset)
+    - [3.2 Adding the YOLO 26 Model](#32-adding-the-yolo-26-model)
+  - [4. Discussion](#4-discussion)
 
 ## 1. Hardware and Software Specification
 
@@ -95,35 +97,35 @@ This part evaluates the image-level metrics defined by [README §3.3.1](../../RE
 - **Image Recall:** the share of truly defective images that are flagged.
 - **Image F1:** the balance of precision and recall in one number; it drops when either is poor.
 
-**Key observation:** The detection models lead this axis: YOLO11n and YOLOv8n both reach 0.9965 AUROC. Their precision is 1.000, but recall is only 0.600 and 0.571, so their F1 scores fall to 0.750 and 0.727. Among anomaly models, PatchCore leads at 0.9932, while GANomaly, Reverse Distillation, and SuperSimpleNet are close to chance (0.65, 0.62, and 0.59).
+**Key observation:** The defect detection models lead this axis: YOLO11n and YOLOv8n both reach 0.9965 AUROC. Their precision is 1.000, but recall is only 0.600 and 0.571, so their F1 scores fall to 0.750 and 0.727. Among anomaly detection models, PatchCore leads at 0.9932, while GANomaly, Reverse Distillation, and SuperSimpleNet are close to chance (0.65, 0.62, and 0.59).
 
-<p align="center"><strong>Figure 1: Image-level metrics on the A100 server</strong></p>
+<p align="center"><strong>Figure 1: Image-level metrics</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/01_image_level.png" alt="Image-level metrics on the A100 server" width="100%" />
 </p>
 
-<sub>One group of four bars per model: (1) Image AUROC, (2) Image F1, (3) Image Precision, (4) Image Recall. An absent bar means the model reports nothing for that metric, never a zero. DETR's F1 / precision / recall are 0.000 rather than missing — it scores no box above the evaluation floor, so its derived image score is 0. All 16 models that emit an image-level score are shown: 10 anomaly and 6 detection, the latter scored from their highest-confidence box per image.</sub>
+<sub>One group of four bars per model: (1) Image AUROC, (2) Image F1, (3) Image Precision, (4) Image Recall. An absent bar means the model reports nothing for that metric, never a zero. DETR's F1 / precision / recall are 0.000 rather than missing — it scores no box above the evaluation floor, so its derived image score is 0. All 16 models that emit an image-level score are shown: 10 anomaly detection models and 6 defect detection models. The latter are scored from their highest-confidence box per image.</sub>
 
 <br>
 
-<p align="center"><strong>Figure 2: Image-level precision-recall and ROC, anomaly models</strong></p>
+<p align="center"><strong>Figure 2: Image-level precision-recall and ROC, anomaly detection models</strong></p>
 
 <p align="center">
-  <img src="../../artifacts/local_benchmark_plots/11_anomaly_image_level_pr_roc.png" alt="Image-level precision-recall and ROC, anomaly models" width="100%" />
+  <img src="../../artifacts/local_benchmark_plots/11_anomaly_image_level_pr_roc.png" alt="Image-level precision-recall and ROC, anomaly detection models" width="100%" />
 </p>
 
-<sub>**(a)** precision-recall, **(b)** ROC, over the 10 anomaly models. Curves are smoothed for display only — a Gaussian kernel over a dense resampling of the empirical staircase; the AP and AUROC in each legend are computed from the unsmoothed data. The x- and y-ranges can be changed with `--xlim` / `--ylim`.</sub>
+<sub>**(a)** precision-recall, **(b)** ROC, over the 10 anomaly detection models. Curves are smoothed for display only — a Gaussian kernel over a dense resampling of the empirical staircase; the AP and AUROC in each legend are computed from the unsmoothed data. The x- and y-ranges can be changed with `--xlim` / `--ylim`.</sub>
 
 <br>
 
-<p align="center"><strong>Figure 3: Image-level precision-recall and ROC, detection models</strong></p>
+<p align="center"><strong>Figure 3: Image-level precision-recall and ROC, defect detection models</strong></p>
 
 <p align="center">
-  <img src="../../artifacts/local_benchmark_plots/12_detection_image_level_pr_roc.png" alt="Image-level precision-recall and ROC, detection models" width="100%" />
+  <img src="../../artifacts/local_benchmark_plots/12_detection_image_level_pr_roc.png" alt="Image-level precision-recall and ROC, defect detection models" width="100%" />
 </p>
 
-<sub>**(a)** precision-recall, **(b)** ROC, over the 6 detection backends. DETR appears here: its AUROC (0.65) and AP (0.50) are real, readable numbers even though its box metrics are degenerate.</sub>
+<sub>**(a)** precision-recall, **(b)** ROC, over the 6 defect detection models. DETR appears here: its AUROC (0.65) and AP (0.50) are real, readable numbers even though its box metrics are degenerate.</sub>
 
 <br>
 
@@ -146,7 +148,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
   <img src="../../artifacts/local_benchmark_plots/02_pixel_level.png" alt="Pixel-level metrics on the A100 server" width="100%" />
 </p>
 
-<sub>The chart mixes two metric families and a group carries only the family its output supports. Bars per model: (1) Pixel AUROC, (2) AUPRO, (3) IAP, (4) Pixel F1, (5) mIoU. Pixel AUROC, AUPRO and IAP sweep a threshold over a *continuous* score map; Pixel F1 and mIoU need only one binary mask, which is why the three mask models report two bars and the anomaly-map models four. `dice` is not plotted: for a binary mask it is numerically identical to `pixel_f1`.</sub>
+<sub>The chart mixes two metric families and a group carries only the family its output supports. Bars per model: (1) Pixel AUROC, (2) AUPRO, (3) IAP, (4) Pixel F1, (5) mIoU. Pixel AUROC, AUPRO and IAP sweep a threshold over a *continuous* score map; Pixel F1 and mIoU need only one binary mask, which is why the three mask models report two bars and the anomaly detection models four. `dice` is not plotted: for a binary mask it is numerically identical to `pixel_f1`.</sub>
 
 <br>
 
@@ -154,13 +156,13 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 
 <br>
 
-<p align="center"><strong>Figure 5: Pixel-level precision-recall and ROC, anomaly-map models</strong></p>
+<p align="center"><strong>Figure 5: Pixel-level precision-recall and ROC, anomaly detection models</strong></p>
 
 <p align="center">
-  <img src="../../artifacts/local_benchmark_plots/13_anomaly_pixel_level_pr_roc.png" alt="Pixel-level precision-recall and ROC, anomaly-map models" width="100%" />
+  <img src="../../artifacts/local_benchmark_plots/13_anomaly_pixel_level_pr_roc.png" alt="Pixel-level precision-recall and ROC, anomaly detection models" width="100%" />
 </p>
 
-<sub>**(a)** precision-recall, **(b)** ROC, over the 9 anomaly models that persist a continuous anomaly map. The three mask models (UNet++, DeepLabV3+, Mask R-CNN) cannot appear: a binarised mask has no score to sweep, so it yields a single operating point rather than a curve. Their pixel quality is in Figure 4.</sub>
+<sub>**(a)** precision-recall, **(b)** ROC, over the 9 anomaly detection models that persist a continuous anomaly map. The three mask models (UNet++, DeepLabV3+, Mask R-CNN) cannot appear: a binarised mask has no score to sweep, so it yields a single operating point rather than a curve. Their pixel quality is in Figure 4.</sub>
 
 <br>
 
@@ -180,7 +182,7 @@ This part evaluates the instance-level metrics defined by [README §3.3.3](../..
 
 **Key observation:** The detectors form two groups. YOLO variants are precise (0.857–0.929) but miss many defects (recall 0.214–0.363). The two R-CNN detectors have higher recall (0.692 and 0.681) but lower precision (0.550 and 0.633). Cascade R-CNN has the best AP50 (0.6428) and F1 (0.6561). DETR finds no evaluated defect (TP 0, FP 0, FN 182).
 
-<p align="center"><strong>Figure 6: Instance-level detection metrics on the A100 server</strong></p>
+<p align="center"><strong>Figure 6: Instance-level detection metrics</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/03_instance_level.png" alt="Instance-level detection metrics on the A100 server" width="100%" />
@@ -240,7 +242,7 @@ This part evaluates the compute metrics defined by [README §3.3.5](../../README
   <img src="../../artifacts/local_benchmark_plots/06_quality_vs_latency.png" alt="Quality versus latency, by metric granularity" width="100%" />
 </p>
 
-<sub>Three panels by metric granularity rather than by model family: **(a)** image level (Image AUROC), **(b)** pixel level (Pixel F1), **(c)** instance level (mAP@0.5); mean latency is on a log axis. Anomaly and segmentation models share panel (b), which is the only quality metric they both report.</sub>
+<sub>Three panels by metric granularity rather than by model family: **(a)** image level (Image AUROC), **(b)** pixel level (Pixel F1), **(c)** instance level (mAP@0.5); mean latency is on a log axis. Anomaly detection and segmentation models share panel (b), which is the only quality metric they both report.</sub>
 
 <br>
 
@@ -279,7 +281,7 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 
 ### 2.3 Analysis
 
-The 19 configurations cover three model groups: **anomaly detection (AD)**, **object detection (DD)**, and **segmentation (SEG)**. They are compared on the metric families in [README §3.3](../../README.md#33-supported-metrics): image level, pixel level, instance level, and overhead. Figure 13 reports separate technical, memory, and compute ranks; models are compared only with models that report the same metrics.
+The 19 configurations cover three model groups: **anomaly detection (AD)**, **defect detection (DD)**, and **segmentation (SEG)**. They are compared on the metric families in [README §3.3](../../README.md#33-supported-metrics): image level, pixel level, instance level, and overhead. Figure 13 reports separate technical, memory, and compute ranks; models are compared only with models that report the same metrics.
 
 <p align="center"><strong>Figure 13: Three-dimensional ranking</strong></p>
 
@@ -295,8 +297,8 @@ The 19 configurations cover three model groups: **anomaly detection (AD)**, **ob
 - **PatchCore:** strongest anomaly image score (AUROC 0.9932) and good localization; its weakness is very high memory use.
 - **MoECLIP:** best pixel localization (AUROC 0.9857, AUPRO 0.9701) and strong image-level performance; it is memory-intensive and not the fastest option.
 - **Dinomaly:** balanced image- and pixel-level results; it does not lead either metric family.
-- **EfficientAD:** moderate image-level performance with relatively low overhead; its pixel localization trails the leading anomaly models.
-- **PaDiM:** relatively low compute cost; its image and pixel scores are weaker than the leading anomaly models.
+- **EfficientAD:** moderate image-level performance with relatively low overhead; its pixel localization trails the leading anomaly detection models.
+- **PaDiM:** relatively low compute cost; its image and pixel scores are weaker than the leading anomaly detection models.
 - **STFPM:** balanced image-level precision and recall with solid pixel AUROC; its pixel F1 remains modest.
 - **WinCLIP:** strong image-level ranking with modest accuracy elsewhere; its throughput is close to 1 FPS.
 - **GANomaly, Reverse Distillation, and SuperSimpleNet:** lower image-level performance; SuperSimpleNet also has the weakest pixel localization.
