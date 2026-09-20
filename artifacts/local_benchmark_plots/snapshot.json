@@ -1,0 +1,29 @@
+{
+  "source": "runs/benchmark_rows.jsonl",
+  "dataset": "ZJU-Leaper",
+  "samples": 350,
+  "model_count": 19,
+  "git_commit": "275578d885a5534ddfe9fe58714659e66a86e2f9",
+  "latest_timestamp_utc": "2026-09-18T02:02:47.495980+00:00",
+  "models": [
+    "Cascade R-CNN \u00b7 ZJU-Leaper",
+    "DETR \u00b7 ZJU-Leaper",
+    "DeepLabV3+ \u00b7 ZJU-Leaper",
+    "Dinomaly \u00b7 ZJU-Leaper (normal only)",
+    "EfficientAD \u00b7 ZJU-Leaper (normal only)",
+    "Faster R-CNN \u00b7 ZJU-Leaper",
+    "GANomaly \u00b7 ZJU-Leaper (normal only)",
+    "Mask R-CNN \u00b7 ZJU-Leaper",
+    "MoECLIP \u00b7 MVTec AD adapter",
+    "PaDiM \u00b7 ZJU-Leaper (normal only)",
+    "PatchCore \u00b7 ZJU-Leaper (normal only)",
+    "Reverse Distillation \u00b7 ZJU-Leaper (normal only)",
+    "STFPM \u00b7 ZJU-Leaper (normal only)",
+    "SuperSimpleNet \u00b7 ZJU-Leaper (normal only)",
+    "UNet++ \u00b7 ZJU-Leaper",
+    "WinCLIP \u00b7 LAION-400M zero-shot",
+    "YOLO11n \u00b7 ZJU-Leaper",
+    "YOLOv8n \u00b7 ZJU-Leaper",
+    "YOLOv8s \u00b7 ZJU-Leaper"
+  ]
+}

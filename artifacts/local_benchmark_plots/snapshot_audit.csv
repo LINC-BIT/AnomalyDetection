@@ -1,0 +1,951 @@
+chart,model,family,metric,value,available,reason,commit,timestamp_utc,memory_measurement_kind
+image_level,Cascade R-CNN · ZJU-Leaper,detection,image_auroc,0.9598445092322642,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+image_level,Cascade R-CNN · ZJU-Leaper,detection,image_f1,0.9509803921568627,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+image_level,Cascade R-CNN · ZJU-Leaper,detection,image_precision,0.9797979797979798,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+image_level,Cascade R-CNN · ZJU-Leaper,detection,image_recall,0.9238095238095239,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+image_level,Cascade R-CNN · ZJU-Leaper,detection,image_threshold,0.5,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+image_level,DETR · ZJU-Leaper,detection,image_auroc,0.6489018464528669,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+image_level,DETR · ZJU-Leaper,detection,image_f1,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+image_level,DETR · ZJU-Leaper,detection,image_precision,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+image_level,DETR · ZJU-Leaper,detection,image_recall,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+image_level,DETR · ZJU-Leaper,detection,image_threshold,0.5,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+image_level,DeepLabV3+ · ZJU-Leaper,anomaly,image_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+image_level,DeepLabV3+ · ZJU-Leaper,anomaly,image_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+image_level,DeepLabV3+ · ZJU-Leaper,anomaly,image_precision,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+image_level,DeepLabV3+ · ZJU-Leaper,anomaly,image_recall,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+image_level,DeepLabV3+ · ZJU-Leaper,anomaly,image_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+image_level,Dinomaly · ZJU-Leaper (normal only),anomaly,image_auroc,0.9797084548104956,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+image_level,Dinomaly · ZJU-Leaper (normal only),anomaly,image_f1,0.9150943396226415,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+image_level,Dinomaly · ZJU-Leaper (normal only),anomaly,image_precision,0.9065420560747663,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+image_level,Dinomaly · ZJU-Leaper (normal only),anomaly,image_recall,0.9238095238095239,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+image_level,Dinomaly · ZJU-Leaper (normal only),anomaly,image_threshold,0.10050738602876663,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+image_level,EfficientAD · ZJU-Leaper (normal only),anomaly,image_auroc,0.9501263362487852,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+image_level,EfficientAD · ZJU-Leaper (normal only),anomaly,image_f1,0.8556701030927835,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+image_level,EfficientAD · ZJU-Leaper (normal only),anomaly,image_precision,0.9325842696629213,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+image_level,EfficientAD · ZJU-Leaper (normal only),anomaly,image_recall,0.7904761904761904,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+image_level,EfficientAD · ZJU-Leaper (normal only),anomaly,image_threshold,0.21963262557983398,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+image_level,Faster R-CNN · ZJU-Leaper,detection,image_auroc,0.9919144800777455,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+image_level,Faster R-CNN · ZJU-Leaper,detection,image_f1,0.9560975609756097,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+image_level,Faster R-CNN · ZJU-Leaper,detection,image_precision,0.98,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+image_level,Faster R-CNN · ZJU-Leaper,detection,image_recall,0.9333333333333333,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+image_level,Faster R-CNN · ZJU-Leaper,detection,image_threshold,0.5,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+image_level,GANomaly · ZJU-Leaper (normal only),anomaly,image_auroc,0.6548104956268221,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+image_level,GANomaly · ZJU-Leaper (normal only),anomaly,image_f1,0.4801980198019802,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+image_level,GANomaly · ZJU-Leaper (normal only),anomaly,image_precision,0.32441471571906355,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+image_level,GANomaly · ZJU-Leaper (normal only),anomaly,image_recall,0.9238095238095239,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+image_level,GANomaly · ZJU-Leaper (normal only),anomaly,image_threshold,0.031165501102805138,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+image_level,Mask R-CNN · ZJU-Leaper,anomaly,image_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+image_level,Mask R-CNN · ZJU-Leaper,anomaly,image_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+image_level,Mask R-CNN · ZJU-Leaper,anomaly,image_precision,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+image_level,Mask R-CNN · ZJU-Leaper,anomaly,image_recall,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+image_level,Mask R-CNN · ZJU-Leaper,anomaly,image_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+image_level,MoECLIP · MVTec AD adapter,anomaly,image_auroc,0.9877162293488824,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+image_level,MoECLIP · MVTec AD adapter,anomaly,image_f1,0.9209302325581395,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+image_level,MoECLIP · MVTec AD adapter,anomaly,image_precision,0.9,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+image_level,MoECLIP · MVTec AD adapter,anomaly,image_recall,0.9428571428571428,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+image_level,MoECLIP · MVTec AD adapter,anomaly,image_threshold,0.3662335276603699,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+image_level,PaDiM · ZJU-Leaper (normal only),anomaly,image_auroc,0.8284159378036928,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+image_level,PaDiM · ZJU-Leaper (normal only),anomaly,image_f1,0.7137546468401487,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+image_level,PaDiM · ZJU-Leaper (normal only),anomaly,image_precision,0.5853658536585366,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+image_level,PaDiM · ZJU-Leaper (normal only),anomaly,image_recall,0.9142857142857143,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+image_level,PaDiM · ZJU-Leaper (normal only),anomaly,image_threshold,22.770282745361328,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+image_level,PatchCore · ZJU-Leaper (normal only),anomaly,image_auroc,0.9932361516034985,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+image_level,PatchCore · ZJU-Leaper (normal only),anomaly,image_f1,0.9468599033816425,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+image_level,PatchCore · ZJU-Leaper (normal only),anomaly,image_precision,0.9607843137254902,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+image_level,PatchCore · ZJU-Leaper (normal only),anomaly,image_recall,0.9333333333333333,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+image_level,PatchCore · ZJU-Leaper (normal only),anomaly,image_threshold,41.00257110595703,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+image_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,image_auroc,0.6222351797862002,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+image_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,image_f1,0.5378151260504201,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+image_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,image_precision,0.38095238095238093,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+image_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,image_recall,0.9142857142857143,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+image_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,image_threshold,1.0821353197097778,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+image_level,STFPM · ZJU-Leaper (normal only),anomaly,image_auroc,0.9497376093294461,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+image_level,STFPM · ZJU-Leaper (normal only),anomaly,image_f1,0.845771144278607,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+image_level,STFPM · ZJU-Leaper (normal only),anomaly,image_precision,0.8854166666666666,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+image_level,STFPM · ZJU-Leaper (normal only),anomaly,image_recall,0.8095238095238095,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+image_level,STFPM · ZJU-Leaper (normal only),anomaly,image_threshold,0.004429359920322895,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+image_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,image_auroc,0.5851506316812439,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+image_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,image_f1,0.45982142857142855,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+image_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,image_precision,0.30029154518950435,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+image_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,image_recall,0.9809523809523809,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+image_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,image_threshold,0.45094573497772217,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+image_level,UNet++ · ZJU-Leaper,anomaly,image_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+image_level,UNet++ · ZJU-Leaper,anomaly,image_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+image_level,UNet++ · ZJU-Leaper,anomaly,image_precision,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+image_level,UNet++ · ZJU-Leaper,anomaly,image_recall,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+image_level,UNet++ · ZJU-Leaper,anomaly,image_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+image_level,WinCLIP · LAION-400M zero-shot,anomaly,image_auroc,0.9772206025267249,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+image_level,WinCLIP · LAION-400M zero-shot,anomaly,image_f1,0.8584070796460177,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+image_level,WinCLIP · LAION-400M zero-shot,anomaly,image_precision,0.8016528925619835,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+image_level,WinCLIP · LAION-400M zero-shot,anomaly,image_recall,0.9238095238095239,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+image_level,WinCLIP · LAION-400M zero-shot,anomaly,image_threshold,0.40816986560821533,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+image_level,YOLO11n · ZJU-Leaper,detection,image_auroc,0.9965403304178815,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+image_level,YOLO11n · ZJU-Leaper,detection,image_f1,0.75,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+image_level,YOLO11n · ZJU-Leaper,detection,image_precision,1.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+image_level,YOLO11n · ZJU-Leaper,detection,image_recall,0.6,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+image_level,YOLO11n · ZJU-Leaper,detection,image_threshold,0.5,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+image_level,YOLOv8n · ZJU-Leaper,detection,image_auroc,0.9965014577259474,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+image_level,YOLOv8n · ZJU-Leaper,detection,image_f1,0.7272727272727273,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+image_level,YOLOv8n · ZJU-Leaper,detection,image_precision,1.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+image_level,YOLOv8n · ZJU-Leaper,detection,image_recall,0.5714285714285714,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+image_level,YOLOv8n · ZJU-Leaper,detection,image_threshold,0.5,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+image_level,YOLOv8s · ZJU-Leaper,detection,image_auroc,0.9933916423712342,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+image_level,YOLOv8s · ZJU-Leaper,detection,image_f1,0.5314685314685315,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+image_level,YOLOv8s · ZJU-Leaper,detection,image_precision,1.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+image_level,YOLOv8s · ZJU-Leaper,detection,image_recall,0.3619047619047619,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+image_level,YOLOv8s · ZJU-Leaper,detection,image_threshold,0.5,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+pixel_level,Cascade R-CNN · ZJU-Leaper,detection,pixel_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+pixel_level,Cascade R-CNN · ZJU-Leaper,detection,pixel_aupro,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+pixel_level,Cascade R-CNN · ZJU-Leaper,detection,iap,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+pixel_level,Cascade R-CNN · ZJU-Leaper,detection,pixel_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+pixel_level,Cascade R-CNN · ZJU-Leaper,detection,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+pixel_level,Cascade R-CNN · ZJU-Leaper,detection,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+pixel_level,DETR · ZJU-Leaper,detection,pixel_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+pixel_level,DETR · ZJU-Leaper,detection,pixel_aupro,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+pixel_level,DETR · ZJU-Leaper,detection,iap,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+pixel_level,DETR · ZJU-Leaper,detection,pixel_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+pixel_level,DETR · ZJU-Leaper,detection,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+pixel_level,DETR · ZJU-Leaper,detection,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+pixel_level,DeepLabV3+ · ZJU-Leaper,anomaly,pixel_auroc,0.9802096730102305,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+pixel_level,DeepLabV3+ · ZJU-Leaper,anomaly,pixel_aupro,0.9538878777460136,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+pixel_level,DeepLabV3+ · ZJU-Leaper,anomaly,iap,0.7352257617444646,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+pixel_level,DeepLabV3+ · ZJU-Leaper,anomaly,pixel_f1,0.6476854221535746,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+pixel_level,DeepLabV3+ · ZJU-Leaper,anomaly,miou,0.5132452185122962,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+pixel_level,DeepLabV3+ · ZJU-Leaper,anomaly,dice,0.6476854221535746,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+pixel_level,Dinomaly · ZJU-Leaper (normal only),anomaly,pixel_auroc,0.9804867468291837,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+pixel_level,Dinomaly · ZJU-Leaper (normal only),anomaly,pixel_aupro,0.8895415567895888,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+pixel_level,Dinomaly · ZJU-Leaper (normal only),anomaly,iap,0.42466345964519453,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+pixel_level,Dinomaly · ZJU-Leaper (normal only),anomaly,pixel_f1,0.6293286576524935,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+pixel_level,Dinomaly · ZJU-Leaper (normal only),anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+pixel_level,Dinomaly · ZJU-Leaper (normal only),anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+pixel_level,EfficientAD · ZJU-Leaper (normal only),anomaly,pixel_auroc,0.7863061620681314,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+pixel_level,EfficientAD · ZJU-Leaper (normal only),anomaly,pixel_aupro,0.5436698702821209,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+pixel_level,EfficientAD · ZJU-Leaper (normal only),anomaly,iap,0.4814466718887944,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+pixel_level,EfficientAD · ZJU-Leaper (normal only),anomaly,pixel_f1,0.5548541281507868,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+pixel_level,EfficientAD · ZJU-Leaper (normal only),anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+pixel_level,EfficientAD · ZJU-Leaper (normal only),anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+pixel_level,Faster R-CNN · ZJU-Leaper,detection,pixel_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+pixel_level,Faster R-CNN · ZJU-Leaper,detection,pixel_aupro,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+pixel_level,Faster R-CNN · ZJU-Leaper,detection,iap,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+pixel_level,Faster R-CNN · ZJU-Leaper,detection,pixel_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+pixel_level,Faster R-CNN · ZJU-Leaper,detection,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+pixel_level,Faster R-CNN · ZJU-Leaper,detection,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+pixel_level,GANomaly · ZJU-Leaper (normal only),anomaly,pixel_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+pixel_level,GANomaly · ZJU-Leaper (normal only),anomaly,pixel_aupro,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+pixel_level,GANomaly · ZJU-Leaper (normal only),anomaly,iap,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+pixel_level,GANomaly · ZJU-Leaper (normal only),anomaly,pixel_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+pixel_level,GANomaly · ZJU-Leaper (normal only),anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+pixel_level,GANomaly · ZJU-Leaper (normal only),anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+pixel_level,Mask R-CNN · ZJU-Leaper,anomaly,pixel_auroc,0.9731990028694267,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+pixel_level,Mask R-CNN · ZJU-Leaper,anomaly,pixel_aupro,0.9172331674585777,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+pixel_level,Mask R-CNN · ZJU-Leaper,anomaly,iap,0.7867003734868797,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+pixel_level,Mask R-CNN · ZJU-Leaper,anomaly,pixel_f1,0.7242132280555678,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+pixel_level,Mask R-CNN · ZJU-Leaper,anomaly,miou,0.5993292917725819,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+pixel_level,Mask R-CNN · ZJU-Leaper,anomaly,dice,0.7242132280555678,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+pixel_level,MoECLIP · MVTec AD adapter,anomaly,pixel_auroc,0.9856566016571193,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+pixel_level,MoECLIP · MVTec AD adapter,anomaly,pixel_aupro,0.9700769305764397,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+pixel_level,MoECLIP · MVTec AD adapter,anomaly,iap,0.6733195373065929,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+pixel_level,MoECLIP · MVTec AD adapter,anomaly,pixel_f1,0.7005555450218994,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+pixel_level,MoECLIP · MVTec AD adapter,anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+pixel_level,MoECLIP · MVTec AD adapter,anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+pixel_level,PaDiM · ZJU-Leaper (normal only),anomaly,pixel_auroc,0.9521164942843015,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+pixel_level,PaDiM · ZJU-Leaper (normal only),anomaly,pixel_aupro,0.9192300477707758,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+pixel_level,PaDiM · ZJU-Leaper (normal only),anomaly,iap,0.16583061959162493,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+pixel_level,PaDiM · ZJU-Leaper (normal only),anomaly,pixel_f1,0.35314827352742045,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+pixel_level,PaDiM · ZJU-Leaper (normal only),anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+pixel_level,PaDiM · ZJU-Leaper (normal only),anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+pixel_level,PatchCore · ZJU-Leaper (normal only),anomaly,pixel_auroc,0.9832753179321732,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+pixel_level,PatchCore · ZJU-Leaper (normal only),anomaly,pixel_aupro,0.9135720886089779,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+pixel_level,PatchCore · ZJU-Leaper (normal only),anomaly,iap,0.4004666292223735,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+pixel_level,PatchCore · ZJU-Leaper (normal only),anomaly,pixel_f1,0.6258728078835418,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+pixel_level,PatchCore · ZJU-Leaper (normal only),anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+pixel_level,PatchCore · ZJU-Leaper (normal only),anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+pixel_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,pixel_auroc,0.6986225974264226,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+pixel_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,pixel_aupro,0.7002840652775636,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+pixel_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,iap,0.026315170078175402,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+pixel_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,pixel_f1,0.08684451610539046,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+pixel_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+pixel_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+pixel_level,STFPM · ZJU-Leaper (normal only),anomaly,pixel_auroc,0.956966616326739,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+pixel_level,STFPM · ZJU-Leaper (normal only),anomaly,pixel_aupro,0.8743586788810075,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+pixel_level,STFPM · ZJU-Leaper (normal only),anomaly,iap,0.34608798435624627,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+pixel_level,STFPM · ZJU-Leaper (normal only),anomaly,pixel_f1,0.5681869288795306,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+pixel_level,STFPM · ZJU-Leaper (normal only),anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+pixel_level,STFPM · ZJU-Leaper (normal only),anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+pixel_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,pixel_auroc,0.45471877234056235,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+pixel_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,pixel_aupro,0.5033464851973023,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+pixel_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,iap,0.02521744027062736,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+pixel_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,pixel_f1,0.07917844510904448,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+pixel_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+pixel_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+pixel_level,UNet++ · ZJU-Leaper,anomaly,pixel_auroc,0.9805192232812506,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+pixel_level,UNet++ · ZJU-Leaper,anomaly,pixel_aupro,0.9373948032115236,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+pixel_level,UNet++ · ZJU-Leaper,anomaly,iap,0.7599842529991486,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+pixel_level,UNet++ · ZJU-Leaper,anomaly,pixel_f1,0.6833005174459431,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+pixel_level,UNet++ · ZJU-Leaper,anomaly,miou,0.5613335922207305,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+pixel_level,UNet++ · ZJU-Leaper,anomaly,dice,0.6833005174459431,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+pixel_level,WinCLIP · LAION-400M zero-shot,anomaly,pixel_auroc,0.9248003328378553,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+pixel_level,WinCLIP · LAION-400M zero-shot,anomaly,pixel_aupro,0.9139779764629556,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+pixel_level,WinCLIP · LAION-400M zero-shot,anomaly,iap,0.10799911094392131,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+pixel_level,WinCLIP · LAION-400M zero-shot,anomaly,pixel_f1,0.30781946533338755,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+pixel_level,WinCLIP · LAION-400M zero-shot,anomaly,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+pixel_level,WinCLIP · LAION-400M zero-shot,anomaly,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+pixel_level,YOLO11n · ZJU-Leaper,detection,pixel_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+pixel_level,YOLO11n · ZJU-Leaper,detection,pixel_aupro,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+pixel_level,YOLO11n · ZJU-Leaper,detection,iap,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+pixel_level,YOLO11n · ZJU-Leaper,detection,pixel_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+pixel_level,YOLO11n · ZJU-Leaper,detection,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+pixel_level,YOLO11n · ZJU-Leaper,detection,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+pixel_level,YOLOv8n · ZJU-Leaper,detection,pixel_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+pixel_level,YOLOv8n · ZJU-Leaper,detection,pixel_aupro,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+pixel_level,YOLOv8n · ZJU-Leaper,detection,iap,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+pixel_level,YOLOv8n · ZJU-Leaper,detection,pixel_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+pixel_level,YOLOv8n · ZJU-Leaper,detection,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+pixel_level,YOLOv8n · ZJU-Leaper,detection,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+pixel_level,YOLOv8s · ZJU-Leaper,detection,pixel_auroc,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+pixel_level,YOLOv8s · ZJU-Leaper,detection,pixel_aupro,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+pixel_level,YOLOv8s · ZJU-Leaper,detection,iap,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+pixel_level,YOLOv8s · ZJU-Leaper,detection,pixel_f1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+pixel_level,YOLOv8s · ZJU-Leaper,detection,miou,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+pixel_level,YOLOv8s · ZJU-Leaper,detection,dice,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,map,0.3332568407058716,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,map_50,0.6427542567253113,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,map_75,0.3042392432689667,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,map_small,0.010335179977118969,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,map_medium,0.21746058762073517,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,map_large,0.5009286999702454,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,mar_1,0.2807692289352417,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,mar_10,0.44780218601226807,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,mar_100,0.4703296720981598,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,mar_small,0.12857143580913544,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,mar_medium,0.36176469922065735,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,mar_large,0.6268817186355591,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,precision_at_threshold,0.6326530612244898,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,recall_at_threshold,0.6813186813186813,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,f1_at_threshold,0.6560846560846562,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,recall_small,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,recall_normal,0.7209302325581395,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,true_positives,124.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,false_positives,72.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,Cascade R-CNN · ZJU-Leaper,detection,false_negatives,58.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+instance_level,DETR · ZJU-Leaper,detection,map,0.0010835399152711034,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,map_50,0.0021650586277246475,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,map_75,8.803827222436666e-05,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,map_small,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,map_medium,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,map_large,0.0021158710587769747,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,mar_1,0.01483516488224268,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,mar_10,0.015934066846966743,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,mar_100,0.016483517363667488,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,mar_small,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,mar_medium,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,mar_large,0.032258063554763794,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,precision_at_threshold,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,recall_at_threshold,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,f1_at_threshold,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,recall_small,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,recall_normal,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,true_positives,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,false_positives,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DETR · ZJU-Leaper,detection,false_negatives,182.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,DeepLabV3+ · ZJU-Leaper,anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,Dinomaly · ZJU-Leaper (normal only),anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,EfficientAD · ZJU-Leaper (normal only),anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+instance_level,Faster R-CNN · ZJU-Leaper,detection,map,0.3321131467819214,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,map_50,0.6622574925422668,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,map_75,0.30144140124320984,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,map_small,0.03393593057990074,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,map_medium,0.2216281145811081,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,map_large,0.47579002380371094,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,mar_1,0.2736263871192932,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,mar_10,0.44890108704566956,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,mar_100,0.45494505763053894,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,mar_small,0.10000000149011612,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,mar_medium,0.3632352948188782,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,mar_large,0.602150559425354,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,precision_at_threshold,0.5502183406113537,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,recall_at_threshold,0.6923076923076923,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,f1_at_threshold,0.6131386861313869,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,recall_small,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,recall_normal,0.7325581395348837,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,true_positives,126.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,false_positives,103.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,Faster R-CNN · ZJU-Leaper,detection,false_negatives,56.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,GANomaly · ZJU-Leaper (normal only),anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,Mask R-CNN · ZJU-Leaper,anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+instance_level,MoECLIP · MVTec AD adapter,anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,MoECLIP · MVTec AD adapter,anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PaDiM · ZJU-Leaper (normal only),anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,PatchCore · ZJU-Leaper (normal only),anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,Reverse Distillation · ZJU-Leaper (normal only),anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,STFPM · ZJU-Leaper (normal only),anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+instance_level,UNet++ · ZJU-Leaper,anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,UNet++ · ZJU-Leaper,anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,map,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,map_50,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,map_75,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,map_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,map_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,map_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,mar_1,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,mar_10,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,mar_100,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,mar_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,mar_medium,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,mar_large,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,precision_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,recall_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,f1_at_threshold,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,recall_small,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,recall_normal,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,true_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,false_positives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,WinCLIP · LAION-400M zero-shot,anomaly,false_negatives,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+instance_level,YOLO11n · ZJU-Leaper,detection,map,0.2845933735370636,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,map_50,0.5754473805427551,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,map_75,0.25831541419029236,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,map_small,0.04531686380505562,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,map_medium,0.16944479942321777,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,map_large,0.42715373635292053,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,mar_1,0.23571428656578064,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,mar_10,0.4357142746448517,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,mar_100,0.5384615659713745,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,mar_small,0.14761905372142792,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,mar_medium,0.5132352709770203,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,mar_large,0.6451612710952759,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,precision_at_threshold,0.9090909090909091,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,recall_at_threshold,0.32967032967032966,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,f1_at_threshold,0.4838709677419355,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,recall_small,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,recall_normal,0.3488372093023256,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,true_positives,60.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,false_positives,6.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLO11n · ZJU-Leaper,detection,false_negatives,122.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,map,0.27213752269744873,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,map_50,0.5861219763755798,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,map_75,0.2129737287759781,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,map_small,0.02452944405376911,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,map_medium,0.15049229562282562,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,map_large,0.4130614101886749,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,mar_1,0.2181318700313568,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,mar_10,0.42802196741104126,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,mar_100,0.5269230604171753,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,mar_small,0.08095238357782364,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,mar_medium,0.5058823823928833,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,mar_large,0.6430107355117798,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,precision_at_threshold,0.8571428571428571,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,recall_at_threshold,0.3626373626373626,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,f1_at_threshold,0.5096525096525096,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,recall_small,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,recall_normal,0.38372093023255816,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,true_positives,66.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,false_positives,11.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8n · ZJU-Leaper,detection,false_negatives,116.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,map,0.25123167037963867,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,map_50,0.5379553437232971,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,map_75,0.18663528561592102,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,map_small,0.04811881110072136,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,map_medium,0.14433112740516663,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,map_large,0.3852236866950989,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,mar_1,0.20989011228084564,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,mar_10,0.4153846204280853,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,mar_100,0.5197802186012268,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,mar_small,0.06190476194024086,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,mar_medium,0.49705880880355835,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,mar_large,0.6397849321365356,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,precision_at_threshold,0.9285714285714286,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,recall_at_threshold,0.21428571428571427,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,f1_at_threshold,0.34821428571428575,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,recall_small,0.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,recall_normal,0.22674418604651161,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,true_positives,39.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,false_positives,3.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+instance_level,YOLOv8s · ZJU-Leaper,detection,false_negatives,143.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,Cascade R-CNN · ZJU-Leaper,detection,fps,0.8182763541755215,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,instantaneous_fps_mean,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,instantaneous_fps_std,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,instantaneous_fps_cv,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,latency_ms_mean,1222.0810181024717,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,latency_ms_std,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,latency_ms_cv,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,latency_ms_p50,1223.7585439579561,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,latency_ms_p95,1444.8891489300877,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,latency_ms_p99,1444.8891489300877,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,flops_g,408.0209,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,resolution_slope_beta,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,Cascade R-CNN · ZJU-Leaper,detection,runtime_s,44.4,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+compute,DETR · ZJU-Leaper,detection,fps,56.58023943704631,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,instantaneous_fps_mean,56.7178994009059,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,instantaneous_fps_std,2.7535374647185398,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,instantaneous_fps_cv,0.04854794507207297,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,latency_ms_mean,17.674014990916476,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,latency_ms_std,0.8839004639993517,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,latency_ms_cv,0.05001129989159965,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,latency_ms_p50,17.274479032494128,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,latency_ms_p95,19.120126962661743,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,latency_ms_p99,19.181570038199425,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,flops_g,186.0145,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,lmei,0.2775,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,resolution_slope_beta,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DETR · ZJU-Leaper,detection,runtime_s,46.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,fps,80.34106228452599,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,instantaneous_fps_mean,88.04432763996324,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,instantaneous_fps_std,14.847615458196804,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,instantaneous_fps_cv,0.16863795608630994,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,latency_ms_mean,12.446935247862712,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,latency_ms_std,6.518832902095722,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,latency_ms_cv,0.5237299602096898,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,latency_ms_p50,10.797944967634976,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,latency_ms_p95,11.65951497387141,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,latency_ms_p99,40.82105902489275,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,flops_g,572.1205,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,lmei,0.3437,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,resolution_slope_beta,-0.00016801211967054964,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,DeepLabV3+ · ZJU-Leaper,anomaly,runtime_s,63.6,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,fps,29.737970869437323,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,instantaneous_fps_mean,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,instantaneous_fps_std,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,instantaneous_fps_cv,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,latency_ms_mean,33.62704215396661,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,latency_ms_std,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,latency_ms_cv,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,latency_ms_p50,30.01030010636896,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,latency_ms_p95,63.34012106526643,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,latency_ms_p99,63.34012106526643,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,flops_g,273.0566,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,resolution_slope_beta,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,Dinomaly · ZJU-Leaper (normal only),anomaly,runtime_s,37.4,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,fps,3.717993174233726,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,instantaneous_fps_mean,3.8474548883070483,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,instantaneous_fps_std,0.7933759887092648,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,instantaneous_fps_cv,0.20620800288534769,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,latency_ms_mean,268.96230120328255,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,latency_ms_std,45.22860263732631,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,latency_ms_cv,0.16815963588570873,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,latency_ms_p50,277.74547203443944,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,latency_ms_p95,324.8622959945351,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,latency_ms_p99,354.60257693193853,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,flops_g,75.9065,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,resolution_slope_beta,3.775351840934189e-06,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,EfficientAD · ZJU-Leaper (normal only),anomaly,runtime_s,60.7,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+compute,Faster R-CNN · ZJU-Leaper,detection,fps,60.420237926157945,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,instantaneous_fps_mean,60.6706791074537,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,instantaneous_fps_std,3.745423627919891,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,instantaneous_fps_cv,0.06173366909716602,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,latency_ms_mean,16.55074581503868,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,latency_ms_std,1.109144866019046,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,latency_ms_cv,0.06701479669944733,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,latency_ms_p50,16.055481042712927,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,latency_ms_p95,18.271506065502763,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,latency_ms_p99,19.71608807798475,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,flops_g,268.9822,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,lmei,0.2965,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,resolution_slope_beta,-6.904786583350119e-07,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,Faster R-CNN · ZJU-Leaper,detection,runtime_s,21.6,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,fps,34.851866080757084,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,instantaneous_fps_mean,34.91672162320033,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,instantaneous_fps_std,1.4301505283157527,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,instantaneous_fps_cv,0.040958900544817836,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,latency_ms_mean,28.692868200596422,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,latency_ms_std,1.303416726335201,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,latency_ms_cv,0.04542650519365323,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,latency_ms_p50,28.320385026745498,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,latency_ms_p95,30.370853026397526,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,latency_ms_p99,33.458458026871085,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,flops_g,33.0444,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,resolution_slope_beta,1.831054807459025e-07,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,GANomaly · ZJU-Leaper (normal only),anomaly,runtime_s,51.4,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+compute,Mask R-CNN · ZJU-Leaper,anomaly,fps,59.08185265494422,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,instantaneous_fps_mean,59.351711945403,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,instantaneous_fps_std,4.027274030428072,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,instantaneous_fps_cv,0.06785438698268245,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,latency_ms_mean,16.925670998170972,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,latency_ms_std,1.1350505918502067,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,latency_ms_cv,0.06706089182360114,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,latency_ms_p50,17.60777400340885,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,latency_ms_p95,18.463988904841244,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,latency_ms_p99,18.752856994979084,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,flops_g,277.0023,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,lmei,0.2842,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,resolution_slope_beta,4.8104247145162795e-06,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,Mask R-CNN · ZJU-Leaper,anomaly,runtime_s,460.1,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+compute,MoECLIP · MVTec AD adapter,anomaly,fps,5.021335389875775,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,instantaneous_fps_mean,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,instantaneous_fps_std,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,instantaneous_fps_cv,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,latency_ms_mean,199.15021052293014,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,latency_ms_std,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,latency_ms_cv,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,latency_ms_p50,211.74500498455018,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,latency_ms_p95,221.6246210737154,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,latency_ms_p99,221.6246210737154,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,flops_g,2241.5497,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,resolution_slope_beta,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,MoECLIP · MVTec AD adapter,anomaly,runtime_s,131.4,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,fps,77.32033234942432,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,instantaneous_fps_mean,77.40908568704408,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,instantaneous_fps_std,2.6120950339313285,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,instantaneous_fps_cv,0.033744036772268886,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,latency_ms_mean,12.933208764297888,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,latency_ms_std,0.4396218822524394,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,latency_ms_cv,0.0339917100438381,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,latency_ms_p50,12.957570026628673,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,latency_ms_p95,13.511379016563296,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,latency_ms_p99,13.82292399648577,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,flops_g,3.6884,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,resolution_slope_beta,-6.309325641746139e-05,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PaDiM · ZJU-Leaper (normal only),anomaly,runtime_s,43.3,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,fps,4.418781990926,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,instantaneous_fps_mean,4.542638772707956,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,instantaneous_fps_std,0.8040743477207126,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,instantaneous_fps_cv,0.17700600641009986,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,latency_ms_mean,226.306706701871,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,latency_ms_std,36.82615617561282,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,latency_ms_cv,0.16272675570382625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,latency_ms_p50,227.69783600233495,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,latency_ms_p95,309.0728040551767,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,latency_ms_p99,312.47877003625035,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,flops_g,24.1408,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,resolution_slope_beta,-1.1480736600411694e-06,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,PatchCore · ZJU-Leaper (normal only),anomaly,runtime_s,88.3,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,fps,7.89665267593189,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,instantaneous_fps_mean,10.514163822510866,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,instantaneous_fps_std,5.714917032711385,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,instantaneous_fps_cv,0.5435446060366422,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,latency_ms_mean,126.63593563484028,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,latency_ms_std,61.95877177766228,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,latency_ms_cv,0.48926690095553005,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,latency_ms_p50,145.04534797742963,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,latency_ms_p95,215.4721929691732,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,latency_ms_p99,266.3212079787627,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,flops_g,67.8974,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,resolution_slope_beta,1.1151585015318309e-06,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,Reverse Distillation · ZJU-Leaper (normal only),anomaly,runtime_s,63.3,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,fps,74.76646919821401,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,instantaneous_fps_mean,81.6899834604167,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,instantaneous_fps_std,23.18527730270474,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,instantaneous_fps_cv,0.2838203206876555,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,latency_ms_mean,13.374979596119374,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,latency_ms_std,4.206505083476502,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,latency_ms_cv,0.31450553275587656,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,latency_ms_p50,13.561278930865228,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,latency_ms_p95,21.891994983889163,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,latency_ms_p99,24.017136893235147,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,flops_g,7.3767,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,resolution_slope_beta,-7.956845086054258e-06,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,STFPM · ZJU-Leaper (normal only),anomaly,runtime_s,88.5,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,fps,17.383303006540732,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,instantaneous_fps_mean,17.438154600603323,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,instantaneous_fps_std,0.9081724598753163,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,instantaneous_fps_cv,0.052079619700349224,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,latency_ms_mean,57.526466611307114,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,latency_ms_std,3.4863008386651777,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,latency_ms_cv,0.06060342385047386,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,latency_ms_p50,56.90207099542022,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,latency_ms_p95,61.20621401350945,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,latency_ms_p99,71.0309409769252,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,flops_g,96.7028,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,resolution_slope_beta,-2.1027224332900408e-06,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,runtime_s,93.0,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+compute,UNet++ · ZJU-Leaper,anomaly,fps,79.53583047002164,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,instantaneous_fps_mean,90.77561716903767,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,instantaneous_fps_std,26.67227496407249,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,instantaneous_fps_cv,0.2938264238336684,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,latency_ms_mean,12.57294975221157,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,latency_ms_std,5.626868864837456,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,latency_ms_cv,0.44753768811075495,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,latency_ms_p50,10.224048048257828,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,latency_ms_p95,19.49820900335908,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,latency_ms_p99,30.94790398608893,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,flops_g,250.232,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,lmei,0.4128,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,resolution_slope_beta,-0.00018748579006097716,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,UNet++ · ZJU-Leaper,anomaly,runtime_s,62.7,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+compute,WinCLIP · LAION-400M zero-shot,anomaly,fps,0.9953712863601751,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,instantaneous_fps_mean,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,instantaneous_fps_std,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,instantaneous_fps_cv,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,latency_ms_mean,1004.6502382610925,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,latency_ms_std,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,latency_ms_cv,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,latency_ms_p50,1015.5745469965041,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,latency_ms_p95,1080.0877569708973,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,latency_ms_p99,1080.0877569708973,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,flops_g,446.701,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,lmei,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,resolution_slope_beta,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,WinCLIP · LAION-400M zero-shot,anomaly,runtime_s,590.6,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+compute,YOLO11n · ZJU-Leaper,detection,fps,308.4789432636126,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,instantaneous_fps_mean,310.59813021135335,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,instantaneous_fps_std,27.048358385457767,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,instantaneous_fps_cv,0.0870847431278872,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,latency_ms_mean,3.24171234969981,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,latency_ms_std,0.2541816920802177,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,latency_ms_cv,0.07840969976986252,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,latency_ms_p50,3.3608509693294764,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,latency_ms_p95,3.4478430170565844,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,latency_ms_p99,3.4681609831750393,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,flops_g,6.4406,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,lmei,11.7565,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,resolution_slope_beta,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLO11n · ZJU-Leaper,detection,runtime_s,11.9,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,fps,432.2056574355095,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,instantaneous_fps_mean,437.3673985189489,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,instantaneous_fps_std,47.507094188662336,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,instantaneous_fps_cv,0.10862056556921011,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,latency_ms_mean,2.3137133510317653,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,latency_ms_std,0.2516454317318825,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,latency_ms_cv,0.1087625792623209,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,latency_ms_p50,2.493071020580828,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,latency_ms_p95,2.643472980707884,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,latency_ms_p99,2.6765470393002033,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,flops_g,8.1942,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,lmei,14.9008,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,resolution_slope_beta,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8n · ZJU-Leaper,detection,runtime_s,11.4,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,fps,355.33258336490604,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,instantaneous_fps_mean,355.92230912720413,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,instantaneous_fps_std,13.930192866640994,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,instantaneous_fps_cv,0.03913829650296644,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,latency_ms_mean,2.8142648516222835,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,latency_ms_std,0.11943308791204921,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,latency_ms_cv,0.04243846766703638,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,latency_ms_p50,2.792176092043519,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,latency_ms_p95,2.9486119747161865,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,latency_ms_p99,3.243003971874714,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,flops_g,28.647,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,lmei,6.9886,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,resolution_slope_beta,,False,not reported by this task/backend,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+compute,YOLOv8s · ZJU-Leaper,detection,runtime_s,11.9,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+memory,Cascade R-CNN · ZJU-Leaper,detection,params_m,69.1641,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+memory,Cascade R-CNN · ZJU-Leaper,detection,peak_memory_mb,2281.06640625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+memory,Cascade R-CNN · ZJU-Leaper,detection,avg_memory_mb,2265.26220703125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+memory,Cascade R-CNN · ZJU-Leaper,detection,model_size_mb,526.9418048858643,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+memory,Cascade R-CNN · ZJU-Leaper,detection,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:10.435389+00:00,process_rss
+memory,DETR · ZJU-Leaper,detection,params_m,44.3878,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+memory,DETR · ZJU-Leaper,detection,peak_memory_mb,689.96533203125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+memory,DETR · ZJU-Leaper,detection,avg_memory_mb,689.96533203125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+memory,DETR · ZJU-Leaper,detection,model_size_mb,329.89481258392334,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+memory,DETR · ZJU-Leaper,detection,memory_measurement_kind,device_allocator,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:38.112548+00:00,device_allocator
+memory,DeepLabV3+ · ZJU-Leaper,anomaly,params_m,40.347,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+memory,DeepLabV3+ · ZJU-Leaper,anomaly,peak_memory_mb,603.8544921875,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+memory,DeepLabV3+ · ZJU-Leaper,anomaly,avg_memory_mb,603.8544921875,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+memory,DeepLabV3+ · ZJU-Leaper,anomaly,model_size_mb,308.18266582489014,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+memory,DeepLabV3+ · ZJU-Leaper,anomaly,memory_measurement_kind,device_allocator,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:47.088570+00:00,device_allocator
+memory,Dinomaly · ZJU-Leaper (normal only),anomaly,params_m,148.009,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+memory,Dinomaly · ZJU-Leaper (normal only),anomaly,peak_memory_mb,1755.37890625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+memory,Dinomaly · ZJU-Leaper (normal only),anomaly,avg_memory_mb,1755.37890625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+memory,Dinomaly · ZJU-Leaper (normal only),anomaly,model_size_mb,564.713849067688,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+memory,Dinomaly · ZJU-Leaper (normal only),anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:53:48.271556+00:00,process_rss
+memory,EfficientAD · ZJU-Leaper (normal only),anomaly,params_m,8.0586,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+memory,EfficientAD · ZJU-Leaper (normal only),anomaly,peak_memory_mb,1869.22265625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+memory,EfficientAD · ZJU-Leaper (normal only),anomaly,avg_memory_mb,1869.220703125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+memory,EfficientAD · ZJU-Leaper (normal only),anomaly,model_size_mb,71.71623706817627,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+memory,EfficientAD · ZJU-Leaper (normal only),anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:57.313402+00:00,process_rss
+memory,Faster R-CNN · ZJU-Leaper,detection,params_m,41.3523,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+memory,Faster R-CNN · ZJU-Leaper,detection,peak_memory_mb,588.8671875,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+memory,Faster R-CNN · ZJU-Leaper,detection,avg_memory_mb,588.8671875,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+memory,Faster R-CNN · ZJU-Leaper,detection,model_size_mb,314.74438667297363,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+memory,Faster R-CNN · ZJU-Leaper,detection,memory_measurement_kind,device_allocator,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:49.629947+00:00,device_allocator
+memory,GANomaly · ZJU-Leaper (normal only),anomaly,params_m,188.6895,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+memory,GANomaly · ZJU-Leaper (normal only),anomaly,peak_memory_mb,3044.2578125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+memory,GANomaly · ZJU-Leaper (normal only),anomaly,avg_memory_mb,3044.2552734375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+memory,GANomaly · ZJU-Leaper (normal only),anomaly,model_size_mb,2159.616702079773,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+memory,GANomaly · ZJU-Leaper (normal only),anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:52:13.833771+00:00,process_rss
+memory,Mask R-CNN · ZJU-Leaper,anomaly,params_m,43.9755,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+memory,Mask R-CNN · ZJU-Leaper,anomaly,peak_memory_mb,608.9443359375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+memory,Mask R-CNN · ZJU-Leaper,anomaly,avg_memory_mb,608.9443359375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+memory,Mask R-CNN · ZJU-Leaper,anomaly,model_size_mb,334.7647190093994,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+memory,Mask R-CNN · ZJU-Leaper,anomaly,memory_measurement_kind,device_allocator,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:56:59.585232+00:00,device_allocator
+memory,MoECLIP · MVTec AD adapter,anomaly,params_m,433.5619,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+memory,MoECLIP · MVTec AD adapter,anomaly,peak_memory_mb,3538.47265625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+memory,MoECLIP · MVTec AD adapter,anomaly,avg_memory_mb,3538.43603515625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+memory,MoECLIP · MVTec AD adapter,anomaly,model_size_mb,18.351489067077637,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+memory,MoECLIP · MVTec AD adapter,anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:54:37.922853+00:00,process_rss
+memory,PaDiM · ZJU-Leaper (normal only),anomaly,params_m,2.7828,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+memory,PaDiM · ZJU-Leaper (normal only),anomaly,peak_memory_mb,2247.4375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+memory,PaDiM · ZJU-Leaper (normal only),anomaly,avg_memory_mb,2247.4375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+memory,PaDiM · ZJU-Leaper (normal only),anomaly,model_size_mb,168.49345684051514,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+memory,PaDiM · ZJU-Leaper (normal only),anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:21.653825+00:00,process_rss
+memory,PatchCore · ZJU-Leaper (normal only),anomaly,params_m,24.8625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+memory,PatchCore · ZJU-Leaper (normal only),anomaly,peak_memory_mb,4505.0859375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+memory,PatchCore · ZJU-Leaper (normal only),anomaly,avg_memory_mb,4504.9830078125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+memory,PatchCore · ZJU-Leaper (normal only),anomaly,model_size_mb,455.10562801361084,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+memory,PatchCore · ZJU-Leaper (normal only),anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:15.211238+00:00,process_rss
+memory,Reverse Distillation · ZJU-Leaper (normal only),anomaly,params_m,89.0023,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+memory,Reverse Distillation · ZJU-Leaper (normal only),anomaly,peak_memory_mb,3004.05859375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+memory,Reverse Distillation · ZJU-Leaper (normal only),anomaly,avg_memory_mb,3004.0548828125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+memory,Reverse Distillation · ZJU-Leaper (normal only),anomaly,model_size_mb,765.5683126449585,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+memory,Reverse Distillation · ZJU-Leaper (normal only),anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:50:54.982397+00:00,process_rss
+memory,STFPM · ZJU-Leaper (normal only),anomaly,params_m,5.5656,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+memory,STFPM · ZJU-Leaper (normal only),anomaly,peak_memory_mb,1879.05078125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+memory,STFPM · ZJU-Leaper (normal only),anomaly,avg_memory_mb,1879.04765625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+memory,STFPM · ZJU-Leaper (normal only),anomaly,model_size_mb,31.96977138519287,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+memory,STFPM · ZJU-Leaper (normal only),anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:20.526860+00:00,process_rss
+memory,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,params_m,33.7194,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+memory,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,peak_memory_mb,2365.37109375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+memory,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,avg_memory_mb,2365.37109375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+memory,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,model_size_mb,196.49571895599365,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+memory,SuperSimpleNet · ZJU-Leaper (normal only),anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:51:29.115485+00:00,process_rss
+memory,UNet++ · ZJU-Leaper,anomaly,params_m,26.1934,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+memory,UNet++ · ZJU-Leaper,anomaly,peak_memory_mb,535.04150390625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+memory,UNet++ · ZJU-Leaper,anomaly,avg_memory_mb,535.04150390625,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+memory,UNet++ · ZJU-Leaper,anomaly,model_size_mb,200.05498600006104,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+memory,UNet++ · ZJU-Leaper,anomaly,memory_measurement_kind,device_allocator,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:49:48.011800+00:00,device_allocator
+memory,WinCLIP · LAION-400M zero-shot,anomaly,params_m,208.3773,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+memory,WinCLIP · LAION-400M zero-shot,anomaly,peak_memory_mb,4254.76953125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+memory,WinCLIP · LAION-400M zero-shot,anomaly,avg_memory_mb,4248.5966796875,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+memory,WinCLIP · LAION-400M zero-shot,anomaly,model_size_mb,4.863739013671875e-05,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+memory,WinCLIP · LAION-400M zero-shot,anomaly,memory_measurement_kind,process_rss,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T02:02:47.495980+00:00,process_rss
+memory,YOLO11n · ZJU-Leaper,detection,params_m,2.59,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+memory,YOLO11n · ZJU-Leaper,detection,peak_memory_mb,65.48876953125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+memory,YOLO11n · ZJU-Leaper,detection,avg_memory_mb,65.48876953125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+memory,YOLO11n · ZJU-Leaper,detection,model_size_mb,5.225427627563477,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+memory,YOLO11n · ZJU-Leaper,detection,memory_measurement_kind,device_allocator,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.553248+00:00,device_allocator
+memory,YOLOv8n · ZJU-Leaper,detection,params_m,3.011,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+memory,YOLOv8n · ZJU-Leaper,detection,peak_memory_mb,46.52734375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+memory,YOLOv8n · ZJU-Leaper,detection,avg_memory_mb,46.52734375,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+memory,YOLOv8n · ZJU-Leaper,detection,model_size_mb,5.967325210571289,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+memory,YOLOv8n · ZJU-Leaper,detection,memory_measurement_kind,device_allocator,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:28.734614+00:00,device_allocator
+memory,YOLOv8s · ZJU-Leaper,detection,params_m,11.136,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+memory,YOLOv8s · ZJU-Leaper,detection,peak_memory_mb,121.517578125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+memory,YOLOv8s · ZJU-Leaper,detection,avg_memory_mb,121.517578125,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+memory,YOLOv8s · ZJU-Leaper,detection,model_size_mb,21.48484230041504,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator
+memory,YOLOv8s · ZJU-Leaper,detection,memory_measurement_kind,device_allocator,True,,275578d885a5534ddfe9fe58714659e66a86e2f9,2026-09-18T01:48:29.293719+00:00,device_allocator

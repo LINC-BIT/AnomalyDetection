@@ -27,6 +27,10 @@ runs/
 !**/data/.gitkeep
 **/artifacts/*
 !**/artifacts/.gitkeep
+# The local benchmark plots are a deliverable, not scratch: the test report embeds
+# these PNGs, so they have to be present on every clone and on GitHub. Everything
+# else under artifacts/ (runtime prediction maps, benchmark scratch) stays ignored.
+!artifacts/local_benchmark_plots/
 **/results/*
 !**/results/.gitkeep
 
@@ -42,6 +46,9 @@ runs/
 *.npy
 *.jsonl
 *.csv
+# ...but the benchmark audit table is the evidence behind the figure report,
+# one row per model per metric, so it travels with the figures.
+!artifacts/local_benchmark_plots/snapshot_audit.csv
 *.log
 
 # ---------------------------------------------------------------------------
