@@ -35,6 +35,7 @@ def test_perfect_image_level_separation():
     metrics = AnomalyEvaluator(allow_oracle_threshold=True).evaluate(samples, predictions)
 
     assert metrics["image_auroc"] == 1.0
+    assert metrics["image_ap"] == 1.0
     assert metrics["image_f1"] == 1.0
     assert metrics["image_precision"] == 1.0
     assert metrics["image_recall"] == 1.0

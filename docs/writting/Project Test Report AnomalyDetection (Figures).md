@@ -103,7 +103,7 @@ This part evaluates the image-level metrics defined by [README §3.3.1](../../RE
   <img src="../../artifacts/local_benchmark_plots/01_image_level.png" alt="Image-level metrics on the A100 server" width="100%" />
 </p>
 
-<sub>One group of four bars per model: (1) Image AUROC, (2) Image F1, (3) Image Precision, (4) Image Recall. An absent bar means the model reports nothing for that metric, never a zero. DETR's F1 / precision / recall are 0.000 rather than missing — it scores no box above the evaluation floor, so its derived image score is 0. All 16 models that emit an image-level score are shown: 10 anomaly and 6 detection, the latter scored from their highest-confidence box per image.</sub>
+<sub>Two panels, because the two families' image scores are not the same measurement. **(a) Anomaly detection** — the ten unsupervised and zero-shot backends, on a continuous normality score. **(b) Defect detection** — the supervised detectors, on the highest confidence box in the image. Both panels carry the same bars in the same order: (1) Image AUROC, (2) Image F1, (3) Image Precision, (4) Image Recall; a later run adds Image AP in second position once the re-run picks up the `image_ap` column the evaluators now emit. An absent bar means the model reports nothing for that metric, never a zero. DETR is not drawn: it is excluded from the bar figures because its box metrics are ~0 (its AUROC of 0.65 is in Figure 3). Segmentation models report no image-level score at all and appear in Figure 4 instead. **The two panels are not a ranking of one another** — see the note under "Image-level metrics" in the main report.</sub>
 
 <br>
 
@@ -135,10 +135,9 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 - **Pixel AUROC:** the probability that a defective pixel is ranked above a normal one, pooled over the pixels of all images. 0.5 is random guessing.
 - **Pixel AUPRO:** the share of each defective region that is covered before the false-positive rate reaches a fixed limit. Every region counts equally, so a small defect is not hidden by a large one.
 - **Pixel F1:** the match between predicted and true defect pixels at a fixed pixel threshold, penalised by missed pixels and by extra pixels.
-- **Pixel IoU:** the intersection over union between the predicted defect area and the true defect area.
 - **IAP (Instance Average Precision):** the average precision over connected defect regions, with every region weighted equally.
 
-**Key observation:** MoECLIP leads localization by a wide margin (0.9857 AUROC / 0.9701 AUPRO) and SuperSimpleNet is last (0.4547 / 0.5033). Pixel F1 and mIoU stay low across the board — the best is MoECLIP at 0.6733 — because the pixel threshold is not calibrated on this run; AUROC and AUPRO need no threshold and are therefore the more informative columns here.
+**Key observation:** MoECLIP leads localization by a wide margin (0.9857 AUROC / 0.9701 AUPRO) and SuperSimpleNet is last (0.4547 / 0.5033). Pixel F1 stays low across the board — the best is MoECLIP at 0.6733 — because the pixel threshold is not calibrated on this run; AUROC and AUPRO need no threshold and are therefore the more informative columns here.
 
 <p align="center"><strong>Figure 4: Pixel-level metrics on the A100 server</strong></p>
 
@@ -146,7 +145,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
   <img src="../../artifacts/local_benchmark_plots/02_pixel_level.png" alt="Pixel-level metrics on the A100 server" width="100%" />
 </p>
 
-<sub>The chart mixes two metric families and a group carries only the family its output supports. Bars per model: (1) Pixel AUROC, (2) AUPRO, (3) IAP, (4) Pixel F1, (5) mIoU. Pixel AUROC, AUPRO and IAP sweep a threshold over a *continuous* score map; Pixel F1 and mIoU need only one binary mask, which is why the three mask models report two bars and the anomaly-map models four. `dice` is not plotted: for a binary mask it is numerically identical to `pixel_f1`.</sub>
+<sub>Bars per model: (1) Pixel AUROC, (2) AUPRO, (3) IAP, (4) Pixel F1, and all twelve groups carry the same four. Pixel AUROC, AUPRO and IAP sweep a threshold over a *continuous* score map; Pixel F1 needs one binary mask. `dice` and `miou` are not plotted. `dice` is numerically identical to `pixel_f1` for a binary mask, and `miou` is both a monotone function of it (`IoU = F1 / (2 - F1)`) and reported by only the three segmentation models, so as a fifth bar it appeared on three of twelve groups and nothing on the other nine — a gap a reader cannot tell from a bad score. Both remain in `snapshot_audit.csv` and in the segmentation tables of the main report.</sub>
 
 <br>
 
@@ -165,7 +164,7 @@ This part evaluates the pixel-level metrics defined by [README §3.3.2](../../RE
 <br>
 
 
-The 3 segmentation models are the other pixel-level producers; their Pixel F1 and mIoU are the last two bar styles in Figure 4. They report no threshold-free pixel metric, because their output is a binary mask rather than a score map.
+The 3 segmentation models are the other pixel-level producers. They are the last three groups in Figure 4 and carry the same four bars as the anomaly-map models, because the segmentation adapter now persists the continuous probability map that `pixel_auroc` / `pixel_aupro` / `iap` are computed from. Their mIoU is in the segmentation table of the main report, not in the figure.
 
 #### 2.2.3 Technical Metrics: Instance Level
 
@@ -250,11 +249,11 @@ This part evaluates the compute metrics defined by [README §3.3.5](../../README
 This part evaluates the memory metrics defined by [README §3.3.6](../../README.md#336-overhead-metrics-memory):
 
 - **Parameters (M):** the number of learned weights, in millions. Fixed by the architecture, so identical on any machine.
-- **Peak memory:** the most memory used at once during the run.
-- **Allocator peak:** the same peak measured by the CUDA allocator, which excludes the Python interpreter and its libraries.
-- **Retained / extra:** the memory still held after the run, which a long-running service keeps resident.
+- **Peak memory:** the most memory used at once during the run. **Two different instruments produced this number, and which one applies to a model depends on how that model could be profiled** — see the note under Figure 11.
+- **Allocator peak:** peak tensor memory live on the graphics card, which excludes the Python interpreter, host copies and the CUDA context itself.
+- **Artifact size:** the checkpoint file on disk (weights plus, for a fine-tuned model, its optimizer state). This is storage, not run-time memory.
 
-**Key observation:** Peak memory spans two orders of magnitude on one run — YOLOv8n at 46.5 MB against PatchCore at 4505 MB. The two instruments are not interchangeable: whole-process RSS includes the weights, the CUDA context and host copies, while the CUDA allocator counts GPU tensor memory only, which is why Figure 11 gives them separate axes.
+**Key observation:** Peak memory spans two orders of magnitude on one run — YOLOv8n at 46.5 MB against PatchCore at 4505 MB — but **the column mixes two instruments and the rows are therefore not comparable with each other.** 8 of the 19 models were profiled through an exported graph, where the graphics-card allocator reports GPU tensor memory; the other 11 could not be exported (the anomaly backends, plus Cascade R-CNN, whose custom layers fail to export) and were profiled natively, where only whole-program memory is available. Figure 11 gives the two instruments separate axes for that reason, and the per-model instrument is listed in the main report's Table 12.
 
 <p align="center"><strong>Figure 11: Peak memory by measurement instrument</strong></p>
 
@@ -262,7 +261,7 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
   <img src="../../artifacts/local_benchmark_plots/07_memory_by_measurement_kind.png" alt="Peak memory by measurement instrument" width="100%" />
 </p>
 
-<sub>**(a)** whole-process RSS and **(b)** CUDA allocator peak. The two panels are **not two views of one number** and must not be compared across: RSS counts the entire Python process (weights, CUDA context, host copies, framework overhead) while the allocator counts GPU tensor memory only — a model can show 1.8 GB of RSS and 0.05 GB of allocator memory because its weights live in host memory. Each panel therefore has its own y-axis. Peak memory is a property of this host and should not be carried to another machine.</sub>
+<sub>**(a) Peak memory, whole program** and **(b) Peak memory, GPU**. The two panels are **not two views of one number** and must not be compared across: panel (a) counts the entire Python process (weights, graphics-card context, host copies, framework overhead) while panel (b) counts tensor memory live on the card — a model can show 1.8 GB in (a) and 0.05 GB in (b) because its weights live in host memory. Each panel has its own y-axis, and a model appears only in the panel whose instrument measured it: 11 models in (a), 8 in (b). Which instrument a model got is decided by whether it could be exported for profiling, not by its accuracy or its size; the main report's memory section explains this and lists the instrument per model. Peak memory is a property of this host and should not be carried to another machine.</sub>
 
 <br>
 

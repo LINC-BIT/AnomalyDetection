@@ -136,6 +136,7 @@ def test_detection_scores_also_produce_image_level_metrics():
     metrics = DetectionEvaluator().evaluate(samples, predictions)
 
     assert metrics["image_auroc"] == 1.0
+    assert metrics["image_ap"] == 1.0
     assert metrics["image_f1"] == 1.0
     assert metrics["image_precision"] == 1.0
     assert metrics["image_recall"] == 1.0

@@ -32,6 +32,11 @@ from matplotlib.transforms import Bbox
 
 # Thin hatch strokes read as a light texture rather than a solid fill.
 matplotlib.rcParams["hatch.linewidth"] = 0.9
+# SVG keeps text as <text> instead of outlining every glyph, so a vector editor
+# can reword a label and the file stays small. The trade-off is that the SVG is
+# no longer self-contained: whoever opens it needs the font. PNG and PDF are
+# unaffected -- they still embed or outline as before.
+matplotlib.rcParams["svg.fonttype"] = "none"
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
@@ -44,14 +49,17 @@ from fabric_defect_hub.metrics_taxonomy import OVERHEAD_TABLES, TABLES, TECHNICA
 # with pixel-level overlap metrics, so it is an anomaly-detection model here
 # rather than a third colour with its own legend entry.
 COLORS = {"anomaly": "#0f766e", "detection": "#2563eb"}
-# One style per metric inside a model's group of bars: a grey solid bar, then red,
-# blue and grey diagonals. The hatch is a single character, which is the sparsest
+# One style per metric inside a model's group of bars. The greys carry the two
+# styles a reader sees most often, so they stay light enough to sit under the
+# grid without competing with the coloured marks; red is dots rather than
+# diagonals so it cannot be confused with the blue or amber diagonal bars at
+# small print sizes. The hatch is a single character, which is the sparsest
 # matplotlib will draw; repeating it (`//`) is what makes a hatch look dense.
 BAR_STYLES = (
-    {"facecolor": "#9ca3af", "edgecolor": "#4b5563", "hatch": ""},
-    {"facecolor": "white", "edgecolor": "#c1121f", "hatch": "/"},
+    {"facecolor": "#d1d5db", "edgecolor": "#9ca3af", "hatch": ""},
+    {"facecolor": "white", "edgecolor": "#c1121f", "hatch": "."},
     {"facecolor": "white", "edgecolor": "#155eef", "hatch": "/"},
-    {"facecolor": "white", "edgecolor": "#6b7280", "hatch": "/"},
+    {"facecolor": "white", "edgecolor": "#9ca3af", "hatch": "/"},
     # A six-metric figure needs six distinct styles: with only four the fifth and
     # sixth bars repeated the first two and two metrics became indistinguishable.
     {"facecolor": "white", "edgecolor": "#b45309", "hatch": "\\"},
@@ -92,8 +100,19 @@ MARKER_BOX_PX = 4.0
 # mIoU). `dice` is deliberately absent because it *is* `pixel_f1` -- see the
 # evaluator's `_dice` and `_pixel_f1`, which are the same formula, and the two
 # columns are bit-identical in the log.
-IMAGE_LEVEL_FIGURE_METRICS = ("image_auroc", "image_f1", "image_precision", "image_recall")
-PIXEL_LEVEL_FIGURE_METRICS = ("pixel_auroc", "pixel_aupro", "iap", "pixel_f1", "miou")
+# Both panels of `01_image_level` use this same list, in this same order, so a
+# metric gets the same bar style in both: the figure's own rule is "one style per
+# metric", and positional styling only delivers that when the two panels' metric
+# lists are identical. `map_50` is deliberately absent -- mAP is an
+# instance-level metric and already has `03_instance_level` -- which is also what
+# keeps the two panels structurally identical.
+IMAGE_LEVEL_FIGURE_METRICS = ("image_auroc", "image_ap", "image_f1", "image_precision", "image_recall")
+# `miou` is deliberately absent. Only the three segmentation models report it,
+# so it was a fifth bar on three of the twelve groups and nothing on the other
+# nine -- and for a single binary mask per image, IoU is a monotone function of
+# F1 (`IoU = F1 / (2 - F1)`), so it repeats `pixel_f1` rather than adding a
+# measurement. Same reasoning that keeps `dice` off the figure.
+PIXEL_LEVEL_FIGURE_METRICS = ("pixel_auroc", "pixel_aupro", "iap", "pixel_f1")
 INSTANCE_LEVEL_FIGURE_METRICS = ("map", "map_50", "map_75", "f1_at_threshold")
 # Size-bucketed recall and counts, the tables the report carries under instance
 # level that the four headline metrics above do not cover.
@@ -133,11 +152,27 @@ def _panel_label(index: int, title: str) -> str:
     return f"({chr(ord('a') + index)}) {title}"
 
 
+# Every figure is written in all three formats, and `--missing` treats a figure
+# as missing when *any* of them is absent. That is what lets a format added
+# after the fact -- SVG, here -- be filled in by re-running `--missing` instead
+# of redrawing every figure or remembering which ones predate it. PNG is the
+# raster copy for slides, PDF the vector copy for LaTeX, SVG the editable vector
+# copy for a vector editor.
+FIGURE_FORMATS: tuple[str, ...] = ("png", "pdf", "svg")
+
+
+def missing_formats(output: Path, stem: str) -> list[str]:
+    """Which of the expected formats for one figure are not on disk yet."""
+
+    return [suffix for suffix in FIGURE_FORMATS if not (output / f"{stem}.{suffix}").exists()]
+
+
 def _save(fig: plt.Figure, output: Path, name: str, layout: bool = True) -> None:
     if layout:
         fig.tight_layout()
     fig.savefig(output / f"{name}.png", dpi=180, bbox_inches="tight")
     fig.savefig(output / f"{name}.pdf", bbox_inches="tight")
+    fig.savefig(output / f"{name}.svg", bbox_inches="tight")
     plt.close(fig)
 
 
@@ -230,6 +265,30 @@ def instance_exclusions(snapshot: Snapshot) -> dict[str, str]:
     return excluded
 
 
+def _draw_grouped_bars(ax, records: list, metrics: list[str]) -> None:
+    """Draw one model-grouped, metric-styled bar panel on a supplied axes.
+
+    Shared by the single-panel bar figures and by `01_image_level`, whose two
+    panels pass the same metric list so a metric cannot take one style in one
+    panel and a different style in the other. A model that reports nothing for a
+    metric simply has no bar there, so a missing measurement never reads as a bad
+    score.
+    """
+
+    x = np.arange(len(records))
+    width = 0.82 / len(metrics)
+    for index, metric in enumerate(metrics):
+        values = [float(values[metric]) if values.get(metric) is not None else np.nan for _, values in records]
+        offset = (index - (len(metrics) - 1) / 2) * width
+        ax.bar(x + offset, values, width=width * 0.86, linewidth=1.0, label=label_of(metric),
+               **BAR_STYLES[index % len(BAR_STYLES)])
+    ax.set_xticks(x, [_short(row["model"]) for row, _ in records], rotation=55, ha="right")
+    ax.set_ylabel("Score")
+    ax.set_xlim(-0.5, len(records) - 0.5)
+    ax.grid(axis="y", alpha=0.25)
+    ax.legend(ncols=len(metrics), loc="lower center", bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=10)
+
+
 def _grouped_bars(
     snapshot: Snapshot,
     metrics: list[str],
@@ -260,23 +319,58 @@ def _grouped_bars(
     if not records:
         return
     records.sort(key=lambda item: max((float(v) for v in item[1].values() if v is not None), default=0), reverse=True)
-    labels = [_short(row["model"]) for row, _ in records]
-    x = np.arange(len(records))
-    width = 0.82 / len(metrics)
     fig, ax = plt.subplots(figsize=(max(13, len(records) * 0.95), 7))
-    for index, metric in enumerate(metrics):
-        values = [float(values[metric]) if values.get(metric) is not None else np.nan for _, values in records]
-        offset = (index - (len(metrics) - 1) / 2) * width
-        ax.bar(x + offset, values, width=width * 0.86, linewidth=1.0, label=label_of(metric), **BAR_STYLES[index % len(BAR_STYLES)])
-    ax.set_xticks(x, labels, rotation=55, ha="right")
-    ax.set_ylabel("Score")
+    _draw_grouped_bars(ax, records, metrics)
     ax.set_ylim(*(ylim if ylim is not None else ax.get_ylim()))
     if FIGURE_TITLES:
         ax.set_title(title, pad=30)
-    ax.set_xlim(-0.5, len(records) - 0.5)
-    ax.grid(axis="y", alpha=0.25)
-    ax.legend(ncols=len(metrics), loc="lower center", bbox_to_anchor=(0.5, 1.0), frameon=False, fontsize=10)
     _save(fig, output, filename)
+
+
+def _image_level(snapshot: Snapshot, output: Path) -> None:
+    """Image-level metrics as two panels, one per **purpose**, in one style.
+
+    The v1 figure put ten anomaly detectors and six supervised detectors on one
+    AUROC axis. That comparison is not sound: an anomaly model reports a
+    continuous normality score for every image, while a detector reports
+    `max(box confidence)`, which is exactly `0` on any image where it finds
+    nothing. Pooling them lets a detector's AUROC (0.99 while missing 40-64 % of
+    defective images at its own threshold) sit beside an anomaly model's AUROC as
+    though the two measured the same thing.
+
+    Splitting the families into two panels is what keeps them apart, so the
+    panels themselves carry **no** special-casing: the same metric list, the same
+    order and therefore the same bar styles in both. The score caveat lives in
+    the caption and `README.md` rather than in a flagged bar and a footnote,
+    which made the figure fight itself. Models are ordered by Image AUROC, the
+    metric the panel is about.
+    """
+
+    present = {key for row in snapshot.rows for key, value in row.get("metrics", {}).items() if value is not None}
+    metrics = [metric for metric in IMAGE_LEVEL_FIGURE_METRICS if metric in present]
+
+    panels = (
+        (metrics, [r for r in snapshot.rows if family(r) == "anomaly"], "Anomaly detection"),
+        (metrics, [r for r in snapshot.rows if family(r) == "detection"], "Defect detection"),
+    )
+    drawn = []
+    for panel_metrics, rows, title in panels:
+        records = [(row, {metric: row["metrics"].get(metric) for metric in panel_metrics}) for row in rows]
+        records = [item for item in records if any(v is not None and math.isfinite(float(v)) for v in item[1].values())]
+        if not panel_metrics or not records:
+            continue
+        records.sort(key=lambda item: (item[1].get(panel_metrics[0]) is None, -(item[1].get(panel_metrics[0]) or 0.0)))
+        drawn.append((panel_metrics, records, title))
+
+    if not drawn:
+        return
+    fig, axes = plt.subplots(1, len(drawn), figsize=(max(9.0, 6.5) * len(drawn), 7.2), squeeze=False)
+    for index, (ax, (panel_metrics, records, title)) in enumerate(zip(axes.flat, drawn)):
+        _draw_grouped_bars(ax, records, panel_metrics)
+        ax.set_ylim(0.0, 1.02)
+        ax.set_title(_panel_label(index, title), fontsize=10, pad=26)
+    fig.tight_layout()
+    _save(fig, output, "01_image_level", layout=False)
 
 
 def _compute(snapshot: Snapshot, output: Path) -> None:
@@ -368,20 +462,25 @@ def _quality_vs_latency(snapshot: Snapshot, output: Path) -> None:
 def _memory(snapshot: Snapshot, output: Path) -> None:
     """Peak memory, split by the instrument that measured it.
 
-    `process_rss` and `device_allocator` are not two views of one number: RSS is
-    the whole Python process (weights, CUDA context, host copies, framework
-    overhead), the CUDA allocator counts only GPU tensor memory. Comparing them
-    across panels would rank a measurement artefact. The panels are labelled
-    with the report's own words; CAPTIONS.md explains the two instruments.
+    `process_rss` and `device_allocator` are not two views of one number: the
+    first is everything the Python process held (weights, GPU context, host
+    copies, framework overhead), the second is the tensor memory actually live on
+    the graphics card. Comparing them across panels would rank a measurement
+    artefact, so each instrument gets its own panel and its own y-axis.
+
+    The panel titles stay in plain words -- "whole program" and "GPU" -- because
+    a reader of the report is not expected to know what an RSS or a CUDA
+    allocator is. The precise definitions live in `CAPTIONS.md` and in the
+    report's memory section, which is where a reader goes for the detail.
     """
 
     memory = [(row, row["metrics"]) for row in snapshot.rows]
     # `sharey=False`: the two instruments differ by an order of magnitude, and a
-    # shared axis squashed the CUDA allocator panel into an unreadable strip.
+    # shared axis squashed the GPU-tensor panel into an unreadable strip.
     fig, axes = plt.subplots(1, 2, figsize=(max(14, len(memory) * 0.8), 6.5))
     for panel_index, (ax, kind, title, style) in enumerate((
-        (axes[0], "process_rss", "Peak memory — whole process (RSS)", BAR_STYLES[0]),
-        (axes[1], "device_allocator", "Peak memory — CUDA allocator", BAR_STYLES[1]),
+        (axes[0], "process_rss", "Peak memory, whole program", BAR_STYLES[0]),
+        (axes[1], "device_allocator", "Peak memory, GPU", BAR_STYLES[1]),
     )):
         group = [(row, metrics) for row, metrics in memory if metrics.get("memory_measurement_kind") == kind]
         group.sort(key=lambda item: item[1]["peak_memory_mb"])
@@ -554,7 +653,7 @@ def _figures(metrics: dict[str, list[str]], excluded: dict[str, str]):
     """
 
     return {
-        "01": ("01_image_level", lambda s, o: _grouped_bars(s, metrics["image_level"], "Image-level metrics: anomaly scores and detection boxes", o, "01_image_level")),
+        "01": ("01_image_level", _image_level),
         "02": ("02_pixel_level", lambda s, o: _grouped_bars(s, metrics["pixel_level"], "Pixel-level metrics: anomaly maps and segmentation masks", o, "02_pixel_level")),
         "03": ("03_instance_level", lambda s, o: _grouped_bars(s, metrics["instance_level"], "Instance-level detection metrics", o, "03_instance_level", set(excluded))),
         "04": ("04_compute_throughput_latency", _compute),
@@ -577,7 +676,7 @@ def select_figures(only: list[str] | None, missing: bool, output: Path, figures:
             raise SystemExit(f"unknown figure id(s): {', '.join(unknown)}. Known: {', '.join(ids)}")
         ids = [figure_id for figure_id in ids if figure_id in set(only)]
     if missing:
-        ids = [figure_id for figure_id in ids if not (output / f"{figures[figure_id][0]}.png").exists()]
+        ids = [figure_id for figure_id in ids if missing_formats(output, figures[figure_id][0])]
     return ids
 
 
@@ -612,7 +711,7 @@ def main() -> int:
     parser.add_argument("--commit", help="Select an explicit git commit instead of the newest complete snapshot")
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts/local_benchmark_plots"))
     parser.add_argument("--only", nargs="+", metavar="ID", help="render only these figure ids (see --list)")
-    parser.add_argument("--missing", action="store_true", help="render only figures whose PNG is not on disk yet")
+    parser.add_argument("--missing", action="store_true", help="render only figures missing at least one output format (png/pdf/svg)")
     parser.add_argument("--list", action="store_true", help="list the figure ids and their output state, then exit")
     args = parser.parse_args()
 
@@ -621,7 +720,8 @@ def main() -> int:
         # a driver asking the script rather than hardcoding its figure list.
         metrics = {key: [] for key in ("image_level", "pixel_level", "instance_level")}
         for figure_id, (stem, _) in _figures(metrics, {}).items():
-            state = "present" if (args.output_dir / f"{stem}.png").exists() else "missing"
+            missing = missing_formats(args.output_dir, stem)
+            state = "present" if not missing else f"missing {','.join(missing)}"
             print(f"{figure_id}  {stem:<34} {state}")
         return 0
     snapshot = load_latest_snapshot(log=args.input, commit=args.commit)

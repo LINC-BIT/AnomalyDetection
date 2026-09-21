@@ -116,10 +116,14 @@ def _spec(key, label, category, table, direction="neutral", unit="", precision=4
 METRIC_SPECS: tuple[MetricSpec, ...] = (
     # -- technical / image level ------------------------------------------
     _spec("image_auroc", "Image AUROC", "technical", "image_level", "higher"),
+    _spec("image_ap", "Image AP", "technical", "image_level", "higher"),
     _spec("image_f1", "Image F1", "technical", "image_level", "higher"),
     _spec("image_precision", "Image Precision", "technical", "image_level", "higher"),
     _spec("image_recall", "Image Recall", "technical", "image_level", "higher"),
     _spec("image_threshold", "Decision threshold", "technical", "image_level"),
+    # Generic spellings, declared when the image-level table was planned and
+    # still unfilled by any evaluator; the `image_*` keys above are the ones the
+    # evaluators actually emit.
     _spec("auroc", "AUROC", "technical", "image_level", "higher"),
     _spec("ap", "AP", "technical", "image_level", "higher"),
     # -- technical / pixel level ------------------------------------------

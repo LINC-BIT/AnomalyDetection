@@ -113,7 +113,7 @@ Precision, Recall, F1 and TP/FP/FN are taken at confidence threshold 0.25.
 
 <br>
 
-These 11 models are every configuration this machine profiled. `Peak memory` is whole-process resident set, on a different scale from the Full Machine's allocator-based figures. `Parameters` and `FLOPs` are architecture-fixed and therefore machine-independent.
+These 11 models are every configuration this machine profiled. `Peak memory` here is whole-program memory — the resident size of the entire Python process, weights and framework included — measured the same way for all 11 rows, so these rows are comparable with each other. It is on a different scale from the Full Machine's GPU-tensor readings ("GPU tensors" in Table 5 there) and must not be compared with those. `Parameters` and `FLOPs` are architecture-fixed and therefore machine-independent.
 
 ---
 

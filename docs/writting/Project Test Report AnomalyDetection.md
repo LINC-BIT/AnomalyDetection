@@ -104,6 +104,10 @@ This part evaluates the image-level metrics defined by [README §3.3.1](../../RE
 
 **Key observation:** Image AUROC agrees within **<span style="color:#0070C0">0.2 points</span>** across the two machines for all ten anomaly models; the thresholded metrics drift by up to 4.4 points. The Full Machine's detection models rank highest on this axis — YOLO11n / YOLOv8n 0.9965.
 
+**Read Table 3 by paradigm, not down the AUROC column.** It lists both families together, but an anomaly model reports a continuous normality score for every image while a detector reports the highest-confidence box it found, which is exactly `0` when it found nothing. That difference makes the two AUROCs different measurements. On the Full Machine, YOLOv8n scores 157 of 245 normal images at exactly 0 and no defective image at 0, which is why its AUROC is 0.997 while its recall at its own threshold is only 0.571 (YOLOv8s: AUROC 0.993, recall 0.362). The detector ranks images well and still misses most defects at the operating point it would actually use. Figure 1 in the figures report therefore draws the two families as two panels rather than one axis, and within a panel the bars compare like with like.
+
+From this revision the evaluators also record **Image AP** (`image_ap`, the area under the image-level precision-recall curve) beside Image AUROC. It is not in Tables 2 and 3 because those runs predate the change; the next benchmark run fills it in, and it is the number to compare against the PR curves in Figures 2 and 3.
+
 <p align="center"><strong>Table 2: Image-level testing results on Small Machine</strong></p>
 
 <div align="center">
@@ -345,10 +349,16 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 
 - **Parameters (M):** the number of learned weights, in millions. Fixed by the architecture, so identical on any machine.
 - **Peak memory:** the most memory used at once during the run.
-- **Allocator peak:** the same peak measured by the CUDA allocator, which excludes the Python interpreter and its libraries.
-- **Retained / extra:** the memory still held after the run, which a long-running service keeps resident.
+- **Measured as:** which of two instruments produced that peak. **A model's row is only comparable with another row that used the same instrument**, and Table 12 therefore names the instrument on every row.
+- **Average memory:** the mean of the memory samples taken during the measured runs; for a model measured on the card it equals the peak, because the allocator reading is already a high-water mark.
+- **Artifact size:** the checkpoint file on disk — weights, plus optimizer state for a fine-tuned model. This is storage, not run-time memory, and it is why a checkpoint can be larger than the memory the model uses.
 
-**Key observation:** **<span style="color:#0070C0">Parameters reproduce</span>** for every model measured twice, while peak memory is not comparable across the two machines.
+**Key observation:** **<span style="color:#0070C0">Parameters reproduce</span>** for every model measured twice, while peak memory is not comparable across the two machines — and, on the Full Machine, not even across models within one table. **Two different instruments produced the peak-memory column, and which one a model got depends on how that model could be profiled, not on how good or how large it is.**
+
+- 8 of the 19 models were exported to a TorchScript or ONNX graph and profiled through it. The profiler then reads **tensor memory live on the graphics card**, the closest available figure to true VRAM.
+- The other 11 could not be exported — the anomaly backends, plus Cascade R-CNN, whose custom layers no exporter accepts — so they were profiled natively by running the model directly. The only instrument available on that path is the **resident memory of the whole Python process**: the weights, the graphics-card context, host copies of tensors, the framework and its libraries.
+
+The two quantities are not two views of one number. A model can report 1.8 GB of whole-program memory and 0.05 GB of tensor memory because its weights live in host memory. Reading down the "Peak memory" column as if it were one ranking therefore compares an instrument with a model: Cascade R-CNN's 2281 MB is whole-program memory, DETR's 690 MB is card-tensor memory, and neither number says the other model is smaller. Figure 11 in the figures report draws the two instruments on separate axes for the same reason, and the instrument is recorded per row as `memory_measurement_kind` in `snapshot_audit.csv`.
 
 <p align="center"><strong>Table 11: Memory overhead testing results on Small Machine</strong></p>
 
@@ -372,37 +382,41 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 
 <br>
 
+All 11 models were profiled natively on that machine, so their peak memory is whole-program memory throughout. These rows are comparable with each other, and with the "whole program" rows of Table 12 — not with its "GPU tensors" rows.
+
+<br>
+
 <p align="center"><strong>Table 12: Memory overhead testing results on Full Machine</strong></p>
 
 <div align="center" style="width: 100%; overflow-x: auto;">
 
-| Model | Parameters (M) | Peak memory (MB) | Allocator peak (MB) | Retained / extra (MB) |
-| :---: | :---: | :---: | :---: | :---: |
-| Cascade R-CNN | 69.1641 | 2281.1 | 2265.3 | 526.94 |
-| DETR | 44.3878 | 690.0 | 690.0 | 329.89 |
-| DeepLabV3+ | 40.3470 | 603.9 | 603.9 | 308.18 |
-| Dinomaly | 148.0090 | 1755.4 | 1755.4 | 564.71 |
-| EfficientAD | 8.0586 | 1869.2 | 1869.2 | 71.72 |
-| Faster R-CNN | 41.3523 | 588.9 | 588.9 | 314.74 |
-| GANomaly | 188.6895 | 3044.3 | 3044.3 | 2159.62 |
-| Mask R-CNN | 43.9755 | 608.9 | 608.9 | 334.76 |
-| MoECLIP | 433.5619 | 3538.5 | 3538.4 | 18.35 |
-| PaDiM | 2.7828 | 2247.4 | 2247.4 | 168.49 |
-| PatchCore | 24.8625 | 4505.1 | 4505.0 | 455.11 |
-| Reverse Distillation | 89.0023 | 3004.1 | 3004.1 | 765.57 |
-| STFPM | 5.5656 | 1879.1 | 1879.0 | 31.97 |
-| SuperSimpleNet | 33.7194 | 2365.4 | 2365.4 | 196.50 |
-| UNet++ | 26.1934 | 535.0 | 535.0 | 200.05 |
-| WinCLIP | 208.3773 | 4254.8 | 4248.6 | 0.00 |
-| YOLO11n | 2.5900 | 65.5 | 65.5 | 5.23 |
-| YOLOv8n | 3.0110 | 46.5 | 46.5 | 5.97 |
-| YOLOv8s | 11.1360 | 121.5 | 121.5 | 21.48 |
+| Model | Parameters (M) | Peak memory (MB) | Measured as | Average memory (MB) | Artifact size (MB) |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| Cascade R-CNN | 69.1641 | 2281.1 | whole program | 2265.3 | 526.94 |
+| DETR | 44.3878 | 690.0 | GPU tensors | 690.0 | 329.89 |
+| DeepLabV3+ | 40.3470 | 603.9 | GPU tensors | 603.9 | 308.18 |
+| Dinomaly | 148.0090 | 1755.4 | whole program | 1755.4 | 564.71 |
+| EfficientAD | 8.0586 | 1869.2 | whole program | 1869.2 | 71.72 |
+| Faster R-CNN | 41.3523 | 588.9 | GPU tensors | 588.9 | 314.74 |
+| GANomaly | 188.6895 | 3044.3 | whole program | 3044.3 | 2159.62 |
+| Mask R-CNN | 43.9755 | 608.9 | GPU tensors | 608.9 | 334.76 |
+| MoECLIP | 433.5619 | 3538.5 | whole program | 3538.4 | 18.35 |
+| PaDiM | 2.7828 | 2247.4 | whole program | 2247.4 | 168.49 |
+| PatchCore | 24.8625 | 4505.1 | whole program | 4505.0 | 455.11 |
+| Reverse Distillation | 89.0023 | 3004.1 | whole program | 3004.1 | 765.57 |
+| STFPM | 5.5656 | 1879.1 | whole program | 1879.0 | 31.97 |
+| SuperSimpleNet | 33.7194 | 2365.4 | whole program | 2365.4 | 196.50 |
+| UNet++ | 26.1934 | 535.0 | GPU tensors | 535.0 | 200.05 |
+| WinCLIP | 208.3773 | 4254.8 | whole program | 4248.6 | 0.00 |
+| YOLO11n | 2.5900 | 65.5 | GPU tensors | 65.5 | 5.23 |
+| YOLOv8n | 3.0110 | 46.5 | GPU tensors | 46.5 | 5.97 |
+| YOLOv8s | 11.1360 | 121.5 | GPU tensors | 121.5 | 21.48 |
 
 </div>
 
 <br>
 
-All 19 Full Machine configurations. Table 11 lists the 11 models the Small Machine profiled.
+All 19 Full Machine configurations. Table 11 lists the 11 models the Small Machine profiled. Compare the "Peak memory" column only between rows that share a "Measured as" value; the trailing columns are the average of the memory samples and the checkpoint's size on disk, neither of which is a run-time peak.
 
 ### 2.3 Analysis
 
@@ -455,7 +469,7 @@ Because the metrics have different scales, each model is reduced to one composit
 - **Pixel level.** MoECLIP leads localization (0.9857 AUROC / 0.9701 AUPRO); Pixel F1 and IoU stay low because the pixel threshold is not calibrated.
 - **Overhead.** 0.82–432 FPS across 19 models: YOLO real-time, Cascade R-CNN and WinCLIP ≈ 1 FPS.
 
-**Reproducibility.** Image AUROC within 0.2 points, parameter counts and FLOPs exact. FPS and latency are host-specific (1.1×–31×), and peak memory is not comparable across machines.
+**Reproducibility.** Image AUROC within 0.2 points, parameter counts and FLOPs exact. FPS and latency are host-specific (1.1×–31×). Peak memory is not comparable across machines, and on the Full Machine not even across models: two instruments produced it (Table 12), so only rows sharing a `Measured as` value may be compared.
 
 ## 3. Extensibility
 
@@ -491,5 +505,5 @@ The run produced a new model, registered as `textile/artifacts/models/yolo26n_yo
 ## 4. Discussion
 
 - **Training budgets are short.** Several entries were trained for only a few steps — the anomaly smoke configuration is 1 epoch on 8 images — so the weaker results in §2.3 reflect the run budget as much as the architecture.
-- **Overhead metrics are host-defined.** FPS, latency and peak memory are measured per machine, so their values differ between the RTX 4090 and the A100 runs; only FLOPs and parameter counts are host-independent.
+- **Overhead metrics are host-defined, and peak memory is also instrument-defined.** FPS, latency and peak memory are measured per machine, so their values differ between the RTX 4090 and the A100 runs; only FLOPs and parameter counts are host-independent. Peak memory additionally depends on whether a model could be profiled through an exported graph (GPU-tensor memory) or had to be profiled natively (whole-program memory), which is why Table 12 names the instrument per row and Figure 11 gives the two separate axes.
 - **Coverage gaps.** MambaAD untested; MoECLIP scored on MVTec AD rather than ZJU-Leaper; cross-domain ([README §3.3.4](../../README.md#334-technical-metrics-cross-domain)) covered on the Small Machine only; `LMEI`, `Max streams @budget`, `1-stream latency`, `resolution slope` and power/energy not produced.

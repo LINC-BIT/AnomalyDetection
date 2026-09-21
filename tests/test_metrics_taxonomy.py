@@ -103,7 +103,7 @@ def test_every_metric_this_project_measures_has_a_home():
 
     measured = {
         # accuracy
-        "image_auroc", "image_f1", "image_precision", "image_recall", "image_threshold",
+        "image_auroc", "image_ap", "image_f1", "image_precision", "image_recall", "image_threshold",
         "map", "map_50", "map_75", "map_large", "map_medium", "map_small",
         "mar_1", "mar_10", "mar_100", "mar_large", "mar_medium", "mar_small",
         "miou", "dice", "pixel_f1", "recall_small", "recall_normal",

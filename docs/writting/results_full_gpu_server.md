@@ -141,33 +141,33 @@ All 19 configurations. `LMEI`, `Max streams @budget`, `1-stream latency` and `re
 
 <div align="center">
 
-| Model | Parameters (M) | Peak memory (MB) | Allocator peak (MB) | Retained / extra (MB) |
-| :---: | :---: | :---: | :---: | :---: |
-| Cascade R-CNN | 69.1641 | 2281.1 | 2265.3 | 526.94 |
-| DETR | 44.3878 | 690.0 | 690.0 | 329.89 |
-| DeepLabV3+ | 40.3470 | 603.9 | 603.9 | 308.18 |
-| Dinomaly | 148.0090 | 1755.4 | 1755.4 | 564.71 |
-| EfficientAD | 8.0586 | 1869.2 | 1869.2 | 71.72 |
-| Faster R-CNN | 41.3523 | 588.9 | 588.9 | 314.74 |
-| GANomaly | 188.6895 | 3044.3 | 3044.3 | 2159.62 |
-| Mask R-CNN | 43.9755 | 608.9 | 608.9 | 334.76 |
-| MoECLIP | 433.5619 | 3538.5 | 3538.4 | 18.35 |
-| PaDiM | 2.7828 | 2247.4 | 2247.4 | 168.49 |
-| PatchCore | 24.8625 | 4505.1 | 4505.0 | 455.11 |
-| Reverse Distillation | 89.0023 | 3004.1 | 3004.1 | 765.57 |
-| STFPM | 5.5656 | 1879.1 | 1879.0 | 31.97 |
-| SuperSimpleNet | 33.7194 | 2365.4 | 2365.4 | 196.50 |
-| UNet++ | 26.1934 | 535.0 | 535.0 | 200.05 |
-| WinCLIP | 208.3773 | 4254.8 | 4248.6 | 0.00 |
-| YOLO11n | 2.5900 | 65.5 | 65.5 | 5.23 |
-| YOLOv8n | 3.0110 | 46.5 | 46.5 | 5.97 |
-| YOLOv8s | 11.1360 | 121.5 | 121.5 | 21.48 |
+| Model | Parameters (M) | Peak memory (MB) | Measured as | Average memory (MB) | Artifact size (MB) |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| Cascade R-CNN | 69.1641 | 2281.1 | whole program | 2265.3 | 526.94 |
+| DETR | 44.3878 | 690.0 | GPU tensors | 690.0 | 329.89 |
+| DeepLabV3+ | 40.3470 | 603.9 | GPU tensors | 603.9 | 308.18 |
+| Dinomaly | 148.0090 | 1755.4 | whole program | 1755.4 | 564.71 |
+| EfficientAD | 8.0586 | 1869.2 | whole program | 1869.2 | 71.72 |
+| Faster R-CNN | 41.3523 | 588.9 | GPU tensors | 588.9 | 314.74 |
+| GANomaly | 188.6895 | 3044.3 | whole program | 3044.3 | 2159.62 |
+| Mask R-CNN | 43.9755 | 608.9 | GPU tensors | 608.9 | 334.76 |
+| MoECLIP | 433.5619 | 3538.5 | whole program | 3538.4 | 18.35 |
+| PaDiM | 2.7828 | 2247.4 | whole program | 2247.4 | 168.49 |
+| PatchCore | 24.8625 | 4505.1 | whole program | 4505.0 | 455.11 |
+| Reverse Distillation | 89.0023 | 3004.1 | whole program | 3004.1 | 765.57 |
+| STFPM | 5.5656 | 1879.1 | whole program | 1879.0 | 31.97 |
+| SuperSimpleNet | 33.7194 | 2365.4 | whole program | 2365.4 | 196.50 |
+| UNet++ | 26.1934 | 535.0 | GPU tensors | 535.0 | 200.05 |
+| WinCLIP | 208.3773 | 4254.8 | whole program | 4248.6 | 0.00 |
+| YOLO11n | 2.5900 | 65.5 | GPU tensors | 65.5 | 5.23 |
+| YOLOv8n | 3.0110 | 46.5 | GPU tensors | 46.5 | 5.97 |
+| YOLOv8s | 11.1360 | 121.5 | GPU tensors | 121.5 | 21.48 |
 
 </div>
 
 <br>
 
-All 19 configurations. Peak memory was measured by two different counters (whole-process RSS for the Anomalib backend, CUDA allocator for torchvision/YOLO), so it is not comparable with the Small Machine's RSS-only figures.
+All 19 configurations. **Peak memory was produced by two different instruments and the column is not a single ranking.** 8 models were exported to a TorchScript/ONNX graph and profiled through it, so the reading is tensor memory live on the graphics card (`device_allocator`, "GPU tensors" below). The other 11 could not be exported — the anomaly backends, plus Cascade R-CNN, whose custom layers no exporter accepts — and were profiled natively, where the only available instrument is the resident memory of the whole Python process (`process_rss`, "whole program" below). The two are not two views of one number: whole-program memory includes the weights, the graphics-card context, host tensor copies and the framework's libraries. Compare rows only within the same "Measured as" value. The Small Machine's figures are whole-program throughout, so they are comparable with the "whole program" rows here and not with the "GPU tensors" rows. The instrument is also recorded per row as `memory_measurement_kind` in `snapshot_audit.csv`.
 
 ---
 

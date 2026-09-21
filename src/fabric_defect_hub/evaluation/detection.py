@@ -229,7 +229,7 @@ def _image_level_detection_metrics(pairs, score_threshold: float) -> dict[str, f
     the defect precisely enough to meet an IoU threshold.
     """
 
-    from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
+    from sklearn.metrics import average_precision_score, f1_score, precision_score, recall_score, roc_auc_score
 
     y_true = [
         int(sample.annotations.is_anomalous)
@@ -241,6 +241,12 @@ def _image_level_detection_metrics(pairs, score_threshold: float) -> dict[str, f
     metrics: dict[str, float] = {}
     if len(set(y_true)) >= 2:
         metrics["image_auroc"] = float(roc_auc_score(y_true, y_score))
+        # AP alongside AUROC. For a detector this pair is what exposes the
+        # operating-point problem: a model can rank well (high AUROC/AP) and
+        # still miss most defects at its own threshold (low recall), because a
+        # frame with no box scores exactly 0 and drags the negative class into
+        # one mass that any firing outranks.
+        metrics["image_ap"] = float(average_precision_score(y_true, y_score))
     y_pred = [int(score >= score_threshold) for score in y_score]
     metrics["image_f1"] = float(f1_score(y_true, y_pred, zero_division=0))
     metrics["image_precision"] = float(precision_score(y_true, y_pred, zero_division=0))

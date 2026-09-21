@@ -2,49 +2,80 @@
 
 The descriptions live here, not inside the PNGs: a heading burned into an image cannot be
 reworded, translated or renumbered afterwards. Every figure is written to
-`artifacts/local_benchmark_plots/` as PNG + PDF.
+`artifacts/local_benchmark_plots/` as PNG + PDF + SVG. The SVG keeps text
+editable, so a label can be reworded in a vector editor; PNG and PDF are the
+self-contained copies.
 
 Machines: **Small** = RTX 4090 24 GB, **Full** = A100 80 GB. Dataset: ZJU-Leaper test split,
 350 samples, 640 × 640, fp32. 19 configurations, unless a caption says otherwise.
 
 ---
 
-## 01 · `01_image_level` — Image-level metrics
+## 01 · `01_image_level` — Image-level metrics, split by purpose
 
-Per-image accuracy for every model that reports an image-level score: 10 anomaly models and 6
-detectors, whose score is derived from the highest-confidence box per image. One group of four
-bars per model; a bar is absent where a model reports nothing for that metric, never zero-filled.
+Two panels, because an anomaly detector's image score and a supervised detector's image score are
+not the same measurement. Both panels carry the **same metrics in the same order**, so a metric has
+one bar style across the whole figure. A bar is absent where a model reports nothing for that
+metric, never zero-filled.
 
 | Bar | Metric |
 | --- | --- |
-| 1 (grey solid) | Image AUROC |
-| 2 (red `/`) | Image F1 |
-| 3 (blue `/`) | Image Precision |
-| 4 (grey `/`) | Image Recall |
+| 1 (light grey solid) | Image AUROC |
+| 2 (red `.`) | Image AP |
+| 3 (blue `/`) | Image F1 |
+| 4 (grey `/`) | Image Precision |
+| 5 (amber `\`) | Image Recall |
 
-DETR's F1 / precision / recall are 0.000 — not missing. It scores no box above the evaluation
-floor, so the derived score is 0 for every image and the three bars have no height. The model is
-kept in this table because the zero is the finding.
+**(a) Anomaly detection** — the ten unsupervised / zero-shot backends, on their continuous
+normality score. **(b) Defect detection** — the supervised detectors, on `max(box confidence)`.
+Panel titles stay that short on purpose: what each panel is *about* belongs in this caption, not in
+the image. `mAP@0.5` is deliberately not here — mAP is an instance-level metric and already has
+`03_instance_level`.
+
+**The two panels are not a ranking of one another.** A detector's image score is `max(box
+confidence)`, which is exactly `0` whenever it finds nothing: `YOLOv8n` scores 157 of 245 normal
+images at 0 while no defective image scores 0, so its AUROC is 0.997 even though its recall at its
+own threshold is 0.571 (`YOLOv8s`: AUROC 0.993, recall 0.362). The detector ranks well and fires at
+a threshold that misses most defects. Within a panel the bars compare like with like; across the two
+panels they do not, which is why the families are drawn apart instead of on one axis.
+
+`Image AP` is the area under panel (a) of the PR/ROC curve figures, which is what aligns this
+figure with them on the precision-recall dimension. It is produced by both evaluators as of
+2026-09-21, so it is absent from a snapshot taken before that and appears after the next
+benchmark re-run.
+
+`DETR` is absent: `EXCLUDED_MODELS` drops it from every bar figure. Its F1 / precision / recall are
+0.000 — not missing — and its AUROC of 0.65 is still readable in
+`12_detection_image_level_pr_roc`. Segmentation models (`DeepLabV3+`, `UNet++`, `Mask R-CNN`)
+report no image-level score at all and appear in `02_pixel_level` instead.
 
 ## 02 · `02_pixel_level` — Pixel-level metrics
 
-Pixel-level accuracy for the 12 models whose output is a mask or a heatmap. The chart deliberately
-mixes two metric families, and a group carries only the family its output supports.
+Pixel-level accuracy for the 12 models whose output is a mask or a heatmap. The chart mixes two
+metric families, and a group carries only the family its output supports.
 
 - **Threshold-free ranking** — Pixel AUROC, AUPRO, IAP. These sweep a threshold over a
   *continuous* score map, so a model that persists only a binarised mask cannot report them.
-- **Thresholded overlap** — Pixel F1, mIoU. One binary mask is enough.
+- **Thresholded overlap** — Pixel F1.
 
 | Bar | Metric |
 | --- | --- |
-| 1 (grey solid) | Pixel AUROC |
-| 2 (red `/`) | AUPRO |
+| 1 (light grey solid) | Pixel AUROC |
+| 2 (red `.`) | AUPRO |
 | 3 (blue `/`) | IAP |
 | 4 (grey `/`) | Pixel F1 |
-| 5 (amber `\`) | mIoU |
+
+All twelve groups carry the same four bars — on this snapshot the three mask models report the
+ranking metrics too, so no group is short a bar.
 
 `dice` is not plotted: for a binary mask it *is* `pixel_f1` (the evaluator's `_dice` and
 `_pixel_f1` are the same formula, and the two columns agree to every quoted digit).
+
+`miou` is not plotted either, and for the same class of reason: only the three segmentation models
+report it, so it was a fifth bar on three of twelve groups and nothing on the other nine, which
+reads as a missing measurement rather than an inapplicable one. For a single binary mask per image
+IoU is also a monotone function of F1 (`IoU = F1 / (2 - F1)`), so the bar would repeat `pixel_f1`.
+It remains in `snapshot_audit.csv` and in the report's segmentation tables.
 
 ## 03 · `03_instance_level` — Instance-level detection metrics
 
@@ -52,8 +83,8 @@ Box quality for the detection backends.
 
 | Bar | Metric |
 | --- | --- |
-| 1 (grey solid) | mAP@[.5:.95] |
-| 2 (red `/`) | mAP@0.5 |
+| 1 (light grey solid) | mAP@[.5:.95] |
+| 2 (red `.`) | mAP@0.5 |
 | 3 (blue `/`) | mAP@0.75 |
 | 4 (grey `/`) | F1@0.5 |
 
@@ -80,11 +111,24 @@ Anomaly and segmentation models share panel (b), which is the only quality metri
 
 ## 07 · `07_memory_by_measurement_kind` — Peak memory by instrument
 
-**(a)** whole-process RSS, **(b)** CUDA allocator peak. **The two panels are not two views of one
-number and must not be compared across:** RSS counts the entire Python process (weights, CUDA
-context, host copies, framework overhead), the allocator counts GPU tensor memory only. A model
-can show 1.8 GB RSS and 0.05 GB of allocator memory because its weights live in host memory. Each
-panel has its own y-axis for that reason.
+**(a)** "Peak memory, whole program", **(b)** "Peak memory, GPU". The panel titles are deliberately
+plain — a reader is not expected to know what an RSS or a CUDA allocator is — so the precise
+definitions live here.
+
+**The two panels are not two views of one number and must not be compared across:**
+
+- Panel (a) is measured as the **resident set size of the whole Python process**: the model
+  weights, the GPU context, host copies of tensors, the framework and its libraries.
+- Panel (b) is measured as **tensor memory allocated on the GPU** (`torch.cuda.max_memory_allocated`),
+  which excludes the interpreter, the host copies and the CUDA context itself.
+
+Because the two instruments answer different questions, only some models have a reading in each
+panel: 11 of 19 were profiled with the whole-program instrument and 8 with the GPU-tensor one. A
+model is absent from the panel that did not measure it rather than drawn at zero, and each panel
+has its own y-axis because the two ranges differ by an order of magnitude. A model can show 1.8 GB
+of whole-program memory and 0.05 GB of GPU-tensor memory because its weights live in host memory.
+Whichever instrument a row carries is recorded as `memory_measurement_kind` in the snapshot and in
+`snapshot_audit.csv`, and the report's memory section lists it per model.
 
 ## 08 · `08_instance_size_breakdown` — Size-bucketed AP and AR
 
@@ -92,8 +136,8 @@ The detection report's size breakdown, which the four headline metrics in 03 do 
 
 | Bar | Metric |
 | --- | --- |
-| 1 (grey solid) | mAP small |
-| 2 (red `/`) | mAP medium |
+| 1 (light grey solid) | mAP small |
+| 2 (red `.`) | mAP medium |
 | 3 (blue `/`) | mAP large |
 | 4 (grey `/`) | mAR@1 |
 | 5 (amber `\`) | mAR@10 |

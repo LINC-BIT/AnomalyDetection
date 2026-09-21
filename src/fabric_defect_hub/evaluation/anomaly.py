@@ -278,12 +278,19 @@ def _best_f1_threshold(y_true, y_score) -> float:
 
 def _image_level_metrics(y_true, y_score, *, threshold: float | None = None,
                          allow_oracle_threshold: bool = False) -> dict[str, float]:
-    from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
+    from sklearn.metrics import average_precision_score, f1_score, precision_score, recall_score, roc_auc_score
 
     metrics: dict[str, float] = {}
-    metrics["image_auroc"] = (
-        float(roc_auc_score(y_true, y_score)) if len(set(y_true.tolist())) >= 2 else float("nan")
-    )
+    if len(set(y_true.tolist())) >= 2:
+        metrics["image_auroc"] = float(roc_auc_score(y_true, y_score))
+        # The area under the precision-recall curve. Reported beside AUROC
+        # because the same ranking produces two numbers a reviewer will compare
+        # against the PR curve figure, and because AP is the metric that
+        # separates "ranks well" from "fires at the right threshold" when the
+        # negative class has a point mass (see the detector backends).
+        metrics["image_ap"] = float(average_precision_score(y_true, y_score))
+    else:
+        metrics["image_auroc"] = float("nan")
 
     if threshold is None and not allow_oracle_threshold:
         return metrics

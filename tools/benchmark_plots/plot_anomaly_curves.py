@@ -15,6 +15,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
+# SVG keeps text as <text> rather than glyph outlines, so a vector editor can
+# reword a label. PNG and PDF are unaffected.
+matplotlib.rcParams["svg.fonttype"] = "none"
+
 ROOT = Path(__file__).resolve().parents[2]
 DATASET_ROOT = ROOT / "datasets/textile/ZJU-Leaper"
 PREDICTION_ROOT = ROOT / "artifacts/runtime/anomaly_maps/benchmark"
@@ -110,31 +114,52 @@ def pixel_pairs(predictions: list[dict]) -> tuple[np.ndarray, np.ndarray]:
     return np.concatenate(labels).astype(np.uint8), np.concatenate(scores)
 
 
+def _threshold_curve_counts(labels: np.ndarray, scores: np.ndarray) -> tuple[np.ndarray, np.ndarray, int, int]:
+    """`(cumulative_true, cumulative_false, positives, negatives)` at **distinct** scores.
+
+    One ROC/PR point per *sample* is only valid when every score is distinct.
+    With ties it is wrong: the intermediate prefixes inside a tied block depend
+    on the order the sort happened to leave within that block, and integrating
+    that staircase over-counts. The degenerate case is exact -- four samples all
+    scoring 0.5 have a true AUC of 0.5, and the per-sample staircase integrates
+    to 0.75. Ties are not exotic here: a detector that fires on nothing emits an
+    exact 0.0, and a calibrated anomaly score can saturate.
+
+    Collapsing each run of equal scores to its last prefix makes the trace a
+    function of the scores alone, which is what makes the area equal to the
+    Mann-Whitney U statistic `sklearn.roc_auc_score` computes.
+    """
+
+    order = np.argsort(-np.asarray(scores), kind="mergesort")
+    truth = np.asarray(labels)[order].astype(bool)
+    ordered_scores = np.asarray(scores)[order]
+    last_of_block = np.r_[np.diff(ordered_scores) != 0, True]
+    cumulative_true = np.cumsum(truth)[last_of_block]
+    cumulative_predicted = np.arange(1, len(truth) + 1)[last_of_block]
+    cumulative_false = cumulative_predicted - cumulative_true
+    return cumulative_true, cumulative_false, max(int(truth.sum()), 1), max(int((~truth).sum()), 1)
+
+
 def roc_points(labels: np.ndarray, scores: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
-    order = np.argsort(-scores, kind="mergesort")
-    truth = labels[order].astype(bool)
-    positives = max(int(truth.sum()), 1)
-    negatives = max(int((~truth).sum()), 1)
-    thresholds = np.r_[np.inf, scores[order]]
-    predicted = np.arange(len(truth) + 1)
-    cumulative_true = np.r_[0, np.cumsum(truth)]
-    cumulative_false = predicted - cumulative_true
-    tpr = cumulative_true / positives
-    fpr = cumulative_false / negatives
+    cumulative_true, cumulative_false, positives, negatives = _threshold_curve_counts(labels, scores)
+    tpr = np.r_[0.0, cumulative_true / positives]
+    fpr = np.r_[0.0, cumulative_false / negatives]
     return fpr, tpr, float(np.trapezoid(tpr, fpr))
 
 
 def pr_points(labels: np.ndarray, scores: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
-    order = np.argsort(-scores, kind="mergesort")
-    truth = labels[order].astype(bool)
-    true_positive = np.cumsum(truth)
-    false_positive = np.cumsum(~truth)
-    positives = max(int(truth.sum()), 1)
-    recall = true_positive / positives
-    precision = true_positive / np.maximum(true_positive + false_positive, 1)
-    order = np.argsort(recall)
-    recall = recall[order]
-    precision = precision[order]
+    """Interpolated (VOC2010-style) precision-recall trace and its area.
+
+    The area is **AP under the interpolated curve**, which is the curve this
+    figure draws: precision is made monotone non-increasing before integration.
+    `sklearn.average_precision_score` uses the step-wise convention instead and
+    returns a slightly lower number; the two are different definitions, so the
+    figure states which one it reports rather than leaving "AP" ambiguous.
+    """
+
+    cumulative_true, cumulative_false, positives, _ = _threshold_curve_counts(labels, scores)
+    recall = cumulative_true / positives
+    precision = cumulative_true / np.maximum(cumulative_true + cumulative_false, 1)
     unique_recall, inverse = np.unique(recall, return_inverse=True)
     envelope = np.zeros_like(unique_recall, dtype=float)
     for index in range(len(unique_recall)):
@@ -269,8 +294,16 @@ def render_figure(
     }
     render_curve_panel(axes[0], "pr", curves, styles, "(a) Precision-Recall", xlim, ylim)
     render_curve_panel(axes[1], "roc", curves, styles, "(b) ROC", xlim, ylim)
+    # The legend carries the area under each curve, because those areas are the
+    # only quantitative statement these figures make: panel (a) integrates to
+    # AP and panel (b) to AUROC, and a reader comparing this figure with the bar
+    # charts must be able to see the two numbers agree rather than infer it from
+    # the curve shape.
     handles = [
-        plt.Line2D([], [], color=styles[name][0], linestyle=styles[name][1], linewidth=2.2, label=name)
+        plt.Line2D(
+            [], [], color=styles[name][0], linestyle=styles[name][1], linewidth=2.2,
+            label=f"{name}   AP {float(curves[name]['ap']):.3f} · AUROC {float(curves[name]['auroc']):.3f}",
+        )
         for name in curves
     ]
     legend = axes[1].legend(
@@ -294,7 +327,21 @@ def render_figure(
     fig.tight_layout()
     fig.savefig(output / f"{stem}.png", dpi=200, bbox_inches="tight")
     fig.savefig(output / f"{stem}.pdf", bbox_inches="tight")
+    fig.savefig(output / f"{stem}.svg", bbox_inches="tight")
     plt.close(fig)
+
+
+# Every figure is written in all three formats, and `--missing` treats a figure
+# as missing when *any* of them is absent, so a format added after the fact can
+# be filled in without redrawing the rest. PNG for slides, PDF for LaTeX, SVG
+# for a vector editor.
+FIGURE_FORMATS: tuple[str, ...] = ("png", "pdf", "svg")
+
+
+def missing_formats(output: Path, stem: str) -> list[str]:
+    """Which of the expected formats for one figure are not on disk yet."""
+
+    return [suffix for suffix in FIGURE_FORMATS if not (output / f"{stem}.{suffix}").exists()]
 
 
 # Figure id -> (output stem, human label). The ids run on from the metric bar
@@ -315,7 +362,7 @@ def select_figures(only: list[str] | None, missing: bool, output: Path) -> list[
             raise SystemExit(f"unknown figure id(s): {', '.join(unknown)}. Known: {', '.join(ids)}")
         ids = [figure_id for figure_id in ids if figure_id in set(only)]
     if missing:
-        ids = [figure_id for figure_id in ids if not (output / f"{FIGURES[figure_id][0]}.png").exists()]
+        ids = [figure_id for figure_id in ids if missing_formats(output, FIGURES[figure_id][0])]
     return ids
 
 
@@ -325,7 +372,7 @@ def main() -> int:
     parser.add_argument("--xlim", type=float, nargs=2, default=(0.0, 1.0), metavar=("XMIN", "XMAX"), help="display range of the horizontal axis (default: 0 1)")
     parser.add_argument("--ylim", type=float, nargs=2, default=(0.0, 1.02), metavar=("YMIN", "YMAX"), help="display range of the vertical axis (default: 0 1.02)")
     parser.add_argument("--only", nargs="+", metavar="ID", help="render only these figure ids (see --list)")
-    parser.add_argument("--missing", action="store_true", help="render only figures whose PNG is not on disk yet")
+    parser.add_argument("--missing", action="store_true", help="render only figures missing at least one output format (png/pdf/svg)")
     parser.add_argument("--list", action="store_true", help="list the figure ids and their output state, then exit")
     args = parser.parse_args()
     xlim = (float(args.xlim[0]), float(args.xlim[1]))
@@ -333,7 +380,8 @@ def main() -> int:
 
     if args.list:
         for figure_id, (stem, label) in FIGURES.items():
-            state = "present" if (args.output_dir / f"{stem}.png").exists() else "missing"
+            missing = missing_formats(args.output_dir, stem)
+            state = "present" if not missing else f"missing {','.join(missing)}"
             print(f"{figure_id}  {stem:<34} {state}  {label}")
         return 0
 
