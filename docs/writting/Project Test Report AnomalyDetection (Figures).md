@@ -90,136 +90,135 @@ The evaluated configuration:
 
 #### 2.2.1 Technical Metrics: Image Level
 
-This part evaluates the image-level metrics defined by [README §3.3.1](../../README.md#331-technical-metrics-image-level):
+This section evaluates image-level detection performance, i.e., whether an input image contains a defect. The metrics are defined in [README §3.3.1](../../README.md). Five representative metrics are selected for evaluation:
 
-- **Image AUROC** (Area Under the Receiver Operating Characteristic curve)**:** the probability that a defective image is ranked above a normal one. 0.5 is random guessing, 1.0 is perfect, and no decision threshold is needed.
+- **Image AUROC (Area Under the Receiver Operating Characteristic curve):** the probability that a defective image is ranked above a normal one. A value of 0.5 corresponds to random guessing, while 1.0 indicates perfect discrimination.
+- **Image AP (Average Precision):** the area under the image-level precision-recall curve, summarising ranking performance across decision thresholds.
 - **Image Precision:** the share of images flagged as defective that really are defective.
 - **Image Recall:** the share of truly defective images that are flagged.
 - **Image F1:** the balance of precision and recall in one number; it drops when either is poor.
 
-**Key observation:** The defect detection models lead this axis: YOLO11n and YOLOv8n both reach 0.9965 AUROC. Their precision is 1.000, but recall is only 0.600 and 0.571, so their F1 scores fall to 0.750 and 0.727. Among anomaly detection models, PatchCore leads at 0.9932, while GANomaly, Reverse Distillation, and SuperSimpleNet are close to chance (0.65, 0.62, and 0.59).
+**Key observation:**
+
+- For the **defect detection models** shown on the right side of Figure 1, YOLO11n and YOLOv8n achieve the highest Image AUROC among the evaluated models, both reaching approximately 0.99. However, their recall is relatively lower at 0.600 and 0.571, respectively. This indicates that the two models produce few false-positive image-level predictions but miss a proportion of defective images.
+
+- Among the **anomaly detection models**, PatchCore achieves the highest Image AUROC at 0.9932. In contrast, GANomaly, Reverse Distillation, and SuperSimpleNet obtain substantially lower Image AUROC values of 0.65, 0.62, and 0.59, respectively, indicating weaker image-level discrimination on this test set.
 
 <p align="center"><strong>Figure 1: Image-level metrics</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/01_image_level.png" alt="Image-level metrics on the A100 server" width="100%" />
 </p>
+<sub>**(a)** Anomaly detection models; **(b)** defect detection models. Bars per model: (1) Image AUROC, (2) Image AP, (3) Image F1, (4) Image Precision and (5) Image Recall. An absent bar means that the corresponding model does not report that metric.</sub>
 
-<sub>One group of four bars per model: (1) Image AUROC, (2) Image F1, (3) Image Precision, (4) Image Recall. An absent bar means the model reports nothing for that metric, never a zero. DETR's F1 / precision / recall are 0.000 rather than missing — it scores no box above the evaluation floor, so its derived image score is 0. All 16 models that emit an image-level score are shown: 10 anomaly detection models and 6 defect detection models. The latter are scored from their highest-confidence box per image.</sub>
-
-<br>
+To further examine the image-level performance, Figure 2 shows the precision-recall (PR) and receiver operating characteristic (ROC) curves of the anomaly detection models. The PR curve illustrates the trade-off between precision and recall at different thresholds, while the ROC curve shows the trade-off between the true positive rate and false positive rate.
 
 <p align="center"><strong>Figure 2: Image-level precision-recall and ROC, anomaly detection models</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/11_anomaly_image_level_pr_roc.png" alt="Image-level precision-recall and ROC, anomaly detection models" width="100%" />
 </p>
+<sub>**(a)** Precision-recall curves; **(b)** ROC curves for the 10 anomaly detection models. Curves are smoothed for visualization only; AP and AUROC values are calculated from the original unsmoothed evaluation results.</sub>
 
-<sub>**(a)** precision-recall, **(b)** ROC, over the 10 anomaly detection models. Curves are smoothed for display only — a Gaussian kernel over a dense resampling of the empirical staircase; the AP and AUROC in each legend are computed from the unsmoothed data. The x- and y-ranges can be changed with `--xlim` / `--ylim`.</sub>
-
-<br>
+Figure 3 shows the corresponding image-level PR and ROC curves for the defect detection models, providing a threshold-dependent view of their image-level classification performance.
 
 <p align="center"><strong>Figure 3: Image-level precision-recall and ROC, defect detection models</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/12_detection_image_level_pr_roc.png" alt="Image-level precision-recall and ROC, defect detection models" width="100%" />
 </p>
-
-<sub>**(a)** precision-recall, **(b)** ROC, over the 6 defect detection models. DETR appears here: its AUROC (0.65) and AP (0.50) are real, readable numbers even though its box metrics are degenerate.</sub>
+<sub>**(a)** Precision-recall curves; **(b)** ROC curves for the 6 defect detection models. DETR is included because its image-level AUROC (0.65) and AP (0.50) can still be computed, although its instance-level detection results are degenerate.</sub>
 
 <br>
 
 
 #### 2.2.2 Technical Metrics: Pixel Level
 
-This part evaluates the pixel-level metrics defined by [README §3.3.2](../../README.md#332-technical-metrics-pixel-level):
+This section evaluates pixel-level localization performance, i.e., how accurately the defective pixels within an image are identified. The metrics are defined in [README §3.3.2](../../README.md#332-technical-metrics-pixel-level). Four representative metrics are selected for evaluation:
 
-- **Pixel AUROC:** the probability that a defective pixel is ranked above a normal one, pooled over the pixels of all images. 0.5 is random guessing.
+- **Pixel AUROC:** the probability that a defective pixel is ranked above a normal one, pooled over the pixels of all images. A value of 0.5 corresponds to random guessing, while 1.0 indicates perfect discrimination.
 - **Pixel AUPRO:** the share of each defective region that is covered before the false-positive rate reaches a fixed limit. Every region counts equally, so a small defect is not hidden by a large one.
 - **Pixel F1:** the match between predicted and true defect pixels at a fixed pixel threshold, penalised by missed pixels and by extra pixels.
 - **IAP (Instance Average Precision):** the average precision over connected defect regions, with every region weighted equally.
 
-**Key observation:** MoECLIP leads localization by a wide margin (0.9857 AUROC and 0.9701 AUPRO), while SuperSimpleNet ranks last (0.4547 and 0.5033). Pixel F1 and mIoU remain low because the pixel threshold was not calibrated in this run. AUROC and AUPRO do not require a threshold and are therefore more informative here.
+**Key observation:**
+
+- Among the **anomaly detection models**, MoECLIP leads pixel-level localization, with 0.9857 Pixel AUROC and 0.9701 Pixel AUPRO, while SuperSimpleNet has the lowest values (0.4547 and 0.5033).
+- Figure 4 also includes the three **segmentation models** because the current evaluation snapshot retains their pixel-level score maps and therefore reports the same four metrics for all 12 models. Among the segmentation models, Mask R-CNN has the highest Pixel F1, followed by UNet++ and DeepLabV3+.
+- Pixel AUROC, AUPRO and IAP evaluate the ranking of continuous pixel scores over thresholds. Pixel F1 evaluates the binary prediction at the selected operating threshold and should therefore be interpreted together with the threshold-selection procedure.
 
 <p align="center"><strong>Figure 4: Pixel-level metrics on the A100 server</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/02_pixel_level.png" alt="Pixel-level metrics on the A100 server" width="100%" />
 </p>
+<sub>Bars per model: (1) Pixel AUROC, (2) AUPRO, (3) IAP and (4) Pixel F1. The figure includes nine anomaly detection models and three segmentation models. In the current snapshot, all 12 models retain a pixel-level score map and therefore report all four metrics. Pixel AUROC, AUPRO and IAP sweep a threshold over the score map; Pixel F1 evaluates the binary prediction at the selected operating threshold. mIoU is not plotted.</sub>
 
-<sub>The chart mixes two metric families and a group carries only the family its output supports. Bars per model: (1) Pixel AUROC, (2) AUPRO, (3) IAP, (4) Pixel F1, (5) mIoU. Pixel AUROC, AUPRO and IAP sweep a threshold over a *continuous* score map; Pixel F1 and mIoU need only one binary mask, which is why the three mask models report two bars and the anomaly detection models four. `dice` is not plotted: for a binary mask it is numerically identical to `pixel_f1`.</sub>
-
-<br>
-
-<sub>The figure includes all nine models that emit a per-pixel anomaly map.</sub>
-
-<br>
+To further examine the pixel-level performance, Figure 5 shows the pixel-level precision-recall (PR) and receiver operating characteristic (ROC) curves of the anomaly detection models. The PR curve illustrates the trade-off between precision and recall at different thresholds, while the ROC curve shows the trade-off between the true positive rate and false positive rate.
 
 <p align="center"><strong>Figure 5: Pixel-level precision-recall and ROC, anomaly detection models</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/13_anomaly_pixel_level_pr_roc.png" alt="Pixel-level precision-recall and ROC, anomaly detection models" width="100%" />
 </p>
-
-<sub>**(a)** precision-recall, **(b)** ROC, over the 9 anomaly detection models that persist a continuous anomaly map. The three mask models (UNet++, DeepLabV3+, Mask R-CNN) cannot appear: a binarised mask has no score to sweep, so it yields a single operating point rather than a curve. Their pixel quality is in Figure 4.</sub>
+<sub>**(a)** Precision-recall curves; **(b)** ROC curves for the 9 anomaly detection backends with persisted curve artifacts. The three segmentation models are summarised in Figure 4 but are outside the scope of this anomaly-model curve figure.</sub>
 
 <br>
 
-
-The three segmentation models are the other pixel-level producers; their Pixel F1 and mIoU are the last two bar styles in Figure 4. They report no threshold-free pixel metric because their output is a binary mask rather than a score map.
-
 #### 2.2.3 Technical Metrics: Instance Level
 
-This part evaluates the instance-level metrics defined by [README §3.3.3](../../README.md#333-technical-metrics-instance-level):
+This section evaluates instance-level detection performance. The metrics are defined in [README §3.3.3](../../README.md#333-technical-metrics-instance-level). Six representative metrics are selected for evaluation:
 
-- **AP:** box precision–recall quality averaged over IoU thresholds 0.50–0.95 (COCO style); higher is better.
-- **AP50 / AP75:** AP at a single IoU threshold. 0.50 accepts a loosely placed box, 0.75 demands a tight one, where IoU is the overlap between a predicted box and the true box.
+- **AP:** the box precision–recall quality averaged over IoU thresholds from 0.50 to 0.95 (COCO style); higher is better.
+- **AP50 / AP75:** AP at a single IoU threshold of 0.50 or 0.75; 0.50 accepts a loosely placed box, while 0.75 demands a tight one, where IoU is the overlap between a predicted box and the ground-truth box.
 - **Precision:** the share of reported boxes that overlap a real defect (IoU ≥ 0.50).
 - **Recall:** the share of real defects covered by a reported box.
-- **F1:** the balance of box precision and recall in one number.
-- **TP / FP / FN:** the underlying counts, namely defects found, spurious boxes and defects missed.
+- **F1:** the balance of box precision and recall in one number; it drops when either is poor.
 
-**Key observation:** The detectors form two groups. YOLO variants are precise (0.857–0.929) but miss many defects (recall 0.214–0.363). The two R-CNN detectors have higher recall (0.692 and 0.681) but lower precision (0.550 and 0.633). Cascade R-CNN has the best AP50 (0.6428) and F1 (0.6561). DETR finds no evaluated defect (TP 0, FP 0, FN 182).
+Precision, Recall, F1 and the TP/FP/FN counts are reported at a confidence threshold of 0.25 and an IoU matching threshold of 0.50. Accordingly, Figure 6 labels this operating-point metric as F1@0.5; the 0.5 denotes the IoU threshold, not the confidence threshold.
+
+**Key observation:**
+
+- The **YOLO variants** form the precise-but-incomplete group: Precision reaches 0.857–0.929, but Recall stays at 0.214–0.363, so many defects are missed.
+- The **two R-CNN detectors** show the opposite profile: higher Recall (0.692 and 0.681) at lower Precision (0.550 and 0.633). Cascade R-CNN achieves the best AP50 (0.6428) and F1 (0.6561).
 
 <p align="center"><strong>Figure 6: Instance-level detection metrics</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/03_instance_level.png" alt="Instance-level detection metrics on the A100 server" width="100%" />
 </p>
-
-<sub>Bars per model: (1) mAP@[.5:.95], (2) mAP@0.5, (3) mAP@0.75, (4) F1@0.5. DETR is excluded: its mAP is 0.0011, so its bar has no visible height and it flattens every other model. The value is still in `snapshot_audit.csv` and the model still appears in Figures 1 and 3.</sub>
+<sub>Bars per model: (1) mAP@[.5:.95], (2) mAP@0.5, (3) mAP@0.75 and (4) F1@0.5. DETR is excluded from this bar chart because its mAP (0.0011) is below the figure's display floor and would not produce a readable comparison. Its value remains available in <code>snapshot_audit.csv</code>, and DETR is still included in the image-level results.</sub>
 
 <br>
+
+To further examine the instance-level performance, Figure 7 breaks AP down by the standard COCO small, medium and large object-area buckets. The mAR@k is the maximum recall when at most k detections are kept per image.
 
 <p align="center"><strong>Figure 7: Size-bucketed AP and AR</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/08_instance_size_breakdown.png" alt="Size-bucketed AP and AR" width="100%" />
 </p>
-
-<sub>The size breakdown the four headline metrics above do not cover. Bars per model: (1) mAP small, (2) mAP medium, (3) mAP large, (4) mAR@1, (5) mAR@10, (6) mAR@100.</sub>
+<sub>Bars per model: (1) mAP for small defects, (2) mAP for medium defects, (3) mAP for large defects, (4) mAR@1, (5) mAR@10 and (6) mAR@100. Small, medium and large follow the standard COCO object-area buckets.</sub>
 
 <br>
+
+Figure 8 complements these rate-based metrics with a count-based view: the number of kept boxes shows whether a model finds the defects at all — something mAP alone does not say — while the Precision, Recall and F1 of those boxes quantify the corresponding trade-off.
 
 <p align="center"><strong>Figure 8: Detections against ground truth</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/09_instance_counts.png" alt="Detections against ground truth" width="100%" />
 </p>
-
-<sub>**(a)** boxes kept at the evaluation confidence floor, **(b)** the precision / recall / F1 of those same boxes. Panel (a) is what mAP does not say: whether a model found the defects at all. DETR has no bars — it emits no box above the floor.</sub>
+<sub>**(a)** Boxes kept at the evaluation confidence floor (0.25); **(b)** the Precision, Recall and F1 of those same boxes. DETR has no bars because it emits no box above the floor.</sub>
 
 <br>
-
-- Precision, Recall, F1 and TP/FP/FN are taken at confidence threshold 0.25; AP75 is the third bar style in Figure 6, and mAP@[.5:.95] is the first.
-- A standalone `adh evaluate` run on the DETR checkpoint independently confirmed `TP=0` and `FP=0`.
 
 #### 2.2.4 Overhead Metrics: Compute
 
 This part evaluates the compute metrics defined by [README §3.3.5](../../README.md#335-overhead-metrics-compute):
 
 - **FPS:** images processed per second.
-- **Latency mean / p95 / p99:** the time to process one image, in milliseconds; p95 and p99 describe the slowest frames rather than the average.
+- **Latency mean / p95 / p99:** the time to process one image, in milliseconds; p95 and p99 describe tail latency rather than the average. Figure 9 shows the mean and p95; p99 remains available in the benchmark data but is not plotted.
 - **FLOPs (G):** the arithmetic work of one forward pass, in billions of operations. Fixed by the architecture, so identical on any machine.
 - **Wall-time:** the total seconds the scored run took, accuracy pass included.
 
@@ -255,7 +254,7 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 - **Allocator peak:** peak tensor memory live on the graphics card, which excludes the Python interpreter, host copies and the CUDA context itself.
 - **Artifact size:** the checkpoint file on disk (weights plus, for a fine-tuned model, its optimizer state). This is storage, not run-time memory.
 
-**Key observation:** Peak memory spans two orders of magnitude in this run: YOLOv8n uses 46.5 MB, compared with 4505 MB for PatchCore. The two measurements are not interchangeable. Whole-process RSS includes weights, the CUDA context, and host copies; the CUDA allocator counts GPU tensor memory only. Figure 11 therefore uses separate axes.
+**Key observation:** The two peak-memory measurements are not interchangeable and do not form a single model ranking. In the GPU-allocator panel, YOLOv8n has a measured tensor-memory peak of 46.5 MB. In the whole-process panel, PatchCore has the highest measured resident-memory peak at 4505 MB. These values must be interpreted only within their respective panels: whole-process RSS includes weights, the CUDA context, host copies and framework overhead, whereas the CUDA allocator counts only live GPU tensor memory. Figure 11 therefore separates the two instruments and gives each panel its own axis.
 
 <p align="center"><strong>Figure 11: Peak memory by measurement instrument</strong></p>
 
@@ -270,8 +269,9 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 <p align="center"><strong>Figure 12: Model size and compute complexity</strong></p>
 
 <p align="center">
-  <img src="../../artifacts/local_benchmark_plots/05_parameters_vs_flops.png" alt="Model size and compute complexity" width="100%" />
+  <img src="../../artifacts/local_benchmark_plots/05_parameters_vs_flops.png" alt="Model size and compute complexity" width="80%" />
 </p>
+
 
 <sub>Parameters against FLOPs, both log-scaled and annotated. Both are fixed by the architecture, so unlike FPS, latency and memory they transfer to any machine. Colour marks the family: anomaly (teal) or detection (blue).</sub>
 
