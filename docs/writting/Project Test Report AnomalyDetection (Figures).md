@@ -41,8 +41,6 @@ The hardware and software configuration of the testing platform is listed in Tab
 
 </div>
 
-<br>
-
 ## 2. Evaluation Reproduction
 
 ### 2.1 Examples
@@ -86,8 +84,6 @@ The evaluated configuration:
 
 </div>
 
-<br>
-
 #### 2.2.1 Technical Metrics: Image Level
 
 This section evaluates image-level detection performance, i.e., whether an input image contains a defect. The metrics are defined in [README §3.3.1](../../README.md). Five representative metrics are selected for evaluation:
@@ -109,7 +105,7 @@ This section evaluates image-level detection performance, i.e., whether an input
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/01_image_level.png" alt="Image-level metrics on the A100 server" width="100%" />
 </p>
-<sub>**(a)** Anomaly detection models; **(b)** defect detection models. Bars per model: (1) Image AUROC, (2) Image AP, (3) Image F1, (4) Image Precision and (5) Image Recall. An absent bar means that the corresponding model does not report that metric.</sub>
+<p><sub><strong>(a)</strong> Anomaly detection models; <strong>(b)</strong> defect detection models. Bars per model: (1) Image AUROC, (2) Image AP, (3) Image F1, (4) Image Precision and (5) Image Recall. An absent bar means that the corresponding model does not report that metric.</sub></p>
 
 To further examine the image-level performance, Figure 2 shows the precision-recall (PR) and receiver operating characteristic (ROC) curves of the anomaly detection models. The PR curve illustrates the trade-off between precision and recall at different thresholds, while the ROC curve shows the trade-off between the true positive rate and false positive rate.
 
@@ -118,7 +114,7 @@ To further examine the image-level performance, Figure 2 shows the precision-rec
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/11_anomaly_image_level_pr_roc.png" alt="Image-level precision-recall and ROC, anomaly detection models" width="100%" />
 </p>
-<sub>**(a)** Precision-recall curves; **(b)** ROC curves for the 10 anomaly detection models. Curves are smoothed for visualization only; AP and AUROC values are calculated from the original unsmoothed evaluation results.</sub>
+<p><sub><strong>(a)</strong> Precision-recall curves; <strong>(b)</strong> ROC curves for the 10 anomaly detection models. Curves are smoothed for visualization only; AP and AUROC values are calculated from the original unsmoothed evaluation results.</sub></p>
 
 Figure 3 shows the corresponding image-level PR and ROC curves for the defect detection models, providing a threshold-dependent view of their image-level classification performance.
 
@@ -127,10 +123,7 @@ Figure 3 shows the corresponding image-level PR and ROC curves for the defect de
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/12_detection_image_level_pr_roc.png" alt="Image-level precision-recall and ROC, defect detection models" width="100%" />
 </p>
-<sub>**(a)** Precision-recall curves; **(b)** ROC curves for the 6 defect detection models. DETR is included because its image-level AUROC (0.65) and AP (0.50) can still be computed, although its instance-level detection results are degenerate.</sub>
-
-<br>
-
+<p><sub><strong>(a)</strong> Precision-recall curves; <strong>(b)</strong> ROC curves for the 6 defect detection models. DETR is included because its image-level AUROC (0.65) and AP (0.50) can still be computed, although its instance-level detection results are degenerate.</sub></p>
 
 #### 2.2.2 Technical Metrics: Pixel Level
 
@@ -152,7 +145,7 @@ This section evaluates pixel-level localization performance, i.e., how accuratel
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/02_pixel_level.png" alt="Pixel-level metrics on the A100 server" width="100%" />
 </p>
-<sub>Bars per model: (1) Pixel AUROC, (2) AUPRO, (3) IAP and (4) Pixel F1. The figure includes nine anomaly detection models and three segmentation models. In the current snapshot, all 12 models retain a pixel-level score map and therefore report all four metrics. Pixel AUROC, AUPRO and IAP sweep a threshold over the score map; Pixel F1 evaluates the binary prediction at the selected operating threshold. mIoU is not plotted.</sub>
+<p><sub>Bars per model: (1) Pixel AUROC, (2) AUPRO, (3) IAP and (4) Pixel F1. The figure includes nine anomaly detection models and three segmentation models. In the current snapshot, all 12 models retain a pixel-level score map and therefore report all four metrics. Pixel AUROC, AUPRO and IAP sweep a threshold over the score map; Pixel F1 evaluates the binary prediction at the selected operating threshold. mIoU is not plotted.</sub></p>
 
 To further examine the pixel-level performance, Figure 5 shows the pixel-level precision-recall (PR) and receiver operating characteristic (ROC) curves of the anomaly detection models. The PR curve illustrates the trade-off between precision and recall at different thresholds, while the ROC curve shows the trade-off between the true positive rate and false positive rate.
 
@@ -161,9 +154,7 @@ To further examine the pixel-level performance, Figure 5 shows the pixel-level p
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/13_anomaly_pixel_level_pr_roc.png" alt="Pixel-level precision-recall and ROC, anomaly detection models" width="100%" />
 </p>
-<sub>**(a)** Precision-recall curves; **(b)** ROC curves for the 9 anomaly detection backends with persisted curve artifacts. The three segmentation models are summarised in Figure 4 but are outside the scope of this anomaly-model curve figure.</sub>
-
-<br>
+<p><sub><strong>(a)</strong> Precision-recall curves; <strong>(b)</strong> ROC curves for the 9 anomaly detection backends with persisted curve artifacts. The three segmentation models are summarised in Figure 4 but are outside the scope of this anomaly-model curve figure.</sub></p>
 
 #### 2.2.3 Technical Metrics: Instance Level
 
@@ -187,9 +178,7 @@ Precision, Recall, F1 and the TP/FP/FN counts are reported at a confidence thres
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/03_instance_level.png" alt="Instance-level detection metrics on the A100 server" width="100%" />
 </p>
-<sub>Bars per model: (1) mAP@[.5:.95], (2) mAP@0.5, (3) mAP@0.75 and (4) F1@0.5. DETR is excluded from this bar chart because its mAP (0.0011) is below the figure's display floor and would not produce a readable comparison. Its value remains available in <code>snapshot_audit.csv</code>, and DETR is still included in the image-level results.</sub>
-
-<br>
+<p><sub>Bars per model: (1) mAP@[.5:.95], (2) mAP@0.5, (3) mAP@0.75 and (4) F1@0.5. DETR is excluded from this bar chart because its mAP (0.0011) is below the figure's display floor and would not produce a readable comparison. Its value remains available in <code>snapshot_audit.csv</code>, and DETR is still included in the image-level results.</sub></p>
 
 To further examine the instance-level performance, Figure 7 breaks AP down by the standard COCO small, medium and large object-area buckets. The mAR@k is the maximum recall when at most k detections are kept per image.
 
@@ -198,9 +187,7 @@ To further examine the instance-level performance, Figure 7 breaks AP down by th
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/08_instance_size_breakdown.png" alt="Size-bucketed AP and AR" width="100%" />
 </p>
-<sub>Bars per model: (1) mAP for small defects, (2) mAP for medium defects, (3) mAP for large defects, (4) mAR@1, (5) mAR@10 and (6) mAR@100. Small, medium and large follow the standard COCO object-area buckets.</sub>
-
-<br>
+<p><sub>Bars per model: (1) mAP for small defects, (2) mAP for medium defects, (3) mAP for large defects, (4) mAR@1, (5) mAR@10 and (6) mAR@100. Small, medium and large follow the standard COCO object-area buckets.</sub></p>
 
 Figure 8 complements these rate-based metrics with a count-based view: the number of kept boxes shows whether a model finds the defects at all — something mAP alone does not say — while the Precision, Recall and F1 of those boxes quantify the corresponding trade-off.
 
@@ -209,9 +196,7 @@ Figure 8 complements these rate-based metrics with a count-based view: the numbe
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/09_instance_counts.png" alt="Detections against ground truth" width="100%" />
 </p>
-<sub>**(a)** Boxes kept at the evaluation confidence floor (0.25); **(b)** the Precision, Recall and F1 of those same boxes. DETR has no bars because it emits no box above the floor.</sub>
-
-<br>
+<p><sub><strong>(a)</strong> Boxes kept at the evaluation confidence floor (0.25); <strong>(b)</strong> the Precision, Recall and F1 of those same boxes. DETR has no bars because it emits no box above the floor.</sub></p>
 
 #### 2.2.4 Overhead Metrics: Compute
 
@@ -229,21 +214,14 @@ This part evaluates the compute metrics defined by [README §3.3.5](../../README
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/04_compute_throughput_latency.png" alt="Compute cost on the A100 server" width="100%" />
 </p>
-
-<sub>Four panels: **(a)** throughput (FPS), **(b)** mean latency, **(c)** p95 latency, **(d)** whole-split wall time. FPS is linear; latency and wall time are log-scaled because the backends span orders of magnitude. All 19 configurations are shown.</sub>
-
-<br>
+<p><sub>Four panels: <strong>(a)</strong> throughput (FPS), <strong>(b)</strong> mean latency, <strong>(c)</strong> p95 latency and <strong>(d)</strong> whole-split wall time. FPS is linear; latency and wall time are log-scaled because the backends span orders of magnitude. All 19 configurations are shown.</sub></p>
 
 <p align="center"><strong>Figure 10: Quality versus latency, by metric granularity</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/06_quality_vs_latency.png" alt="Quality versus latency, by metric granularity" width="100%" />
 </p>
-
-<sub>Three panels by metric granularity rather than by model family: **(a)** image level (Image AUROC), **(b)** pixel level (Pixel F1), **(c)** instance level (mAP@0.5); mean latency is on a log axis. Anomaly detection and segmentation models share panel (b), which is the only quality metric they both report.</sub>
-
-<br>
-
+<p><sub>Three panels by metric granularity rather than by model family: <strong>(a)</strong> image level (Image AUROC), <strong>(b)</strong> pixel level (Pixel F1) and <strong>(c)</strong> instance level (mAP@0.5). Mean latency is on a log axis. Anomaly detection and segmentation models share panel (b), which is the only quality metric they both report.</sub></p>
 
 #### 2.2.5 Overhead Metrics: Memory
 
@@ -261,22 +239,14 @@ This part evaluates the memory metrics defined by [README §3.3.6](../../README.
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/07_memory_by_measurement_kind.png" alt="Peak memory by measurement instrument" width="100%" />
 </p>
-
-<sub>**(a) Peak memory, whole program** and **(b) Peak memory, GPU**. The two panels are **not two views of one number** and must not be compared across: panel (a) counts the entire Python process (weights, graphics-card context, host copies, framework overhead) while panel (b) counts tensor memory live on the card — a model can show 1.8 GB in (a) and 0.05 GB in (b) because its weights live in host memory. Each panel has its own y-axis, and a model appears only in the panel whose instrument measured it: 11 models in (a), 8 in (b). Which instrument a model got is decided by whether it could be exported for profiling, not by its accuracy or its size; the main report's memory section explains this and lists the instrument per model. Peak memory is a property of this host and should not be carried to another machine.</sub>
-
-<br>
+<p><sub><strong>(a) Peak memory, whole program</strong> and <strong>(b) Peak memory, GPU</strong>. The two panels are <strong>not two views of one number</strong> and must not be compared across: panel (a) counts the entire Python process (weights, graphics-card context, host copies and framework overhead), while panel (b) counts tensor memory live on the card. A model can show 1.8 GB in (a) and 0.05 GB in (b) because its weights live in host memory. Each panel has its own y-axis, and a model appears only in the panel whose instrument measured it: 11 models in (a) and 8 in (b). The profiling export path determines which instrument a model receives, not its accuracy or size. The main report's memory section lists the instrument for each model. Peak memory is a property of this host and should not be carried to another machine.</sub></p>
 
 <p align="center"><strong>Figure 12: Model size and compute complexity</strong></p>
 
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/05_parameters_vs_flops.png" alt="Model size and compute complexity" width="80%" />
 </p>
-
-
-<sub>Parameters against FLOPs, both log-scaled and annotated. Both are fixed by the architecture, so unlike FPS, latency and memory they transfer to any machine. Colour marks the family: anomaly (teal) or detection (blue).</sub>
-
-<br>
-
+<p><sub>Parameters against FLOPs, both log-scaled and annotated. Both are fixed by the architecture, so unlike FPS, latency and memory they transfer to any machine. Colour marks the family: anomaly (teal) or detection (blue).</sub></p>
 
 ### 2.3 Analysis
 
@@ -287,11 +257,7 @@ The 19 configurations cover three model groups: **anomaly detection (AD)**, **de
 <p align="center">
   <img src="../../artifacts/local_benchmark_plots/10_ranking.png" alt="Three-dimension rank" width="100%" />
 </p>
-
-<sub>**(a)** anomaly detection / zero-shot, **(b)** supervised defect detection — split because an anomaly model and a detector were never measured on the same metrics. Each model gets three bars: its rank within its own panel on **Technical** (the image + pixel + instance accuracy tables), **Memory** and **Compute** (the two overhead tables). Every metric is scored in the direction the project's metric taxonomy declares for it (`higher` / `lower`; `neutral` and non-numeric columns are skipped), min-max normalized across the panel, and a model's dimension score is the average of the metrics it actually reports — so reporting fewer metrics is neither punished nor rewarded. All three bars are ranks (1 = best) on one axis; models are ordered by their mean rank, which is not drawn, because a fourth series on a rank axis reads as a fourth measurement rather than as a summary. Panel (a) includes the three segmentation models, which the project classifies as pixel-level anomaly detection, so it ranks 13 models rather than the 10 anomaly backends alone.</sub>
-
-<br>
-
+<p><sub><strong>(a)</strong> Anomaly detection / zero-shot; <strong>(b)</strong> supervised defect detection. The panels are split because anomaly models and detectors were not measured on the same technical metrics. Each model gets three bars: its rank within its own panel on <strong>Technical</strong> (the image, pixel and instance accuracy tables), <strong>Memory</strong> and <strong>Compute</strong> (the two overhead tables). Every metric is scored in the direction declared by the project's metric taxonomy (<code>higher</code> or <code>lower</code>; <code>neutral</code> and non-numeric columns are skipped) and min-max normalised across the panel. A model's dimension score is the average of the metrics it reports, so reporting fewer metrics is neither punished nor rewarded. All three bars are ranks (1 = best) on one axis. Models are ordered by their mean rank, which is not drawn because a fourth series on a rank axis would read as a fourth measurement rather than a summary. Panel (a) includes the three segmentation models, which the project classifies as pixel-level anomaly detection, so it ranks 13 models rather than the 10 anomaly backends alone.</sub></p>
 
 - **PatchCore:** strongest anomaly image score (AUROC 0.9932) and good localization; its weakness is very high memory use.
 - **MoECLIP:** best pixel localization (AUROC 0.9857, AUPRO 0.9701) and strong image-level performance; it is memory-intensive and not the fastest option.
@@ -326,8 +292,6 @@ Following [README §6.1](../../README.md#61-example-add-a-small-anomaly-dataset)
 | 1.0000 | 0.9935 | 0.9934 | 0.8461 |
 
 </div>
-
-<br>
 
 The results are usable, confirming that the new dataset was added successfully and that PatchCore trained on it.
 
